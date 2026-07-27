@@ -22,7 +22,13 @@ const ALLOWED_TRANSITIONS: Readonly<Record<ProcessingStatus, readonly Processing
 export class ProcessingAdapterError extends Error {
   constructor(
     message: string,
-    readonly code: "adapter_unavailable" | "corrupt_file" | "transient_error",
+    readonly code:
+      | "adapter_unavailable"
+      | "corrupt_file"
+      | "password_protected"
+      | "file_too_large"
+      | "too_many_pages"
+      | "transient_error",
     readonly retryable: boolean,
   ) {
     super(message);
