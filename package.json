@@ -1,21 +1,5 @@
 {
-  "name": "casefind",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Source-linked case organization for unpaid freelance disputes.",
-  "type": "module",
-  "scripts": {
-    "sync:pdfjs": "node scripts/sync-pdfjs.mjs",
-    "preview": "npm run sync:pdfjs && python3 -m http.server 4173 -d web",
-    "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts",
-    "check": "npm run typecheck && npm test"
-  },
-  "dependencies": {
-    "pdfjs-dist": "4.10.38"
-  },
-  "devDependencies": {
-    "tsx": "^4.20.0",
-    "typescript": "^5.8.0"
-  }
+  "name":"casefind","version":"0.1.0","private":true,"description":"Source-linked case organization for unpaid freelance disputes.","type":"module",
+  "scripts":{"sync:pdfjs":"node scripts/sync-pdfjs.mjs","preview":"npm run sync:pdfjs && python3 -m http.server 4173 -d web","serve":"npm run sync:pdfjs && tsx server/runtime.ts","typecheck":"tsc --noEmit","test":"tsx --test tests/**/*.test.ts","check":"npm run typecheck && npm test"},
+  "dependencies":{"pdfjs-dist":"4.10.38"},"devDependencies":{"tsx":"^4.20.0","typescript":"^5.8.0"}
 }
