@@ -59,3 +59,4 @@
 .generated-checklist div { padding:13px 0; border-bottom:1px solid var(--line); }
 .generated-checklist div:last-child { border:0; }
 .generated-checklist span { color:var(--blue); margin-right:10px; }
+.success-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
