@@ -7,3 +7,7 @@ dist/
 !.env.example
 .DS_Store
 *.log
+.casefind/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
