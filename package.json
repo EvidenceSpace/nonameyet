@@ -5,10 +5,14 @@
   "description": "Source-linked case organization for unpaid freelance disputes.",
   "type": "module",
   "scripts": {
-    "preview": "python3 -m http.server 4173 -d web",
+    "sync:pdfjs": "node scripts/sync-pdfjs.mjs",
+    "preview": "npm run sync:pdfjs && python3 -m http.server 4173 -d web",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "pdfjs-dist": "4.10.38"
   },
   "devDependencies": {
     "tsx": "^4.20.0",
