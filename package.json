@@ -1,0 +1,16 @@
+{
+  "name": "casefind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Source-linked case organization for unpaid freelance disputes.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}
