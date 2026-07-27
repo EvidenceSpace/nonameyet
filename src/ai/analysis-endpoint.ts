@@ -1,0 +1,22 @@
+import { analyzeExtractedText, AnalysisRejectedError } from "./analysis-service.js";
+import { joinPagesForAnalysis, parseAnalysisRequest } from "./analysis-request.js";
+import type { AiProvider } from "./provider.js";
+export interface EndpointRequest { method: string; origin?: string; contentType?: string; body: unknown; }
+export interface EndpointResponse { status: number; body: Record<string, unknown>; }
+export async function handleAnalysisEndpoint(args: { request: EndpointRequest; expectedOrigin: string; provider?: AiProvider }): Promise<EndpointResponse> {
+  const { request } = args;
+  if (request.method !== "POST") return { status: 405, body: { error: "method_not_allowed" } };
+  if (request.origin !== args.expectedOrigin) return { status: 403, body: { error: "origin_rejected" } };
+  if (!request.contentType?.toLowerCase().startsWith("application/json")) return { status: 415, body: { error: "json_required" } };
+  const input = parseAnalysisRequest(request.body);
+  if (!input) return { status: 400, body: { error: "invalid_request" } };
+  if (!args.provider) return { status: 503, body: { error: "analysis_unavailable" } };
+  try {
+    const result = await analyzeExtractedText({ provider: args.provider, fileName: input.fileName, text: joinPagesForAnalysis(input.pages) });
+    const candidates = result.candidates.map((candidate) => ({ label: candidate.label, value: candidate.value, confidence: candidate.confidence, pageNumber: candidate.locator.kind === "pdf_page" ? candidate.locator.page : undefined, quote: candidate.locator.quote }));
+    return { status: 200, body: { contractVersion: result.contractVersion, fileId: input.fileId, fileHash: input.fileHash, candidates, warnings: result.warnings } };
+  } catch (error) {
+    if (error instanceof AnalysisRejectedError) return { status: 422, body: { error: "analysis_rejected" } };
+    return { status: 502, body: { error: "provider_failed" } };
+  }
+}
