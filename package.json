@@ -5,6 +5,7 @@
   "description": "Source-linked case organization for unpaid freelance disputes.",
   "type": "module",
   "scripts": {
+    "preview": "python3 -m http.server 4173 -d web",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "check": "npm run typecheck && npm test"
