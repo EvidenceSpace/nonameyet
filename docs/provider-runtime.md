@@ -1,33 +1,18 @@
 # AI provider runtime
 
-CaseFind uses an OpenAI-compatible server adapter. Original file bytes remain in IndexedDB; only user-requested extracted page text is sent to `/api/analyze`.
+CaseFind uses an OpenAI-compatible server adapter. Original file bytes remain in IndexedDB; only user-approved extracted page text is sent to `/api/analyze`.
 
-## Configuration
+## Mandatory consent and usage controls
 
-Set these as server environment variables—never in browser code:
+Every analysis action shows what will be sent and requires explicit confirmation. Both the browser client and server reject requests without `analysis-consent.v1`.
 
-- `AI_API_KEY`: provider credential.
-- `AI_MODEL`: provider model identifier.
-- `AI_BASE_URL`: compatible API base URL, default `https://api.openai.com/v1`.
-- `APP_ORIGIN`: exact permitted browser origin.
-- `HOST` and `PORT`: local server binding.
+The runtime also:
 
-OpenAI, xAI/Grok, OpenRouter, and other compatible APIs can be selected through `AI_BASE_URL` and `AI_MODEL`. Remote endpoints must use HTTPS.
+- coalesces concurrent requests for the same client and file hash;
+- caches successful source-bound responses for five minutes;
+- allows at most 10 new analyses per client per minute;
+- allows at most 400,000 extracted text characters per client per minute;
+- returns `429` with `Retry-After` before calling the provider when a limit is reached;
+- never caches failed provider responses.
 
-## Run
-
-After `npm install`:
-
-```bash
-npm run serve
-```
-
-Without both `AI_API_KEY` and `AI_MODEL`, the app still runs but `/api/analyze` returns `503 analysis_unavailable`. Partial configuration fails at startup.
-
-## Security boundaries
-
-- Authorization is added only inside the server adapter.
-- Credentials never enter provider requests, endpoint responses, or browser bundles.
-- System instructions and untrusted evidence are separate messages.
-- Requests are exact-origin checked and JSON-only.
-- Input, output, timeout, contract, hash, page, quote, and candidate-count gates fail closed.
+These in-memory controls protect the single-process preview. A distributed store and authenticated account quotas are required before multi-instance production deployment.

@@ -1,17 +1,1 @@
-export interface AnalysisPage { pageNumber: number; text: string; }
-export interface AnalysisRequest { fileId: string; fileHash: string; fileName: string; pages: AnalysisPage[]; }
-export function parseAnalysisRequest(value: unknown): AnalysisRequest | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const input = value as Partial<AnalysisRequest>;
-  if (typeof input.fileId !== "string" || !input.fileId.trim()) return undefined;
-  if (typeof input.fileHash !== "string" || !/^[a-f0-9]{64}$/i.test(input.fileHash)) return undefined;
-  if (typeof input.fileName !== "string" || !input.fileName.trim() || input.fileName.length > 240) return undefined;
-  if (!Array.isArray(input.pages) || input.pages.length < 1 || input.pages.length > 500) return undefined;
-  let total = 0;
-  for (const page of input.pages) {
-    if (!page || !Number.isInteger(page.pageNumber) || page.pageNumber < 1 || typeof page.text !== "string") return undefined;
-    total += page.text.length; if (total > 200_000) return undefined;
-  }
-  return { fileId: input.fileId, fileHash: input.fileHash, fileName: input.fileName, pages: input.pages };
-}
-export function joinPagesForAnalysis(pages: readonly AnalysisPage[]): string { return pages.map((page) => `[PDF page ${page.pageNumber}]\n${page.text}`).join("\n\n"); }
+export interface AnalysisPage{pageNumber:number;text:string}export interface AnalysisConsent{version:"analysis-consent.v1";accepted:true}export interface AnalysisRequest{fileId:string;fileHash:string;fileName:string;pages:AnalysisPage[];requestId:string;consent:AnalysisConsent}export function hasAnalysisConsent(value:unknown):boolean{if(!value||typeof value!=="object")return false;const consent=(value as{consent?:unknown}).consent;return!!consent&&typeof consent==="object"&&(consent as any).version==="analysis-consent.v1"&&(consent as any).accepted===true}export function parseAnalysisRequest(value:unknown):AnalysisRequest|undefined{if(!value||typeof value!=="object")return;const input=value as Partial<AnalysisRequest>;if(typeof input.fileId!=="string"||!input.fileId.trim())return;if(typeof input.fileHash!=="string"||!/^[a-f0-9]{64}$/i.test(input.fileHash))return;if(typeof input.fileName!=="string"||!input.fileName.trim()||input.fileName.length>240)return;if(typeof input.requestId!=="string"||!/^[a-f0-9]{64}$/i.test(input.requestId))return;if(!hasAnalysisConsent(input))return;if(!Array.isArray(input.pages)||input.pages.length<1||input.pages.length>500)return;let total=0;for(const page of input.pages){if(!page||!Number.isInteger(page.pageNumber)||page.pageNumber<1||typeof page.text!=="string")return;total+=page.text.length;if(total>200_000)return}return{fileId:input.fileId,fileHash:input.fileHash,fileName:input.fileName,pages:input.pages,requestId:input.requestId,consent:{version:"analysis-consent.v1",accepted:true}}}export function joinPagesForAnalysis(pages:readonly AnalysisPage[]):string{return pages.map(page=>`[PDF page ${page.pageNumber}]\n${page.text}`).join("\n\n")}
