@@ -1,5 +1,5 @@
 const DB_NAME = "casefind-preview";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 function requestResult(request) {
   return new Promise((resolve, reject) => {
@@ -15,19 +15,23 @@ export function openDatabase() {
       const db = request.result;
       if (!db.objectStoreNames.contains("cases")) db.createObjectStore("cases", { keyPath: "id" });
       if (!db.objectStoreNames.contains("files")) {
-        const files = db.createObjectStore("files", { keyPath: "id" });
-        files.createIndex("caseId", "caseId", { unique: false });
-        files.createIndex("caseHash", ["caseId", "sha256"], { unique: true });
+        const store = db.createObjectStore("files", { keyPath: "id" });
+        store.createIndex("caseId", "caseId", { unique: false });
+        store.createIndex("caseHash", ["caseId", "sha256"], { unique: true });
       }
       if (!db.objectStoreNames.contains("facts")) {
-        const facts = db.createObjectStore("facts", { keyPath: "id" });
-        facts.createIndex("caseId", "caseId", { unique: false });
-        facts.createIndex("sourceFileId", "sourceFileId", { unique: false });
+        const store = db.createObjectStore("facts", { keyPath: "id" });
+        store.createIndex("caseId", "caseId", { unique: false });
+        store.createIndex("sourceFileId", "sourceFileId", { unique: false });
       }
       if (!db.objectStoreNames.contains("suggestions")) {
-        const suggestions = db.createObjectStore("suggestions", { keyPath: "id" });
-        suggestions.createIndex("caseId", "caseId", { unique: false });
-        suggestions.createIndex("fileId", "fileId", { unique: false });
+        const store = db.createObjectStore("suggestions", { keyPath: "id" });
+        store.createIndex("caseId", "caseId", { unique: false });
+        store.createIndex("fileId", "fileId", { unique: false });
+      }
+      if (!db.objectStoreNames.contains("processing")) {
+        const store = db.createObjectStore("processing", { keyPath: "fileId" });
+        store.createIndex("caseId", "caseId", { unique: false });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -46,32 +50,36 @@ async function transaction(storeName, mode, action) {
       tx.onabort = () => reject(tx.error || new Error("Transaction aborted"));
     });
     return result;
-  } finally {
-    db.close();
-  }
+  } finally { db.close(); }
 }
 
-export function saveCase(value) { return transaction("cases", "readwrite", (store) => requestResult(store.put(value))); }
-export function getCase(id) { return transaction("cases", "readonly", (store) => requestResult(store.get(id))); }
-export function saveFile(value) { return transaction("files", "readwrite", (store) => requestResult(store.add(value))); }
-export function deleteFile(id) { return transaction("files", "readwrite", (store) => requestResult(store.delete(id))); }
-export function getFilesForCase(caseId) { return transaction("files", "readonly", (store) => requestResult(store.index("caseId").getAll(caseId))); }
-export function saveFact(value) { return transaction("facts", "readwrite", (store) => requestResult(store.put(value))); }
-export function getFactsForCase(caseId) { return transaction("facts", "readonly", (store) => requestResult(store.index("caseId").getAll(caseId))); }
-export function deleteFact(id) { return transaction("facts", "readwrite", (store) => requestResult(store.delete(id))); }
-export function saveSuggestion(value) { return transaction("suggestions", "readwrite", (store) => requestResult(store.put(value))); }
-export function getSuggestionsForCase(caseId) { return transaction("suggestions", "readonly", (store) => requestResult(store.index("caseId").getAll(caseId))); }
-export function deleteSuggestion(id) { return transaction("suggestions", "readwrite", (store) => requestResult(store.delete(id))); }
+export const saveCase = (value) => transaction("cases", "readwrite", (store) => requestResult(store.put(value)));
+export const getCase = (id) => transaction("cases", "readonly", (store) => requestResult(store.get(id)));
+export const saveFile = (value) => transaction("files", "readwrite", (store) => requestResult(store.add(value)));
+export async function deleteFile(id) {
+  await deleteProcessing(id);
+  return transaction("files", "readwrite", (store) => requestResult(store.delete(id)));
+}
+export const getFilesForCase = (id) => transaction("files", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
+export const saveFact = (value) => transaction("facts", "readwrite", (store) => requestResult(store.put(value)));
+export const getFactsForCase = (id) => transaction("facts", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
+export const deleteFact = (id) => transaction("facts", "readwrite", (store) => requestResult(store.delete(id)));
+export const saveSuggestion = (value) => transaction("suggestions", "readwrite", (store) => requestResult(store.put(value)));
+export const getSuggestionsForCase = (id) => transaction("suggestions", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
+export const deleteSuggestion = (id) => transaction("suggestions", "readwrite", (store) => requestResult(store.delete(id)));
+export const saveProcessing = (value) => transaction("processing", "readwrite", (store) => requestResult(store.put(value)));
+export const getProcessingForCase = (id) => transaction("processing", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
+export const deleteProcessing = (id) => transaction("processing", "readwrite", (store) => requestResult(store.delete(id)));
 
 export async function deleteCase(caseId) {
-  const [files, facts, suggestions] = await Promise.all([
-    getFilesForCase(caseId),
-    getFactsForCase(caseId),
-    getSuggestionsForCase(caseId),
-  ]);
-  await transaction("files", "readwrite", async (store) => { for (const file of files) store.delete(file.id); });
-  await transaction("facts", "readwrite", async (store) => { for (const fact of facts) store.delete(fact.id); });
-  await transaction("suggestions", "readwrite", async (store) => { for (const suggestion of suggestions) store.delete(suggestion.id); });
+  const groups = await Promise.all([getFilesForCase(caseId), getFactsForCase(caseId), getSuggestionsForCase(caseId), getProcessingForCase(caseId)]);
+  const stores = ["files", "facts", "suggestions", "processing"];
+  for (let index = 0; index < stores.length; index += 1) {
+    const storeName = stores[index];
+    await transaction(storeName, "readwrite", async (store) => {
+      for (const value of groups[index]) store.delete(storeName === "processing" ? value.fileId : value.id);
+    });
+  }
   await transaction("cases", "readwrite", (store) => requestResult(store.delete(caseId)));
 }
 
@@ -79,5 +87,6 @@ export async function sha256(file) {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+export const createId = (prefix) => `${prefix}_${crypto.randomUUID()}`;
 
-export function createId(prefix) { return `${prefix}_${crypto.randomUUID()}`; }
+if (location.pathname.endsWith("/case.html")) import("./processing-ui.js");
