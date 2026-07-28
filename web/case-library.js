@@ -1,3 +1,4 @@
+import"./storage-health-ui.js";
 import{getAllCases,getFilesForCase,getFactsForCase,getSuggestionsForCase,deleteCase}from"./storage.js";
 import{summarizeLocalCase,sortLocalCases,filterLocalCases,formatLocalBytes,canConfirmCaseDeletion}from"./case-library-model.js";
 const grid=document.querySelector("#case-grid"),empty=document.querySelector("#library-empty"),noResults=document.querySelector("#library-no-results"),controls=document.querySelector("#library-controls"),search=document.querySelector("#case-search");
