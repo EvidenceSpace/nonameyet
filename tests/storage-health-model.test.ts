@@ -1,0 +1,4 @@
+import assert from"node:assert/strict";import test from"node:test";import{describeStorageHealth,formatStorageBytes}from"../web/storage-health-model.js";
+test("persistent storage is labeled without promising permanence",()=>{const result=describeStorageHealth({persisted:true,usage:50,quota:100});assert.equal(result.state,"protected");assert.match(result.detail,/Clearing site data/);assert.equal(result.ratio,.5)});
+test("browser-managed storage identifies pressure honestly",()=>{assert.equal(describeStorageHealth({persisted:false,usage:81,quota:100}).state,"pressure");assert.equal(describeStorageHealth({persisted:false,usage:20,quota:100}).state,"managed")});
+test("missing and malformed estimates fail safely",()=>{assert.equal(describeStorageHealth({supported:false}).state,"unavailable");assert.equal(describeStorageHealth({usage:-1,quota:0}).ratio,0);assert.equal(formatStorageBytes(NaN),"0 bytes");assert.equal(formatStorageBytes(1024),"1.0 KB")});
