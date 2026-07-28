@@ -1,0 +1,1 @@
+const actions=document.querySelector(".workspace-header-actions"),deleteButton=document.querySelector("#delete-case");if(actions&&deleteButton&&!actions.querySelector('a[href="cases.html"]')){const link=document.createElement("a");link.className="icon-button";link.href="cases.html";link.textContent="All cases";deleteButton.before(link)}
