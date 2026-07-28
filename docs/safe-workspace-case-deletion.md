@@ -11,4 +11,6 @@ Before enabling permanent deletion, the dialog shows:
 
 The user must type the exact case title and separately acknowledge the complete local impact. The existing atomic `deleteCase` operation removes the case and its files, facts, suggestions, and processing records in one IndexedDB transaction. An abort rolls the transaction back.
 
-The enhanced dialog replaces the original confirmation element after the workspace initializes, removing its earlier click handler. Successful deletion returns to the local case library. No remote service is contacted, and downloaded encrypted backups are not deleted.
+The static workspace fallback is fail-closed: its destructive button starts disabled and explains that safety checks are loading. The enhanced dialog replaces that disabled element only after it has loaded the local case, impact counts, and backup state. If the enhancement fails to load or initialize, permanent deletion remains unavailable rather than falling back to a weaker confirmation.
+
+Successful deletion returns to the local case library. No remote service is contacted, and downloaded encrypted backups are not deleted.
