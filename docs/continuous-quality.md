@@ -19,7 +19,11 @@ The job has read-only repository permissions, a 15-minute timeout, and concurren
 
 ## Dependency maintenance
 
-Dependabot checks npm and GitHub Actions dependencies monthly with low pull-request limits. Development-tooling minor and patch updates are grouped. Dependency updates still pass through the same pull-request checks and product-boundary review.
+Dependabot checks npm and GitHub Actions dependencies monthly with low pull-request limits. Development-tooling minor and patch updates are grouped, as are GitHub Actions minor and patch updates.
+
+Automated version-update pull requests exclude major releases. Major upgrades can change runtime requirements, generated assets, contracts, or security behavior and therefore require an intentionally prepared branch with migration notes and compatibility testing. This is especially important for PDF.js because the package version, local browser assets, synchronization script, and extraction tests must move together.
+
+Security alerts and deliberately initiated upgrades still receive normal review. No dependency pull request is automatically merged; each must pass the quality workflow and a product-boundary review.
 
 ## Current installation constraint
 
