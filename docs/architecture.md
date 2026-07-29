@@ -1,48 +1,88 @@
 # CaseFind architecture
 
-## System shape
+## Status and intent
 
-V1 is a responsive web application with a separate background processing worker.
+This document separates the architecture that exists today from infrastructure that may be justified after beta validation. Describing a future service does not mean it is deployed or that users have consented to move local case data into it.
 
-- Web client: case creation, uploads, verification, timeline, and export preview.
-- API: authorization, case state, signed uploads, retention, and export requests.
-- PostgreSQL: structured case metadata, facts, events, conflicts, and audit records.
-- Object storage: immutable originals and separately generated derivatives.
-- Worker: malware checks, metadata extraction, OCR, classification, AI extraction, and export generation.
+## Implemented local-first beta
 
-## Processing pipeline
+The current product is a responsive static web application. The browser is the primary case workspace and system of record.
 
-1. Accept an authorized upload and assign a file identifier.
-2. Store the immutable original and calculate SHA-256.
-3. Generate a safe preview and extract metadata.
-4. Run deterministic text extraction and duplicate detection.
-5. Classify the document and request narrowly scoped structured AI extraction.
-6. Validate the AI response against a versioned contract.
-7. Save candidate facts and events as `suggested`.
-8. Ask the user to confirm, correct, dismiss, or mark them uncertain.
-9. Run cross-source gap and conflict analysis only after enough files are processed.
+- **Browser application:** case creation, local file selection, processing, verification, timeline, consistency review, readiness, backup, restore, archive, deletion, and report generation.
+- **IndexedDB:** `casefind-preview`, schema version 5, with `cases`, `files`, `facts`, `suggestions`, `processing`, and `events` stores.
+- **Original records:** unchanged image and PDF bytes stored with the local file record and a SHA-256 digest.
+- **PDF text:** extracted locally with the pinned PDF.js 4.10.38 browser runtime.
+- **Image text:** local recognition is used only when the browser exposes the required capability; otherwise the product shows an explicit unavailable state.
+- **Reports:** self-contained HTML generated locally. Original file bytes are not embedded.
+- **Backups:** user-initiated encrypted `.casefind` bundles using AES-256-GCM and PBKDF2-HMAC-SHA-256.
 
-## Provenance rule
+There is no deployed PostgreSQL case store, object-storage evidence bucket, synchronization service, or background processing worker in the current local-first beta.
 
-A fact or event cannot become user-confirmed unless it has at least one source reference or is explicitly marked as manually entered by the user. A source reference identifies the file plus a page, text range, timestamp, or image region when available.
+## Implemented optional account and analysis runtime
 
-## Suggested service boundaries
+A same-origin server runtime exists for optional identity and AI analysis boundaries.
 
-- `identity`: accounts, sessions, and case memberships.
-- `cases`: parties, goals, checklist, and lifecycle.
-- `files`: uploads, originals, derivatives, retention, and deletion.
-- `extraction`: OCR and versioned AI contracts.
-- `evidence`: candidate facts, events, source references, and conflicts.
-- `exports`: preview, paid packets, manifests, and redacted copies.
+- OIDC account sessions are signed and protected against cross-site request forgery.
+- Sign-in does not authorize file upload or case synchronization.
+- `/api/analyze` accepts extracted text only after explicit analysis consent.
+- Original image and PDF bytes are not accepted by the AI analysis boundary.
+- Usage and idempotency records are encrypted, but the current storage design must be replaced with a multi-host transactional store before horizontal deployment.
+- Provider credentials and spending controls must be intentionally configured before real paid-model traffic.
 
-## Cost controls
+Cases, originals, facts, timeline events, checklist states, consistency decisions, and backups remain local by default even when an account exists.
 
-- Extract PDF text and OCR before using a vision model.
-- Hash and compare files before processing duplicates.
-- Send individual pages or image regions rather than entire cases when possible.
-- Use a cheaper model for classification and a stronger model only for ambiguous cross-file reasoning.
-- Cache extraction by file hash and contract version.
+## Local processing pipeline
 
-## Future collection modes
+1. Validate the selected MIME type, size, case limit, and duplicate hash.
+2. Store the unchanged original locally with its SHA-256 digest.
+3. Extract selectable PDF text locally or attempt explicitly supported local image recognition.
+4. Preserve cancellation, work limits, and explicit processing failures.
+5. If the user gives analysis consent, send extracted text—not original bytes—to the same-origin analysis endpoint.
+6. Validate provider output against the versioned structured contract and source-quote requirements.
+7. Store accepted output as a suggestion, never as a confirmed fact.
+8. Require the user to confirm, correct, dismiss, or mark each suggestion uncertain.
+9. Attach exact file ID, SHA-256, and available page, text, or image locator provenance.
+10. Run deterministic comparison only for supported verified values from separate matching sources.
 
-Possible later modes are WhatsApp exports, forwarded email, mobile share sheets, limited mailbox queries, and selected cloud folders. Full-device collection is not part of the planned V1 architecture.
+## Provenance invariants
+
+- AI output is provisional until an explicit user decision.
+- A verified fact or timeline event must resolve to an existing local source whose file ID and SHA-256 still match.
+- A changed or missing source fails closed in readiness and report generation.
+- Comparison decisions do not delete unselected values or determine which source is true.
+- Reports exclude unresolved AI suggestions and original file bytes.
+- Supported source differences and checklist gaps are disclosed rather than silently hidden.
+
+## Current capability limits
+
+- Scanned-PDF OCR is not yet universal.
+- HEIC originals can be retained, but preview and text-recognition support vary by browser.
+- Encrypted, malformed, corrupt, very large, and difficult photographic PDFs require broader fixture and device coverage.
+- Browser data can be lost if site data is cleared before the user creates an encrypted backup.
+- There is no automatic case synchronization, cloud recovery, paid plan, payment processing, or production support operation.
+
+## Future production services—not current behavior
+
+The following boundaries are candidates only after product validation and a separate consent design:
+
+- **Identity:** account recovery, memberships, and production session operations.
+- **Usage:** transactional multi-host quotas, billing events, and abuse controls.
+- **Optional synchronization:** encrypted case state with explicit per-case enablement, default off.
+- **Files:** optional encrypted object storage with explicit upload consent and retention controls.
+- **Workers:** bounded OCR, malware inspection, derivative generation, and paid export jobs.
+- **Exports:** paginated PDF, redacted copies, appendices, and source manifests.
+
+Future synchronization must not be inferred from sign-in. Moving local case content to any remote destination requires a separate, visible user action and documented retention and deletion behavior.
+
+## Postponed collection modes
+
+WhatsApp exports, forwarded email, mobile share sheets, selected cloud folders, and limited mailbox queries may be researched later. Direct mailbox, messaging, call-log, background, or full-device collection remains outside V1 and requires separate demand evidence, permission design, threat modeling, and trust safeguards.
+
+## Cost and scale rules
+
+- Prefer deterministic local extraction before any AI call.
+- Hash before processing duplicates.
+- Send the minimum extracted text required for the requested analysis.
+- Cache only where privacy and contract-version boundaries are explicit.
+- Select models from measured accuracy, provenance quality, latency, and cost—not marketing claims.
+- Do not add distributed infrastructure before the local workflow and willingness to pay are validated.
