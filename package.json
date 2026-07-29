@@ -13,12 +13,14 @@
     "serve": "npm run sync:pdfjs && tsx server/runtime.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
+    "test:browser": "playwright test",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
     "pdfjs-dist": "4.10.38"
   },
   "devDependencies": {
+    "playwright": "1.54.1",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0"
   }
