@@ -16,7 +16,7 @@
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
-    "pdfjs-dist": "4.10.38"
+    "pdfjs-dist": "6.2.108"
   },
   "devDependencies": {
     "tsx": "^4.20.0",
