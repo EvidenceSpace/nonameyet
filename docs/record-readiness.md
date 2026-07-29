@@ -4,13 +4,15 @@ Record readiness is a transparent local organization score from 0 to 100. It is 
 
 The score has four visible components:
 
-- Collection checklist: 30 points across six record categories.
+- Checklist review: 30 points across six record categories. `Found` and `Not applicable` count as reviewed; `Missing` and `Needs review` remain visible gaps.
 - Original records: 25 points, reaching full credit at three records.
 - Verified facts: 30 points, reaching full credit at three confirmed or corrected facts with exact matching source provenance.
 - Review completion: 15 points based on resolved suggestions and reviewed potential source differences. It contributes zero before any original record exists.
+
+The checklist detail discloses separate counts for found, missing, needs-review, and not-applicable categories. Checklist states are user-controlled organization labels; they do not establish that evidence is authentic, legally required, or sufficient.
 
 Suggested and uncertain facts never count as verified. Confirmed facts with missing records, mismatched file IDs, or mismatched source hashes receive no points and appear as a repair step.
 
 The consistency review compares only supported, verified values from separate matching sources. An unresolved comparison reduces the review-completion component; a current user decision restores that portion. This remains an organization measure, not a conclusion that either source is wrong.
 
-The browser recalculates from current local state when records, checklist selections, facts, suggestions, or consistency decisions change.
+The browser recalculates from current local state when records, checklist states, facts, suggestions, or consistency decisions change.

@@ -1,1 +1,31 @@
-import{getCase,getFilesForCase,getFactsForCase,getSuggestionsForCase}from"./storage.js";import{calculateRecordReadiness}from"./readiness-model.js";const caseId=new URLSearchParams(location.search).get("id"),metrics=document.querySelector(".metric-grid");if(caseId&&metrics){const section=document.createElement("section");section.className="readiness-panel";section.id="record-readiness";metrics.after(section);let generation=0;function escape(value=""){const node=document.createElement("span");node.textContent=value;return node.innerHTML}async function render(){const current=++generation,[record,files,facts,suggestions]=await Promise.all([getCase(caseId),getFilesForCase(caseId),getFactsForCase(caseId),getSuggestionsForCase(caseId)]);if(current!==generation||!record)return;const result=calculateRecordReadiness({record,files,facts,suggestions}),steps=result.nextSteps.length?`<ol>${result.nextSteps.map(step=>`<li>${escape(step)}</li>`).join("")}</ol>`:'<p class="readiness-clear">No organization gaps are currently detected.</p>';section.innerHTML=`<div class="readiness-main"><div class="readiness-score" style="--readiness:${result.score}%"><div><strong>${result.score}</strong><span>/100</span></div></div><div><span class="section-label">RECORD READINESS</span><h3>${result.level}</h3><p>Measures how completely this case is organized and reviewed.</p></div></div><div class="readiness-components">${result.components.map(item=>`<div><div><strong>${escape(item.label)}</strong><span>${item.score}/${item.maximum}</span></div><progress max="${item.maximum}" value="${item.score}"></progress><small>${escape(item.detail)}</small></div>`).join("")}</div><div class="readiness-next"><div><strong>Useful next steps</strong>${steps}</div><aside><b>Organization score only</b><p>This does not measure legal strength, authenticity, credibility, fault, or the likelihood of any outcome.</p></aside></div>`}let timer;const observer=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(render,20)});["#file-count","#nav-review-count","#nav-fact-count","#nav-conflict-count","#check-progress"].forEach(selector=>{const node=document.querySelector(selector);if(node)observer.observe(node,{childList:true,characterData:true,subtree:true})});document.addEventListener("casefind:consistency-updated",render);render()}
+import "./checklist-ui.js";
+import { getCase, getFilesForCase, getFactsForCase, getSuggestionsForCase } from "./storage.js";
+import { calculateRecordReadiness } from "./readiness-model.js";
+
+const caseId = new URLSearchParams(location.search).get("id");
+const metrics = document.querySelector(".metric-grid");
+if (caseId && metrics) {
+  const section = document.createElement("section");
+  section.className = "readiness-panel";
+  section.id = "record-readiness";
+  metrics.after(section);
+  let generation = 0;
+  function escape(value = "") { const node = document.createElement("span"); node.textContent = value; return node.innerHTML; }
+  async function render() {
+    const current = ++generation;
+    const [record, files, facts, suggestions] = await Promise.all([getCase(caseId), getFilesForCase(caseId), getFactsForCase(caseId), getSuggestionsForCase(caseId)]);
+    if (current !== generation || !record) return;
+    const result = calculateRecordReadiness({ record, files, facts, suggestions });
+    const steps = result.nextSteps.length ? `<ol>${result.nextSteps.map((step) => `<li>${escape(step)}</li>`).join("")}</ol>` : '<p class="readiness-clear">No organization gaps are currently detected.</p>';
+    section.innerHTML = `<div class="readiness-main"><div class="readiness-score" style="--readiness:${result.score}%"><div><strong>${result.score}</strong><span>/100</span></div></div><div><span class="section-label">RECORD READINESS</span><h3>${result.level}</h3><p>Measures how completely this case is organized and reviewed.</p></div></div><div class="readiness-components">${result.components.map((item) => `<div><div><strong>${escape(item.label)}</strong><span>${item.score}/${item.maximum}</span></div><progress max="${item.maximum}" value="${item.score}"></progress><small>${escape(item.detail)}</small></div>`).join("")}</div><div class="readiness-next"><div><strong>Useful next steps</strong>${steps}</div><aside><b>Organization score only</b><p>This does not measure legal strength, authenticity, credibility, fault, or the likelihood of any outcome.</p></aside></div>`;
+  }
+  let timer;
+  const observer = new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(render, 20); });
+  ["#file-count", "#nav-review-count", "#nav-fact-count", "#nav-conflict-count", "#check-progress"].forEach((selector) => {
+    const node = document.querySelector(selector);
+    if (node) observer.observe(node, { childList: true, characterData: true, subtree: true });
+  });
+  document.addEventListener("casefind:consistency-updated", render);
+  document.addEventListener("casefind:checklist-updated", render);
+  render();
+}
