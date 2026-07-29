@@ -11,7 +11,7 @@ A freelancer or small service provider with unpaid work whose records are distri
 ## V1 user journey
 
 1. Create an unpaid-work case and describe the desired outcome.
-2. Receive a tailored collection checklist.
+2. Receive the standard unpaid-work collection checklist.
 3. Upload screenshots, images, and PDFs.
 4. Extract candidate dates, amounts, participants, facts, and events.
 5. Confirm, correct, dismiss, or mark each important item uncertain.
