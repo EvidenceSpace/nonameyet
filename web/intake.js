@@ -8,6 +8,7 @@ const creationError = document.querySelector("#creation-error");
 const back = document.querySelector("#back-button");
 const next = document.querySelector("#continue-button");
 const spacer = document.querySelector("#action-spacer");
+const localStorageAck = document.querySelector("#local-storage-ack");
 let step = 1;
 let creating = false;
 
@@ -62,6 +63,11 @@ form.addEventListener("submit", async (event) => {
   if (creating) return;
   if (step === 1 && !validFirstStep()) return;
   if (step < 3) { step += 1; render(); return; }
+  if (!localStorageAck.checked) {
+    creationError.textContent = "Confirm that you understand this draft is stored only in this browser profile before creating it.";
+    localStorageAck.focus();
+    return;
+  }
   const result = validateCaseDetails(values());
   if (!result.ok) {
     step = 1;
@@ -78,7 +84,7 @@ form.addEventListener("submit", async (event) => {
   const caseId = createId("case");
   const now = new Date().toISOString();
   try {
-    await saveCase({ id: caseId, type: "unpaid_freelance_work", ...result.value, checklist: [], status: "collecting", createdAt: now, updatedAt: now });
+    await saveCase({ id: caseId, type: "unpaid_freelance_work", ...result.value, checklist: [], status: "collecting", localStorageAcknowledgedAt: now, createdAt: now, updatedAt: now });
     form.classList.add("hidden");
     document.querySelector(".intake-aside").classList.add("hidden");
     const created = document.querySelector("#created-state");
