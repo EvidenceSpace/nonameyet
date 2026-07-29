@@ -16,9 +16,9 @@ permissions:
 
 jobs:
   quality:
-    name: Typecheck, tests, and vendored assets
+    name: Typecheck, tests, assets, and browser lifecycle
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,3 +41,9 @@ jobs:
 
       - name: Verify generated PDF.js assets are committed
         run: git diff --exit-code -- web/vendor/pdfjs
+
+      - name: Install pinned Chromium for lifecycle testing
+        run: npx playwright install --with-deps chromium
+
+      - name: Run private-case browser lifecycle
+        run: npm run test:browser
