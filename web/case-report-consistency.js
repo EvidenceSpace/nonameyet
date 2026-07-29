@@ -6,16 +6,22 @@ import {
   buildConsistencyAppendix,
   renderConsistencyAppendixHtml,
 } from "./report-consistency-model.js";
+import {
+  buildChecklistAppendix,
+  renderChecklistAppendixHtml,
+} from "./report-checklist-model.js";
 
 export function buildCaseReport(input) {
   const report = buildBaseReport(input);
   const consistencyReview = buildConsistencyAppendix(input);
+  const checklistReview = buildChecklistAppendix(input.record, report.settings.includeChecklist);
   return {
     ...report,
     settings: {
       ...report.settings,
       includeConsistencyNotes: input.options?.includeConsistencyNotes === true,
     },
+    checklistReview,
     consistencyReview,
     unresolvedConsistencyCount: consistencyReview.unresolvedCount,
     resolvedConsistencyCount: consistencyReview.resolvedCount,
@@ -23,14 +29,18 @@ export function buildCaseReport(input) {
 }
 
 export function renderCaseReportHtml(report) {
-  const html = renderBaseReportHtml(report);
-  const appendix = renderConsistencyAppendixHtml(report.consistencyReview || {
+  const html = renderBaseReportHtml({
+    ...report,
+    settings: { ...report.settings, includeChecklist: false },
+  });
+  const checklist = renderChecklistAppendixHtml(report.checklistReview);
+  const consistency = renderConsistencyAppendixHtml(report.consistencyReview || {
     totalCount: 0,
     unresolvedCount: 0,
     resolvedCount: 0,
     items: [],
   });
-  return html.replace("<h2>Source ledger</h2>", `${appendix}<h2>Source ledger</h2>`);
+  return html.replace("<h2>Source ledger</h2>", `${checklist}${consistency}<h2>Source ledger</h2>`);
 }
 
 export function downloadCaseReport(report, documentRef = document, urlRef = URL) {
