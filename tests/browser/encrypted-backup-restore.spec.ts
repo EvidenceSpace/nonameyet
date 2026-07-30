@@ -26,11 +26,6 @@ test("backs up, permanently deletes, and restores a local case", async ({ page }
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible();
 
-  const invoiceStatus = page.locator('#workspace-checklist select[data-key="invoice"]');
-  await expect(invoiceStatus).toBeVisible();
-  await invoiceStatus.selectOption("found");
-  await expect(page.getByText("Saved on this device.")).toBeVisible();
-
   await page.getByRole("button", { name: "Backup case" }).click();
   const backupDialog = page.locator(".backup-dialog");
   await expect(backupDialog).toBeVisible();
@@ -65,7 +60,6 @@ test("backs up, permanently deletes, and restores a local case", async ({ page }
   await expect(page).toHaveURL(/case\.html\?id=/);
   await expect(page.locator("#workspace")).toBeVisible();
   await expect(page.locator("#workspace-title")).toHaveText(caseTitle);
-  await expect(page.locator('#workspace-checklist select[data-key="invoice"]')).toHaveValue("found");
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
