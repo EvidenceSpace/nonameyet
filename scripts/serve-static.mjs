@@ -40,7 +40,7 @@ const server = createServer(async (request, response) => {
 
   let pathname;
   try {
-    pathname = decodeURIComponent(new URL(request.url || "/", `http://${host}`).pathname);
+    pathname = decodeURIComponent(new URL(request.url || "/", "http://" + host).pathname);
   } catch {
     respond(response, 400, "Bad request");
     return;
@@ -78,7 +78,7 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`CaseFind static server listening at http://${host}:${port}`);
+  console.log("CaseFind static server listening at http://" + host + ":" + port);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
