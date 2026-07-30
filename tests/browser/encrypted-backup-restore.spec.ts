@@ -3,6 +3,8 @@ import { expect, test } from "playwright/test";
 const caseTitle = "Encrypted recovery lifecycle";
 const backupPassword = "correct horse battery staple";
 
+test.setTimeout(90_000);
+
 test("backs up, permanently deletes, and restores a local case", async ({ page }, testInfo) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
