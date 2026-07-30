@@ -127,6 +127,9 @@ export function createExtractionBenchmarkReport(args: {
     };
   });
   const evaluations = fixtures.map((fixture) => fixture.evaluation);
+  const totalInputTokens = optionalSum(args.outputs, "inputTokens");
+  const totalOutputTokens = optionalSum(args.outputs, "outputTokens");
+  const totalCostUsd = optionalSum(args.outputs, "costUsd");
 
   return {
     reportVersion: EXTRACTION_BENCHMARK_REPORT_VERSION,
@@ -136,9 +139,9 @@ export function createExtractionBenchmarkReport(args: {
     summary: summarizeExtractionEvaluations(evaluations),
     totals: {
       latencyMs: args.outputs.reduce((total, output) => total + output.latencyMs, 0),
-      ...(optionalSum(args.outputs, "inputTokens") === undefined ? {} : { inputTokens: optionalSum(args.outputs, "inputTokens") }),
-      ...(optionalSum(args.outputs, "outputTokens") === undefined ? {} : { outputTokens: optionalSum(args.outputs, "outputTokens") }),
-      ...(optionalSum(args.outputs, "costUsd") === undefined ? {} : { costUsd: optionalSum(args.outputs, "costUsd") }),
+      ...(totalInputTokens === undefined ? {} : { inputTokens: totalInputTokens }),
+      ...(totalOutputTokens === undefined ? {} : { outputTokens: totalOutputTokens }),
+      ...(totalCostUsd === undefined ? {} : { costUsd: totalCostUsd }),
     },
     fixtures,
   };
