@@ -15,6 +15,7 @@
     "test": "tsx --test tests/**/*.test.ts",
     "test:browser": "playwright test",
     "benchmark:extraction": "tsx scripts/build-extraction-benchmark.ts",
+    "benchmark:compare": "tsx scripts/compare-extraction-benchmarks.ts",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
