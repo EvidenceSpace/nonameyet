@@ -1,9 +1,34 @@
-import {
-  BenchmarkValidationError,
-  type ExtractionBenchmarkReport,
-} from "./benchmark.js";
+import { BenchmarkValidationError } from "./benchmark.js";
 
 export const EXTRACTION_BENCHMARK_COMPARISON_VERSION = "extraction-benchmark-comparison.v1";
+
+export interface ComparableExtractionBenchmarkReport {
+  reportVersion: string;
+  metadata: {
+    provider: string;
+    model: string;
+    modelVersion: string;
+    corpusVersion: string;
+    promptVersion: string;
+    contractVersion: "file-extraction.v1";
+  };
+  qualityGatePassed: boolean;
+  summary: {
+    precision: number;
+    recall: number;
+    falsePositives: number;
+    passedFixtures: number;
+    totalFixtures: number;
+  };
+  totals: {
+    latencyMs: number;
+    costUsd?: number;
+  };
+  fixtures: ReadonlyArray<{
+    fixtureId: string;
+    evaluation: { forbiddenValuesFound: ReadonlyArray<string> };
+  }>;
+}
 
 export interface ModelComparisonThresholds {
   minimumPrecision: number;
@@ -62,11 +87,11 @@ function validateCount(value: number, field: string): void {
   }
 }
 
-function modelKey(report: ExtractionBenchmarkReport): string {
+function modelKey(report: ComparableExtractionBenchmarkReport): string {
   return `${report.metadata.provider}:${report.metadata.model}:${report.metadata.modelVersion}`;
 }
 
-function countForbiddenValues(report: ExtractionBenchmarkReport): number {
+function countForbiddenValues(report: ComparableExtractionBenchmarkReport): number {
   return report.fixtures.reduce(
     (total, fixture) => total + fixture.evaluation.forbiddenValuesFound.length,
     0,
@@ -86,12 +111,9 @@ function compareEligibleCandidates(left: ModelComparisonCandidate, right: ModelC
   return left.modelKey.localeCompare(right.modelKey);
 }
 
-/**
- * Compares compatible benchmark reports without changing runtime model config.
- * Eligibility is evaluated before cost and latency are used for ordering.
- */
+/** Compares compatible reports without changing runtime model configuration. */
 export function compareExtractionBenchmarkReports(args: {
-  reports: ReadonlyArray<ExtractionBenchmarkReport>;
+  reports: ReadonlyArray<ComparableExtractionBenchmarkReport>;
   thresholds?: ModelComparisonThresholds;
 }): ExtractionBenchmarkComparison {
   if (args.reports.length < 2) throw new BenchmarkValidationError("At least two benchmark reports are required.");
@@ -104,18 +126,10 @@ export function compareExtractionBenchmarkReports(args: {
   const baseline = args.reports[0]!;
   const seenModels = new Set<string>();
   const candidates = args.reports.map((report): ModelComparisonCandidate => {
-    if (report.reportVersion !== baseline.reportVersion) {
-      throw new BenchmarkValidationError("Benchmark report versions do not match.");
-    }
-    if (report.metadata.corpusVersion !== baseline.metadata.corpusVersion) {
-      throw new BenchmarkValidationError("Benchmark corpus versions do not match.");
-    }
-    if (report.metadata.promptVersion !== baseline.metadata.promptVersion) {
-      throw new BenchmarkValidationError("Benchmark prompt versions do not match.");
-    }
-    if (report.metadata.contractVersion !== baseline.metadata.contractVersion) {
-      throw new BenchmarkValidationError("Benchmark contract versions do not match.");
-    }
+    if (report.reportVersion !== baseline.reportVersion) throw new BenchmarkValidationError("Benchmark report versions do not match.");
+    if (report.metadata.corpusVersion !== baseline.metadata.corpusVersion) throw new BenchmarkValidationError("Benchmark corpus versions do not match.");
+    if (report.metadata.promptVersion !== baseline.metadata.promptVersion) throw new BenchmarkValidationError("Benchmark prompt versions do not match.");
+    if (report.metadata.contractVersion !== baseline.metadata.contractVersion) throw new BenchmarkValidationError("Benchmark contract versions do not match.");
 
     const key = modelKey(report);
     if (seenModels.has(key)) throw new BenchmarkValidationError(`Duplicate model report: ${key}.`);
@@ -156,9 +170,6 @@ export function compareExtractionBenchmarkReports(args: {
     },
     thresholds,
     candidates,
-    eligibleRanking: candidates
-      .filter((candidate) => candidate.eligible)
-      .sort(compareEligibleCandidates)
-      .map((candidate) => candidate.modelKey),
+    eligibleRanking: candidates.filter((candidate) => candidate.eligible).sort(compareEligibleCandidates).map((candidate) => candidate.modelKey),
   };
 }
