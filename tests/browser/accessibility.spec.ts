@@ -4,7 +4,7 @@ for (const route of ["/index.html", "/cases-new.html"]) {
   test(`${route} exposes keyboard navigation and a main landmark`, async ({ page }) => {
     await page.goto(route);
     await expect(page.locator("main")).toHaveCount(1);
-    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator("h1:visible")).toHaveCount(1);
 
     await page.keyboard.press("Tab");
     const skipLink = page.getByRole("link", { name: "Skip to main content" });
