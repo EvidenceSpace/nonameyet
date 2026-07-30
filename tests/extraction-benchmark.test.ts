@@ -1,17 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EXTENDED_SYNTHETIC_EXTRACTION_CASES } from "../evals/extended-synthetic-extraction-cases.js";
-import { SYNTHETIC_EXTRACTION_CASES } from "../evals/synthetic-extraction-cases.js";
+import {
+  EXTRACTION_EVALUATION_CORPUS,
+  EXTRACTION_EVALUATION_CORPUS_VERSION,
+} from "../evals/corpus.js";
 import { BenchmarkValidationError, createExtractionBenchmarkReport } from "../src/ai/benchmark.js";
 import { buildReferenceExtraction } from "../src/ai/evaluation.js";
 
-const fixtures = [...SYNTHETIC_EXTRACTION_CASES, ...EXTENDED_SYNTHETIC_EXTRACTION_CASES];
+const fixtures = EXTRACTION_EVALUATION_CORPUS.fixtures;
 const metadata = {
   provider: "offline-reference",
   model: "fixture-builder",
   modelVersion: "1",
   runAt: "2026-07-30T00:00:00.000Z",
-  corpusVersion: "synthetic-2026-07-30",
   promptVersion: "analysis-service.v1",
   contractVersion: "file-extraction.v1" as const,
 };
@@ -27,10 +28,11 @@ function referenceOutputs() {
   }));
 }
 
-test("builds a complete reproducible report from captured outputs", () => {
+test("builds a complete reproducible report from the canonical corpus", () => {
   const outputs = referenceOutputs();
-  const report = createExtractionBenchmarkReport({ metadata, fixtures, outputs });
+  const report = createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs });
   assert.equal(report.reportVersion, "extraction-benchmark.v1");
+  assert.equal(report.metadata.corpusVersion, EXTRACTION_EVALUATION_CORPUS_VERSION);
   assert.equal(report.fixtureCount, fixtures.length);
   assert.equal(report.qualityGatePassed, true);
   assert.equal(report.summary.precision, 1);
@@ -40,9 +42,19 @@ test("builds a complete reproducible report from captured outputs", () => {
   assert.equal(report.totals.costUsd, 0);
 });
 
+test("corpus identity cannot be forged through run metadata", () => {
+  const forged = { ...metadata, corpusVersion: "cherry-picked" };
+  const report = createExtractionBenchmarkReport({
+    metadata: forged,
+    corpus: EXTRACTION_EVALUATION_CORPUS,
+    outputs: referenceOutputs(),
+  });
+  assert.equal(report.metadata.corpusVersion, EXTRACTION_EVALUATION_CORPUS_VERSION);
+});
+
 test("rejects incomplete runs so weak fixtures cannot be omitted", () => {
   assert.throws(
-    () => createExtractionBenchmarkReport({ metadata, fixtures, outputs: referenceOutputs().slice(1) }),
+    () => createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs: referenceOutputs().slice(1) }),
     (error) => error instanceof BenchmarkValidationError && /Missing fixture outputs/.test(error.message),
   );
 });
@@ -50,15 +62,15 @@ test("rejects incomplete runs so weak fixtures cannot be omitted", () => {
 test("rejects duplicate, unexpected, and invalid metric records", () => {
   const outputs = referenceOutputs();
   assert.throws(
-    () => createExtractionBenchmarkReport({ metadata, fixtures, outputs: [...outputs, outputs[0]!] }),
+    () => createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs: [...outputs, outputs[0]!] }),
     /Duplicate fixture output/,
   );
   assert.throws(
-    () => createExtractionBenchmarkReport({ metadata, fixtures, outputs: [...outputs, { ...outputs[0]!, fixtureId: "invented" }] }),
+    () => createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs: [...outputs, { ...outputs[0]!, fixtureId: "invented" }] }),
     /Unexpected fixture output/,
   );
   assert.throws(
-    () => createExtractionBenchmarkReport({ metadata, fixtures, outputs: outputs.map((output, index) => index === 0 ? { ...output, latencyMs: -1 } : output) }),
+    () => createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs: outputs.map((output, index) => index === 0 ? { ...output, latencyMs: -1 } : output) }),
     /latencyMs must be a non-negative number/,
   );
 });
@@ -71,7 +83,7 @@ test("preserves semantic failures instead of hiding grounded false conclusions",
     ...buildReferenceExtraction(target),
     candidates: [{ kind: "fact", label: "Payment status", value: "Paid", confidence: 0.99, locator: { kind: "whole_file", quote: "Bank statement shows no matching payment" } }],
   };
-  const report = createExtractionBenchmarkReport({ metadata, fixtures, outputs });
+  const report = createExtractionBenchmarkReport({ metadata, corpus: EXTRACTION_EVALUATION_CORPUS, outputs });
   const result = report.fixtures.find((fixture) => fixture.fixtureId === target.id)!.evaluation;
   assert.equal(report.qualityGatePassed, false);
   assert.equal(result.falsePositives, 1);
