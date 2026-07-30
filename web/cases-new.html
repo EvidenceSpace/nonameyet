@@ -9,8 +9,9 @@
   <script type="module" src="restore-ui.js"></script>
 </head>
 <body class="intake-page">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="intake-header shell"><a href="index.html" class="brand" aria-label="CaseFind home"><span class="brand-mark">C</span><span>CaseFind</span></a><span class="secure-note">⌁ Private draft</span></header>
-  <main class="intake-shell shell">
+  <main class="intake-shell shell" id="main-content" tabindex="-1">
     <aside class="intake-aside">
       <span class="eyebrow"><span></span> New payment case</span><h1>Let’s understand what happened.</h1><p>Start with the situation in your own words. You will choose every record that gets added later.</p>
       <ol class="intake-steps">
@@ -25,7 +26,7 @@
       <section class="form-step active" data-step="1">
         <div class="form-heading"><h2>Tell us about the unpaid work</h2><p>Use a recognizable title and describe the situation. You can correct everything later.</p></div>
         <label>Case title<input id="case-title" name="title" placeholder="e.g. ABC Studio website payment" autocomplete="off" minlength="3" maxlength="120" required /><small>A private name only you can see.</small></label>
-        <div class="field-grid"><label>Client or company<input id="client" name="client" placeholder="ABC Studio" minlength="2" maxlength="120" required /></label><label>Amount still owed<div class="amount-input"><span>₹</span><input id="amount" name="amount" inputmode="decimal" maxlength="60" placeholder="20,000" /></div></label></div>
+        <div class="field-grid"><label>Client or company<input id="client" name="client" placeholder="ABC Studio" minlength="2" maxlength="120" required /></label><label>Amount still owed<div class="amount-input"><span aria-hidden="true">₹</span><input id="amount" name="amount" inputmode="decimal" maxlength="60" placeholder="20,000" /></div></label></div>
         <label>What happened?<textarea id="summary" name="summary" placeholder="Describe the work you agreed to, what you delivered, what was paid, and what happened after you requested the remaining payment." rows="6" minlength="30" maxlength="4000" required></textarea><small id="summary-count" class="hint">0/30 minimum · 4,000 maximum</small></label>
         <p class="form-error" id="form-error" role="alert"></p>
       </section>
