@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "test:browser": "playwright test",
+    "benchmark:extraction": "tsx scripts/build-extraction-benchmark.ts",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {

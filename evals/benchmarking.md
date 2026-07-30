@@ -17,6 +17,16 @@ Each report records:
 
 Reference fixture outputs test the machinery only. They are not model measurements and must never be presented as provider accuracy.
 
+## Build a report offline
+
+Prepare a JSON envelope with `metadata` and one captured `outputs` record for every canonical fixture, then run:
+
+```bash
+npm run benchmark:extraction -- captured-output.json benchmark-report.json
+```
+
+The command accepts at most 10 MiB of JSON and 1,000 captured records, validates the untrusted envelope, enforces canonical coverage, and writes the report through a temporary file. Input and output paths must differ. The generated report contains evaluation results and metering, not the captured raw responses or fixture source text.
+
 ## Controlled provider-run procedure
 
 1. Select and record the exact model version. Do not use a floating alias when a pinned version exists.
