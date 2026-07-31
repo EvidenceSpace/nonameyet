@@ -4,10 +4,11 @@ import { expect, test } from "playwright/test";
 const caseTitle = "Encrypted recovery lifecycle";
 const backupPassword = "correct horse battery staple";
 const safeRecoveryError = "The password is incorrect, or the backup was changed or damaged.";
+const collisionError = "This case already exists on this device. Nothing was overwritten.";
 
-test.setTimeout(90_000);
+test.setTimeout(120_000);
 
-test("backs up, rejects unsafe recovery attempts, deletes, and restores a local case", async ({ page }, testInfo) => {
+test("backs up, rejects collisions and unsafe recovery attempts, deletes, and restores", async ({ page }, testInfo) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -27,6 +28,7 @@ test("backs up, rejects unsafe recovery attempts, deletes, and restores a local 
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible();
+  const workspaceUrl = page.url();
 
   await page.locator(".backup-trigger").click();
   const backupDialog = page.locator(".backup-dialog");
@@ -50,6 +52,18 @@ test("backs up, rejects unsafe recovery attempts, deletes, and restores a local 
   const tamperedPath = testInfo.outputPath("tampered-recovery.casefind");
   await writeFile(tamperedPath, JSON.stringify(envelope), { mode: 0o600 });
 
+  await page.goto("/cases-new.html#restore");
+  const collisionDialog = page.locator(".restore-dialog");
+  await expect(collisionDialog).toBeVisible();
+  await collisionDialog.locator("#restore-file").setInputFiles(backupPath);
+  await collisionDialog.locator("#restore-password").fill(backupPassword);
+  await collisionDialog.locator("#restore-submit").click();
+  await expect(collisionDialog.locator("#restore-error")).toHaveText(collisionError);
+  await expect(collisionDialog.locator("#restore-password")).toHaveValue("");
+  await expect(page).toHaveURL(/cases-new\.html#restore$/);
+
+  await page.goto(workspaceUrl);
+  await expect(page.locator("#workspace-title")).toHaveText(caseTitle);
   await page.locator("#delete-case").click();
   const deleteDialog = page.locator("#delete-dialog");
   await expect(deleteDialog).toHaveAttribute("data-enhanced", "true");
