@@ -11,6 +11,12 @@ CaseFind’s downloadable report remains a self-contained HTML record. The repor
 - Source-ledger headers repeat across printed pages.
 - Screen-only instructions are removed from printed output.
 
+## Browser quality gate
+
+The Chromium lifecycle creates a synthetic local case, opens the real export preflight, previews the self-contained report in a new tab, switches to print media, and renders an A4 PDF buffer. It requires the report to remain script-free, retain its restrictive content security policy, avoid external requests, hide screen-only guidance from print, preserve the entered amount without adding a currency, and produce a non-empty PDF document.
+
+This gate validates the export path and browser rendering behavior. It does not claim that every operating system, browser version, printer driver, font, or user-selected print setting will paginate identically.
+
 ## Important limits
 
 Browser PDF engines may paginate fonts and long content differently. The user must review every generated page before sharing. CaseFind does not claim a downloaded PDF is authenticated, digitally signed, court-ready, or an unaltered original.
