@@ -107,6 +107,14 @@ if (caseId && reportButton) {
     void loadSummary(sequence);
   };
 
+  function openBackupIntent() {
+    if (location.hash !== "#backup") return;
+    history.replaceState(null, "", `${location.pathname}${location.search}`);
+    button.click();
+  }
+  window.addEventListener("hashchange", openBackupIntent);
+  queueMicrotask(openBackupIntent);
+
   form.onsubmit = async (event) => {
     event.preventDefault();
     validate();
