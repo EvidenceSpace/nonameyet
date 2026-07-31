@@ -2,7 +2,7 @@ import { getCase, getFilesForCase, getFactsForCase, getSuggestionsForCase, getEv
 import { buildCaseReport, downloadCaseReport, renderCaseReportHtml } from "./case-report-consistency.js";
 
 const caseId = new URLSearchParams(location.search).get("id");
-const button = document.querySelector(".workspace-topline .button-secondary");
+const button = document.querySelector(".workspace-topline > .button-secondary:not(.backup-trigger)");
 let data;
 
 const dialog = document.createElement("dialog");

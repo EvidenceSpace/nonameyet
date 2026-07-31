@@ -14,7 +14,7 @@ import {
 } from "./case-backup.js";
 
 const caseId = new URLSearchParams(location.search).get("id");
-const reportButton = document.querySelector(".workspace-topline .button-secondary");
+const reportButton = document.querySelector(".workspace-topline > .button-secondary:not(.backup-trigger)");
 
 if (caseId && reportButton) {
   const button = document.createElement("button");
