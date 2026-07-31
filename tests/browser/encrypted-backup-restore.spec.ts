@@ -29,6 +29,8 @@ test("backs up, permanently deletes, and restores a local case", async ({ page }
   await page.locator(".backup-trigger").click();
   const backupDialog = page.locator(".backup-dialog");
   await expect(backupDialog).toBeVisible();
+  await expect(backupDialog.locator("#backup-summary")).not.toContainText("Loading local case details");
+  await expect(backupDialog.locator("#backup-error")).toHaveText("");
   await backupDialog.locator("#backup-password").fill(backupPassword);
   await backupDialog.locator("#backup-confirm").fill(backupPassword);
   await backupDialog.locator("#backup-ack").check();
