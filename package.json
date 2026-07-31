@@ -9,7 +9,7 @@
   },
   "scripts": {
     "sync:pdfjs": "node scripts/sync-pdfjs.mjs",
-    "preview": "npm run sync:pdfjs && python3 -m http.server 4173 -d web",
+    "preview": "npm run sync:pdfjs && node scripts/serve-static.mjs",
     "serve": "npm run sync:pdfjs && tsx server/runtime.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
