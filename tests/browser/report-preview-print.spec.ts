@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { inspectPdfStructure } from "../../src/report/pdf-inspection.js";
 
 const caseTitle = "Print lifecycle record";
 
@@ -54,8 +55,17 @@ test("previews and renders an inert local A4 report", async ({ page, context }) 
   await preview.emulateMedia({ media: "print" });
   await expect(preview.locator(".print-guidance")).toBeHidden();
   const pdf = await preview.pdf({ format: "A4", preferCSSPageSize: true, printBackground: true });
-  expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
-  expect(pdf.length).toBeGreaterThan(5_000);
+  const structure = inspectPdfStructure(pdf);
+  expect(structure.hasHeader).toBe(true);
+  expect(structure.hasEofMarker).toBe(true);
+  expect(structure.hasStartXref).toBe(true);
+  expect(structure.byteLength).toBeGreaterThan(5_000);
+  expect(structure.pageCount).toBeGreaterThanOrEqual(2);
+  expect(structure.pageCount).toBeLessThanOrEqual(3);
+  expect(structure.hasEncryption).toBe(false);
+  expect(structure.hasJavaScript).toBe(false);
+  expect(structure.hasOpenAction).toBe(false);
+  expect(structure.hasEmbeddedFiles).toBe(false);
 
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
