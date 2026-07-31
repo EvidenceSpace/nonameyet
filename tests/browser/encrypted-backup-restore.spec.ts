@@ -1,11 +1,13 @@
+import { readFile, writeFile } from "node:fs/promises";
 import { expect, test } from "playwright/test";
 
 const caseTitle = "Encrypted recovery lifecycle";
 const backupPassword = "correct horse battery staple";
+const safeRecoveryError = "The password is incorrect, or the backup was changed or damaged.";
 
 test.setTimeout(90_000);
 
-test("backs up, permanently deletes, and restores a local case", async ({ page }, testInfo) => {
+test("backs up, rejects unsafe recovery attempts, deletes, and restores a local case", async ({ page }, testInfo) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -42,6 +44,12 @@ test("backs up, permanently deletes, and restores a local case", async ({ page }
   await download.saveAs(backupPath);
   await expect(backupDialog).toBeHidden();
 
+  const envelope = JSON.parse(await readFile(backupPath, "utf8"));
+  const mutationIndex = Math.floor(envelope.ciphertext.length / 2);
+  envelope.ciphertext = `${envelope.ciphertext.slice(0, mutationIndex)}${envelope.ciphertext[mutationIndex] === "A" ? "B" : "A"}${envelope.ciphertext.slice(mutationIndex + 1)}`;
+  const tamperedPath = testInfo.outputPath("tampered-recovery.casefind");
+  await writeFile(tamperedPath, JSON.stringify(envelope), { mode: 0o600 });
+
   await page.locator("#delete-case").click();
   const deleteDialog = page.locator("#delete-dialog");
   await expect(deleteDialog).toHaveAttribute("data-enhanced", "true");
@@ -53,10 +61,29 @@ test("backs up, permanently deletes, and restores a local case", async ({ page }
 
   await page.goto("/cases-new.html#restore");
   const restoreDialog = page.locator(".restore-dialog");
+  const restoreFile = restoreDialog.locator("#restore-file");
+  const restorePassword = restoreDialog.locator("#restore-password");
+  const restoreSubmit = restoreDialog.locator("#restore-submit");
+  const restoreError = restoreDialog.locator("#restore-error");
   await expect(restoreDialog).toBeVisible();
-  await restoreDialog.locator("#restore-file").setInputFiles(backupPath);
-  await restoreDialog.locator("#restore-password").fill(backupPassword);
-  await restoreDialog.locator("#restore-submit").click();
+
+  await restoreFile.setInputFiles(backupPath);
+  await restorePassword.fill("definitely wrong password");
+  await restoreSubmit.click();
+  await expect(restoreError).toHaveText(safeRecoveryError);
+  await expect(restorePassword).toHaveValue("");
+  await expect(page).toHaveURL(/cases-new\.html#restore$/);
+
+  await restoreFile.setInputFiles(tamperedPath);
+  await restorePassword.fill(backupPassword);
+  await restoreSubmit.click();
+  await expect(restoreError).toHaveText(safeRecoveryError);
+  await expect(restorePassword).toHaveValue("");
+  await expect(page).toHaveURL(/cases-new\.html#restore$/);
+
+  await restoreFile.setInputFiles(backupPath);
+  await restorePassword.fill(backupPassword);
+  await restoreSubmit.click();
 
   await expect(page).toHaveURL(/case\.html\?id=/);
   await expect(page.locator("#workspace")).toBeVisible();
