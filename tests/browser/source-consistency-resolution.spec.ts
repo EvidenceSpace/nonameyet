@@ -1,13 +1,13 @@
-import { expect, test, type Locator } from "playwright/test";
+import { expect, test, type Locator, type Page } from "playwright/test";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
   "base64",
 );
 
-async function addAgreedPriceFact(row: Locator, value: string) {
+async function addAgreedPriceFact(page: Page, row: Locator, value: string) {
   await row.locator(".source-file").click();
-  const dialog = row.page().locator("#fact-dialog");
+  const dialog = page.locator("#fact-dialog");
   await expect(dialog).toBeVisible();
   await dialog.locator("#fact-type").selectOption("agreed_price");
   await dialog.locator("#fact-value").fill(value);
@@ -44,8 +44,8 @@ test("reviews a verified cross-source difference without rewriting either fact",
   const invoice = page.locator(".file-row", { hasText: "invoice.png" });
   await expect(proposal).toBeVisible();
   await expect(invoice).toBeVisible();
-  await addAgreedPriceFact(proposal, "5,000");
-  await addAgreedPriceFact(invoice, "6,000");
+  await addAgreedPriceFact(page, proposal, "5,000");
+  await addAgreedPriceFact(page, invoice, "6,000");
 
   const card = page.locator(".consistency-item");
   await expect(card).toHaveCount(1);
