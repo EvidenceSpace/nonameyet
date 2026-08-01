@@ -66,7 +66,7 @@ test("reviews a verified cross-source difference without rewriting either fact",
   const dialog = page.locator(".consistency-dialog");
   await expect(dialog).toBeVisible();
   await dialog.locator("button[type='submit']").click();
-  await expect(dialog.locator(".consistency-error")).toHaveText("Choose how these values should be treated.");
+  await expect(dialog.locator(".consistency-error")).toHaveText("Choose one of the source-linked values.");
   await dialog.getByLabel(/Use “6,000” in this case record/).check();
   await dialog.locator("#consistency-note").fill("The later invoice is the current amount for this case.");
   await dialog.locator("button[type='submit']").click();
