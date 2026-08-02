@@ -1,4 +1,4 @@
-import { createId, deleteFact, deleteSuggestion, getSuggestionsForCase, openDatabase, saveSuggestion } from "./storage.js";
+import { createId, deleteFact, deleteSuggestion, getFilesForCase, getSuggestionsForCase, openDatabase, saveFact, saveSuggestion } from "./storage.js";
 
 export async function confirmSuggestionAsFact(fact, suggestionId) {
   if (!fact?.id || !fact.caseId || !fact.sourceFileId || !suggestionId) throw new Error("Invalid review transition.");
@@ -56,74 +56,64 @@ if (location.pathname.endsWith("/case.html")) {
     }
     const dismissButton = event.target.closest?.(".dismiss-suggestion");
     if (dismissButton) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const suggestionId = dismissButton.closest(".suggestion-card")?.dataset.id;
-      try {
-        await deleteSuggestion(suggestionId);
-        location.reload();
-      } catch {
-        showFailure("The suggestion could not be dismissed on this device. Nothing was changed. Try again.");
-      }
+      event.preventDefault(); event.stopImmediatePropagation();
+      try { await deleteSuggestion(dismissButton.closest(".suggestion-card")?.dataset.id); location.reload(); }
+      catch { showFailure("The suggestion could not be dismissed on this device. Nothing was changed. Try again."); }
       return;
     }
     const uncertainButton = event.target.closest?.(".uncertain-suggestion");
     if (uncertainButton) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      event.preventDefault(); event.stopImmediatePropagation();
       const caseId = new URLSearchParams(location.search).get("id");
       const suggestion = await findSuggestion(caseId, uncertainButton.closest(".suggestion-card")?.dataset.id);
       if (!suggestion) { showFailure("The suggestion is no longer available. Reload and try again."); return; }
-      try {
-        await saveSuggestion({ ...suggestion, status: "uncertain", updatedAt: new Date().toISOString() });
-        location.reload();
-      } catch {
-        showFailure("The review status could not be changed on this device. Nothing was changed. Try again.");
-      }
+      try { await saveSuggestion({ ...suggestion, status: "uncertain", updatedAt: new Date().toISOString() }); location.reload(); }
+      catch { showFailure("The review status could not be changed on this device. Nothing was changed. Try again."); }
       return;
     }
     const deleteFactButton = event.target.closest?.(".delete-fact");
     if (deleteFactButton) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      try {
-        await deleteFact(deleteFactButton.dataset.id);
-        location.reload();
-      } catch {
-        showFailure("The fact could not be removed from this device. Nothing was changed. Try again.");
-      }
+      event.preventDefault(); event.stopImmediatePropagation();
+      try { await deleteFact(deleteFactButton.dataset.id); location.reload(); }
+      catch { showFailure("The fact could not be removed from this device. Nothing was changed. Try again."); }
       return;
     }
     const button = event.target.closest?.(".confirm-suggestion");
     if (!button) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
+    event.preventDefault(); event.stopImmediatePropagation();
     const caseId = new URLSearchParams(location.search).get("id");
     const suggestion = await findSuggestion(caseId, button.closest(".suggestion-card")?.dataset.id);
     if (!suggestion) { showFailure("The suggestion is no longer available. Reload and try again."); return; }
-    try {
-      await confirmSuggestionAsFact(buildFact(caseId, suggestion, suggestion.value, "confirmed"), suggestion.id);
-      location.reload();
-    } catch {
-      showFailure("The suggestion could not be confirmed on this device. Nothing was changed. Try again.");
-    }
+    try { await confirmSuggestionAsFact(buildFact(caseId, suggestion, suggestion.value, "confirmed"), suggestion.id); location.reload(); }
+    catch { showFailure("The suggestion could not be confirmed on this device. Nothing was changed. Try again."); }
   }, true);
 
   document.addEventListener("submit", async (event) => {
+    if (event.target.id === "fact-form") {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const caseId = new URLSearchParams(location.search).get("id");
+      const sourceFileId = document.querySelector("#fact-source").value;
+      const file = (await getFilesForCase(caseId)).find((item) => item.id === sourceFileId);
+      const value = document.querySelector("#fact-value").value.trim();
+      if (!file || !value) { showFailure("Choose a stored source and enter the fact before saving."); return; }
+      const fact = {
+        id: createId("fact"), caseId, type: document.querySelector("#fact-type").value, value,
+        note: document.querySelector("#fact-note").value.trim(), sourceFileId,
+        sourceReference: { fileId: sourceFileId, sha256: file.sha256, locator: { kind: "whole_file" } },
+        status: "confirmed", manuallyEntered: true, createdAt: new Date().toISOString(),
+      };
+      try { await saveFact(fact); document.querySelector("#fact-dialog").close(); location.reload(); }
+      catch { showFailure("The fact could not be saved on this device. Nothing was changed. Try again."); }
+      return;
+    }
     if (event.target.id !== "correction-form") return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
+    event.preventDefault(); event.stopImmediatePropagation();
     const caseId = new URLSearchParams(location.search).get("id");
     const dialog = document.querySelector("#correction-dialog");
     const suggestion = await findSuggestion(caseId, dialog.dataset.suggestionId);
     const value = document.querySelector("#correction-value").value.trim();
     if (!suggestion || !value) { showFailure("The correction could not be matched to its suggestion. Reload and try again."); return; }
-    try {
-      await confirmSuggestionAsFact(buildFact(caseId, suggestion, value, "corrected"), suggestion.id);
-      dialog.close();
-      location.reload();
-    } catch {
-      showFailure("The correction could not be saved on this device. Nothing was changed. Try again.");
-    }
+    try { await confirmSuggestionAsFact(buildFact(caseId, suggestion, value, "corrected"), suggestion.id); dialog.close(); location.reload(); }
+    catch { showFailure("The correction could not be saved on this device. Nothing was changed. Try again."); }
   }, true);
 }
