@@ -9,6 +9,7 @@ const workspace = document.querySelector("#workspace");
 const errorView = document.querySelector("#workspace-error");
 const fileInput = document.querySelector("#file-input");
 const message = document.querySelector("#upload-message");
+fileInput?.setAttribute("accept", "image/png,image/jpeg,image/webp,application/pdf");
 const checklistItems = [
   ["agreement", "Project agreement or proposal", "Scope, price, or original terms"],
   ["price", "Agreed price and payment schedule", "Messages or documents showing the amount"],
@@ -133,7 +134,7 @@ async function acceptSuggestion(suggestion, value, status) {
 async function addFiles(selected) {
   message.className = "upload-message"; message.textContent = "";
   for (const file of selected) {
-    if (!["image/png", "image/jpeg", "image/heic", "application/pdf"].includes(file.type)) { message.className = "upload-message error"; message.textContent = `${file.name} was skipped: unsupported type.`; continue; }
+    if (!["image/png", "image/jpeg", "image/webp", "application/pdf"].includes(file.type)) { message.className = "upload-message error"; message.textContent = `${file.name} was skipped: unsupported type.`; continue; }
     if (file.size > 20 * 1024 * 1024) { message.className = "upload-message error"; message.textContent = `${file.name} exceeds 20 MB.`; continue; }
     if (files.length >= 100) { message.className = "upload-message error"; message.textContent = "This preview supports up to 100 files per case."; break; }
     const hash = await sha256(file);
