@@ -30,29 +30,60 @@ export async function confirmSuggestionAsFact(fact, suggestionId) {
   } finally { db.close(); }
 }
 
+function buildFact(caseId, suggestion, value, status) {
+  return {
+    id: createId("fact"), caseId, label: suggestion.label, type: "other", value,
+    sourceFileId: suggestion.fileId, sourceReference: suggestion.sourceReference,
+    status, manuallyEntered: false, aiSuggested: true, decidedByUser: true,
+    createdAt: new Date().toISOString(),
+  };
+}
+function showFailure(text) {
+  const message = document.querySelector("#upload-message");
+  message.className = "upload-message error";
+  message.textContent = text;
+}
+async function findSuggestion(caseId, suggestionId) {
+  return (await getSuggestionsForCase(caseId)).find((item) => item.id === suggestionId);
+}
+
 if (location.pathname.endsWith("/case.html")) {
   document.addEventListener("click", async (event) => {
+    const correctButton = event.target.closest?.(".correct-suggestion");
+    if (correctButton) {
+      document.querySelector("#correction-dialog").dataset.suggestionId = correctButton.closest(".suggestion-card")?.dataset.id || "";
+      return;
+    }
     const button = event.target.closest?.(".confirm-suggestion");
     if (!button) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    const card = button.closest(".suggestion-card");
     const caseId = new URLSearchParams(location.search).get("id");
-    const suggestion = (await getSuggestionsForCase(caseId)).find((item) => item.id === card?.dataset.id);
-    if (!suggestion) return;
-    const fact = {
-      id: createId("fact"), caseId, label: suggestion.label, type: "other", value: suggestion.value,
-      sourceFileId: suggestion.fileId, sourceReference: suggestion.sourceReference,
-      status: "confirmed", manuallyEntered: false, aiSuggested: true, decidedByUser: true,
-      createdAt: new Date().toISOString(),
-    };
+    const suggestion = await findSuggestion(caseId, button.closest(".suggestion-card")?.dataset.id);
+    if (!suggestion) { showFailure("The suggestion is no longer available. Reload and try again."); return; }
     try {
-      await confirmSuggestionAsFact(fact, suggestion.id);
+      await confirmSuggestionAsFact(buildFact(caseId, suggestion, suggestion.value, "confirmed"), suggestion.id);
       location.reload();
     } catch {
-      const message = document.querySelector("#upload-message");
-      message.className = "upload-message error";
-      message.textContent = "The suggestion could not be confirmed on this device. Nothing was changed. Try again.";
+      showFailure("The suggestion could not be confirmed on this device. Nothing was changed. Try again.");
+    }
+  }, true);
+
+  document.addEventListener("submit", async (event) => {
+    if (event.target.id !== "correction-form") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const caseId = new URLSearchParams(location.search).get("id");
+    const dialog = document.querySelector("#correction-dialog");
+    const suggestion = await findSuggestion(caseId, dialog.dataset.suggestionId);
+    const value = document.querySelector("#correction-value").value.trim();
+    if (!suggestion || !value) { showFailure("The correction could not be matched to its suggestion. Reload and try again."); return; }
+    try {
+      await confirmSuggestionAsFact(buildFact(caseId, suggestion, value, "corrected"), suggestion.id);
+      dialog.close();
+      location.reload();
+    } catch {
+      showFailure("The correction could not be saved on this device. Nothing was changed. Try again.");
     }
   }, true);
 }
