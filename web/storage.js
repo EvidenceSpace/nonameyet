@@ -68,9 +68,22 @@ async function touchCase(caseId, at = new Date().toISOString()) {
   if (record) await saveCase({ ...record, updatedAt: at });
 }
 async function saveWithActivity(storeName, value, method) {
-  const result = await transaction(storeName, "readwrite", (store) => requestResult(store[method](value)));
-  await touchCase(value.caseId);
-  return result;
+  const db = await openDatabase();
+  try {
+    const tx = db.transaction([storeName, "cases"], "readwrite");
+    const resultRequest = tx.objectStore(storeName)[method](value);
+    if (value.caseId) {
+      const cases = tx.objectStore("cases");
+      const caseRequest = cases.get(value.caseId);
+      caseRequest.onsuccess = () => {
+        if (caseRequest.result) cases.put({ ...caseRequest.result, updatedAt: new Date().toISOString() });
+      };
+    }
+    return await new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve(resultRequest.result);
+      tx.onabort = () => reject(tx.error || resultRequest.error || new Error("Transaction aborted"));
+    });
+  } finally { db.close(); }
 }
 async function deleteWithActivity(storeName, id) {
   const value = await transaction(storeName, "readonly", (store) => requestResult(store.get(id)));
