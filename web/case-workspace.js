@@ -137,10 +137,15 @@ async function addFiles(selected) {
     if (!["image/png", "image/jpeg", "image/webp", "application/pdf"].includes(file.type)) { message.className = "upload-message error"; message.textContent = `${file.name} was skipped: unsupported type.`; continue; }
     if (file.size > 20 * 1024 * 1024) { message.className = "upload-message error"; message.textContent = `${file.name} exceeds 20 MB.`; continue; }
     if (files.length >= 100) { message.className = "upload-message error"; message.textContent = "This preview supports up to 100 files per case."; break; }
-    const hash = await sha256(file);
-    if (files.some((item) => item.sha256 === hash)) { message.className = "upload-message error"; message.textContent = `${file.name} is already in this case.`; continue; }
-    const stored = { id: createId("file"), caseId, name: file.name, type: file.type, size: file.size, sha256: hash, createdAt: new Date().toISOString(), original: file };
-    await saveFile(stored); files.push(stored); message.textContent = `Stored ${file.name} locally.`;
+    try {
+      const hash = await sha256(file);
+      if (files.some((item) => item.sha256 === hash)) { message.className = "upload-message error"; message.textContent = `${file.name} is already in this case.`; continue; }
+      const stored = { id: createId("file"), caseId, name: file.name, type: file.type, size: file.size, sha256: hash, createdAt: new Date().toISOString(), original: file };
+      await saveFile(stored); files.push(stored); message.textContent = `Stored ${file.name} locally.`;
+    } catch {
+      message.className = "upload-message error";
+      message.textContent = `${file.name} could not be stored on this device. Check available browser storage and try again.`;
+    }
   }
   fileInput.value = ""; renderFiles();
 }
