@@ -69,7 +69,13 @@ function renderFiles() {
   root.querySelectorAll(".delete-file").forEach((button) => button.addEventListener("click", async () => {
     const linked = facts.some((fact) => fact.sourceFileId === button.dataset.id) || suggestions.some((suggestion) => suggestion.fileId === button.dataset.id);
     if (linked) { message.className = "upload-message error"; message.textContent = "Resolve or remove linked facts and suggestions before deleting this source record."; return; }
-    await deleteFile(button.dataset.id); files = files.filter((file) => file.id !== button.dataset.id); renderFiles();
+    const file = files.find((item) => item.id === button.dataset.id);
+    try {
+      await deleteFile(button.dataset.id); files = files.filter((item) => item.id !== button.dataset.id); renderFiles();
+    } catch {
+      message.className = "upload-message error";
+      message.textContent = `${file?.name || "This record"} could not be removed from this device. Nothing was changed. Try again.`;
+    }
   }));
   renderStats(); renderSourceOptions();
 }
