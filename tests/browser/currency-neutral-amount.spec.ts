@@ -1,6 +1,19 @@
 import { expect, test } from "playwright/test";
 
-test("preserves the amount exactly as the user entered it", async ({ page }) => {
+test("preserves the amount exactly without rendering a guessed currency", async ({ page }) => {
+  await page.addInitScript(() => {
+    (globalThis as typeof globalThis & { __caseFindAmountFrames?: string[] }).__caseFindAmountFrames = [];
+    const sample = () => {
+      const workspace = document.querySelector<HTMLElement>("#workspace");
+      const amount = document.querySelector<HTMLElement>("#workspace-amount");
+      if (workspace && amount && !workspace.hidden) {
+        (globalThis as typeof globalThis & { __caseFindAmountFrames: string[] }).__caseFindAmountFrames.push(amount.textContent || "");
+      }
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+
   await page.goto("/cases-new.html");
   await page.locator("#case-title").fill("Currency-neutral amount");
   await page.locator("#client").fill("Example client");
@@ -14,6 +27,9 @@ test("preserves the amount exactly as the user entered it", async ({ page }) => 
   await expect(page.locator("#workspace")).toBeVisible();
   await expect(page.locator("#workspace-amount")).toHaveText("5000");
   await expect(page.locator("#workspace-amount")).not.toContainText("₹");
+  await page.waitForTimeout(50);
+  const renderedFrames = await page.evaluate(() => (globalThis as typeof globalThis & { __caseFindAmountFrames?: string[] }).__caseFindAmountFrames || []);
+  expect(renderedFrames).not.toContain("₹5000");
 
   await page.locator(".case-details-trigger").click();
   const dialog = page.locator(".case-details-dialog");
