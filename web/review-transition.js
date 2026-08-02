@@ -1,4 +1,4 @@
-import { createId, getSuggestionsForCase, openDatabase } from "./storage.js";
+import { createId, deleteSuggestion, getSuggestionsForCase, openDatabase } from "./storage.js";
 
 export async function confirmSuggestionAsFact(fact, suggestionId) {
   if (!fact?.id || !fact.caseId || !fact.sourceFileId || !suggestionId) throw new Error("Invalid review transition.");
@@ -52,6 +52,19 @@ if (location.pathname.endsWith("/case.html")) {
     const correctButton = event.target.closest?.(".correct-suggestion");
     if (correctButton) {
       document.querySelector("#correction-dialog").dataset.suggestionId = correctButton.closest(".suggestion-card")?.dataset.id || "";
+      return;
+    }
+    const dismissButton = event.target.closest?.(".dismiss-suggestion");
+    if (dismissButton) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const suggestionId = dismissButton.closest(".suggestion-card")?.dataset.id;
+      try {
+        await deleteSuggestion(suggestionId);
+        location.reload();
+      } catch {
+        showFailure("The suggestion could not be dismissed on this device. Nothing was changed. Try again.");
+      }
       return;
     }
     const button = event.target.closest?.(".confirm-suggestion");
