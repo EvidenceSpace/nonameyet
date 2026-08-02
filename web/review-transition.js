@@ -1,4 +1,4 @@
-import { createId, deleteSuggestion, getSuggestionsForCase, openDatabase } from "./storage.js";
+import { createId, deleteFact, deleteSuggestion, getSuggestionsForCase, openDatabase, saveSuggestion } from "./storage.js";
 
 export async function confirmSuggestionAsFact(fact, suggestionId) {
   if (!fact?.id || !fact.caseId || !fact.sourceFileId || !suggestionId) throw new Error("Invalid review transition.");
@@ -64,6 +64,33 @@ if (location.pathname.endsWith("/case.html")) {
         location.reload();
       } catch {
         showFailure("The suggestion could not be dismissed on this device. Nothing was changed. Try again.");
+      }
+      return;
+    }
+    const uncertainButton = event.target.closest?.(".uncertain-suggestion");
+    if (uncertainButton) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const caseId = new URLSearchParams(location.search).get("id");
+      const suggestion = await findSuggestion(caseId, uncertainButton.closest(".suggestion-card")?.dataset.id);
+      if (!suggestion) { showFailure("The suggestion is no longer available. Reload and try again."); return; }
+      try {
+        await saveSuggestion({ ...suggestion, status: "uncertain", updatedAt: new Date().toISOString() });
+        location.reload();
+      } catch {
+        showFailure("The review status could not be changed on this device. Nothing was changed. Try again.");
+      }
+      return;
+    }
+    const deleteFactButton = event.target.closest?.(".delete-fact");
+    if (deleteFactButton) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      try {
+        await deleteFact(deleteFactButton.dataset.id);
+        location.reload();
+      } catch {
+        showFailure("The fact could not be removed from this device. Nothing was changed. Try again.");
       }
       return;
     }
