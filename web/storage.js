@@ -62,11 +62,6 @@ export const saveCase = (value) => transaction("cases", "readwrite", (store) => 
 export const getCase = (id) => transaction("cases", "readonly", (store) => requestResult(store.get(id)));
 export const getAllCases = () => transaction("cases", "readonly", (store) => requestResult(store.getAll()));
 
-async function touchCase(caseId, at = new Date().toISOString()) {
-  if (!caseId) return;
-  const record = await getCase(caseId);
-  if (record) await saveCase({ ...record, updatedAt: at });
-}
 async function saveWithActivity(storeName, value, method) {
   const db = await openDatabase();
   try {
@@ -85,13 +80,32 @@ async function saveWithActivity(storeName, value, method) {
     });
   } finally { db.close(); }
 }
-async function deleteWithActivity(storeName, id) {
-  const value = await transaction(storeName, "readonly", (store) => requestResult(store.get(id)));
-  await transaction(storeName, "readwrite", (store) => requestResult(store.delete(id)));
-  await touchCase(value?.caseId);
+async function deleteWithActivity(storeName, id, relatedStoreNames = []) {
+  const db = await openDatabase();
+  try {
+    const tx = db.transaction([storeName, ...relatedStoreNames, "cases"], "readwrite");
+    const store = tx.objectStore(storeName);
+    const valueRequest = store.get(id);
+    valueRequest.onsuccess = () => {
+      const value = valueRequest.result;
+      store.delete(id);
+      for (const relatedStoreName of relatedStoreNames) tx.objectStore(relatedStoreName).delete(id);
+      if (value?.caseId) {
+        const cases = tx.objectStore("cases");
+        const caseRequest = cases.get(value.caseId);
+        caseRequest.onsuccess = () => {
+          if (caseRequest.result) cases.put({ ...caseRequest.result, updatedAt: new Date().toISOString() });
+        };
+      }
+    };
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onabort = () => reject(tx.error || valueRequest.error || new Error("Transaction aborted"));
+    });
+  } finally { db.close(); }
 }
 export const saveFile = (value) => saveWithActivity("files", value, "add");
-export async function deleteFile(id) { await deleteProcessing(id); return deleteWithActivity("files", id); }
+export const deleteFile = (id) => deleteWithActivity("files", id, ["processing"]);
 export const getFilesForCase = (id) => transaction("files", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const saveFact = (value) => saveWithActivity("facts", value, "put");
 export const getFactsForCase = (id) => transaction("facts", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
