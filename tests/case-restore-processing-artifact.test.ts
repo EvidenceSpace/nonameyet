@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { webcrypto } from "node:crypto";
-import { backupLimits, createEncryptedCaseBackup, materializeCaseBackup } from "../web/case-backup.js";
+import { backupLimits, createEncryptedCaseBackup, materializeCaseBackup, recoverInterruptedProcessing } from "../web/case-backup.js";
 
 const bytes = new TextEncoder().encode("original image bytes");
 const hash = Buffer.from(await webcrypto.subtle.digest("SHA-256", bytes)).toString("hex");
@@ -70,4 +70,38 @@ test("backup creation refuses malformed local extraction state", async () => {
   delete (localFile as { bytes?: string }).bytes;
   const invalid = { ...processing, artifact: { ...artifact, adapterVersion: "" } };
   await assert.rejects(() => createEncryptedCaseBackup({ record: { id: caseId }, files: [localFile], facts: [], suggestions: [], processing: [invalid], events: [] }, "correct horse battery", { cryptoRef: webcrypto as any }), /Stored extraction data is invalid/);
+});
+
+test("restore converts worker-dependent processing states into retryable failures", async () => {
+  const restoredAt = "2026-08-03T00:00:00.000Z";
+  const interrupted = ["queued", "extracting", "retry_wait"].map((status) => ({
+    fileId: file.id,
+    caseId,
+    fileHash: hash,
+    status,
+    message: "Old transient state",
+    nextRetryAt: "2026-08-02T23:00:00.000Z",
+    failure: { code: "transient_error", retryable: true },
+  }));
+  const recovered = recoverInterruptedProcessing(interrupted, restoredAt);
+  for (const job of recovered) {
+    assert.equal(job.status, "failed");
+    assert.equal(job.message, "Processing was interrupted before this backup was restored. Process the source again.");
+    assert.deepEqual(job.failure, { code: "interrupted", retryable: true });
+    assert.equal(job.updatedAt, restoredAt);
+    assert.equal(job.fileHash, hash);
+    assert.equal("nextRetryAt" in job, false);
+    assert.equal("artifact" in job, false);
+  }
+
+  const interruptedPayload = payload() as any;
+  interruptedPayload.processing[0] = { fileId: file.id, caseId, fileHash: hash, status: "extracting", message: "Running OCR locally…" };
+  const bundle = await materializeCaseBackup(interruptedPayload, { cryptoRef: webcrypto as any, now: () => new Date(restoredAt) });
+  assert.equal(bundle.processing[0].status, "failed");
+  assert.equal(bundle.processing[0].failure.code, "interrupted");
+});
+
+test("restore preserves completed processing state", () => {
+  const completed = [processing];
+  assert.deepEqual(recoverInterruptedProcessing(completed, "2026-08-03T00:00:00.000Z"), completed);
 });
