@@ -1,4 +1,5 @@
 import "./checklist-ui.js";
+import "./review-transition.js";
 import { getCase, getFilesForCase, getFactsForCase, getSuggestionsForCase } from "./storage.js";
 import { calculateRecordReadiness } from "./readiness-model.js";
 
