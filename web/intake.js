@@ -1,5 +1,6 @@
 import { createId, saveCase } from "./storage.js";
 import { validateCaseDetails } from "./case-details-model.js";
+import { buildCaseCreationDraft, describeCaseCreationFailure } from "./intake-creation-model.js";
 const form = document.querySelector("#intake-form");
 const summary = document.querySelector("#summary");
 const count = document.querySelector("#summary-count");
@@ -11,6 +12,7 @@ const spacer = document.querySelector("#action-spacer");
 const localStorageAck = document.querySelector("#local-storage-ack");
 let step = 1;
 let creating = false;
+let pendingDraft;
 
 function values() {
   return {
@@ -20,6 +22,25 @@ function values() {
     summary: summary.value,
     goal: document.querySelector('input[name="goal"]:checked')?.value,
   };
+}
+
+function clearCreationError() {
+  creationError.textContent = "";
+  delete creationError.dataset.state;
+  next.removeAttribute("aria-describedby");
+}
+
+function setCreateLabel(retry = false) {
+  next.innerHTML = `${retry ? "Try saving again" : "Create private draft"} <span aria-hidden="true">→</span>`;
+}
+
+function renderCreationFailure(cause) {
+  const failure = describeCaseCreationFailure(cause);
+  creationError.dataset.state = failure.state;
+  creationError.innerHTML = `<span class="creation-recovery-eyebrow">${failure.eyebrow}</span><strong class="creation-recovery-title">${failure.title}</strong><span class="creation-recovery-detail">${failure.detail}</span><span class="creation-recovery-instruction">${failure.instruction}</span>`;
+  next.setAttribute("aria-describedby", "creation-error");
+  setCreateLabel(true);
+  creationError.focus();
 }
 
 function render() {
@@ -35,7 +56,7 @@ function render() {
   spacer.classList.toggle("hidden", step > 1);
   next.innerHTML = step === 3 ? 'Create private draft <span aria-hidden="true">→</span>' : 'Continue <span aria-hidden="true">→</span>';
   error.textContent = "";
-  creationError.textContent = "";
+  clearCreationError();
 }
 
 function validFirstStep() {
@@ -80,29 +101,30 @@ form.addEventListener("submit", async (event) => {
   form.setAttribute("aria-busy", "true");
   next.disabled = true;
   next.textContent = "Saving on this device…";
-  creationError.textContent = "";
-  const caseId = createId("case");
-  const now = new Date().toISOString();
+  clearCreationError();
+  pendingDraft = buildCaseCreationDraft(result.value, pendingDraft, {
+    createId,
+    now: () => new Date().toISOString(),
+  });
   try {
-    await saveCase({ id: caseId, type: "unpaid_freelance_work", ...result.value, checklist: [], status: "collecting", localStorageAcknowledgedAt: now, createdAt: now, updatedAt: now });
+    await saveCase(pendingDraft);
     form.classList.add("hidden");
     document.querySelector(".intake-aside").classList.add("hidden");
     const created = document.querySelector("#created-state");
-    document.querySelector("#created-title").textContent = result.value.title;
-    document.querySelector("#open-workspace").href = `case.html?id=${encodeURIComponent(caseId)}`;
+    document.querySelector("#created-title").textContent = pendingDraft.title;
+    document.querySelector("#open-workspace").href = `case.html?id=${encodeURIComponent(pendingDraft.id)}`;
     created.classList.remove("hidden");
     created.scrollIntoView({ behavior: "smooth", block: "start" });
-  } catch {
-    creationError.textContent = "This private draft could not be saved in this browser. Your entries are still here—check available storage and try again.";
-    creationError.focus();
+  } catch (cause) {
+    renderCreationFailure(cause);
   } finally {
     creating = false;
     form.removeAttribute("aria-busy");
     next.disabled = false;
-    if (!form.classList.contains("hidden")) next.innerHTML = 'Create private draft <span aria-hidden="true">→</span>';
+    if (!form.classList.contains("hidden") && !creationError.textContent) setCreateLabel();
   }
 });
 back.addEventListener("click", () => { if (!creating) { step = Math.max(1, step - 1); render(); } });
-document.querySelector("#restart-button").addEventListener("click", () => { form.reset(); step = 1; creating = false; form.removeAttribute("aria-busy"); next.disabled = false; form.classList.remove("hidden"); document.querySelector(".intake-aside").classList.remove("hidden"); document.querySelector("#created-state").classList.add("hidden"); creationError.textContent = ""; updateSummaryCount(); render(); });
+document.querySelector("#restart-button").addEventListener("click", () => { form.reset(); step = 1; creating = false; pendingDraft = undefined; form.removeAttribute("aria-busy"); next.disabled = false; form.classList.remove("hidden"); document.querySelector(".intake-aside").classList.remove("hidden"); document.querySelector("#created-state").classList.add("hidden"); clearCreationError(); updateSummaryCount(); render(); });
 updateSummaryCount();
 render();
