@@ -1,1 +1,49 @@
-import{decryptCaseBackup,materializeCaseBackup,backupLimits}from"./case-backup.js";import{restoreCaseBundle}from"./storage.js";const header=document.querySelector(".intake-header");if(header){const trigger=document.createElement("button");trigger.className="restore-trigger";trigger.type="button";trigger.textContent="Restore encrypted backup";header.append(trigger);const dialog=document.createElement("dialog");dialog.className="restore-dialog";dialog.innerHTML=`<form id="restore-form"><div class="restore-head"><div><span class="section-label">LOCAL RECOVERY</span><h2>Restore an encrypted case</h2></div><button class="dialog-close" type="button" aria-label="Close">×</button></div><p class="restore-intro">Choose a <code>.casefind</code> file and enter its password. Decryption and integrity checks happen only in this browser.</p><label>Encrypted backup<input id="restore-file" type="file" accept=".casefind,application/vnd.casefind.encrypted+json" required><small>Maximum encrypted file size: 75 MB</small></label><label>Backup password<input id="restore-password" type="password" autocomplete="current-password" required></label><div class="restore-assurance"><b>Nothing is overwritten.</b><span>If this case or any included record already exists, the entire restore is rejected.</span></div><p class="restore-error" id="restore-error" role="alert"></p><div class="restore-actions"><button class="button-secondary restore-cancel" type="button">Cancel</button><button class="button" id="restore-submit" type="submit">Decrypt and restore</button></div></form>`;document.body.append(dialog);const form=dialog.querySelector("form"),fileInput=dialog.querySelector("#restore-file"),password=dialog.querySelector("#restore-password"),submit=dialog.querySelector("#restore-submit"),error=dialog.querySelector("#restore-error");function close(){dialog.close();form.reset();error.textContent=""}trigger.onclick=()=>{error.textContent="";dialog.showModal();fileInput.focus()};if(location.hash==="#restore")trigger.click();dialog.querySelector(".dialog-close").onclick=close;dialog.querySelector(".restore-cancel").onclick=close;dialog.addEventListener("click",event=>{if(event.target===dialog)close()});form.onsubmit=async event=>{event.preventDefault();error.textContent="";const file=fileInput.files?.[0];if(!file)return;if(file.size>75*1024*1024){error.textContent="This encrypted backup is larger than 75 MB.";return}submit.disabled=true;submit.textContent="Checking locally…";try{const payload=await decryptCaseBackup(await file.text(),password.value),bundle=await materializeCaseBackup(payload,{maxBytes:backupLimits.maxBytes}),caseId=await restoreCaseBundle(bundle);location.href=`case.html?id=${encodeURIComponent(caseId)}`}catch(cause){error.textContent=cause instanceof Error?cause.message:"The backup could not be restored."}finally{submit.disabled=false;submit.textContent="Decrypt and restore";password.value=""}}}
+import { decryptCaseBackup, materializeCaseBackup, backupLimits } from "./case-backup.js";
+import { restoreCaseBundle } from "./storage.js";
+import { noteLocalCaseStored } from "./case-history-model.js";
+
+const header = document.querySelector(".intake-header");
+if (header) {
+  const trigger = document.createElement("button");
+  trigger.className = "restore-trigger";
+  trigger.type = "button";
+  trigger.textContent = "Restore encrypted backup";
+  header.append(trigger);
+  const dialog = document.createElement("dialog");
+  dialog.className = "restore-dialog";
+  dialog.innerHTML = `<form id="restore-form"><div class="restore-head"><div><span class="section-label">LOCAL RECOVERY</span><h2>Restore an encrypted case</h2></div><button class="dialog-close" type="button" aria-label="Close">×</button></div><p class="restore-intro">Choose a <code>.casefind</code> file and enter its password. Decryption and integrity checks happen only in this browser.</p><label>Encrypted backup<input id="restore-file" type="file" accept=".casefind,application/vnd.casefind.encrypted+json" required><small>Maximum encrypted file size: 75 MB</small></label><label>Backup password<input id="restore-password" type="password" autocomplete="current-password" required></label><div class="restore-assurance"><b>Nothing is overwritten.</b><span>If this case or any included record already exists, the entire restore is rejected.</span></div><p class="restore-error" id="restore-error" role="alert"></p><div class="restore-actions"><button class="button-secondary restore-cancel" type="button">Cancel</button><button class="button" id="restore-submit" type="submit">Decrypt and restore</button></div></form>`;
+  document.body.append(dialog);
+  const form = dialog.querySelector("form");
+  const fileInput = dialog.querySelector("#restore-file");
+  const password = dialog.querySelector("#restore-password");
+  const submit = dialog.querySelector("#restore-submit");
+  const error = dialog.querySelector("#restore-error");
+  function close() { dialog.close(); form.reset(); error.textContent = ""; }
+  trigger.onclick = () => { error.textContent = ""; dialog.showModal(); fileInput.focus(); };
+  if (location.hash === "#restore") trigger.click();
+  dialog.querySelector(".dialog-close").onclick = close;
+  dialog.querySelector(".restore-cancel").onclick = close;
+  dialog.addEventListener("click", (event) => { if (event.target === dialog) close(); });
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    error.textContent = "";
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.size > 75 * 1024 * 1024) { error.textContent = "This encrypted backup is larger than 75 MB."; return; }
+    submit.disabled = true;
+    submit.textContent = "Checking locally…";
+    try {
+      const payload = await decryptCaseBackup(await file.text(), password.value);
+      const bundle = await materializeCaseBackup(payload, { maxBytes: backupLimits.maxBytes });
+      const caseId = await restoreCaseBundle(bundle);
+      noteLocalCaseStored();
+      location.href = `case.html?id=${encodeURIComponent(caseId)}`;
+    } catch (cause) {
+      error.textContent = cause instanceof Error ? cause.message : "The backup could not be restored.";
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Decrypt and restore";
+      password.value = "";
+    }
+  };
+}

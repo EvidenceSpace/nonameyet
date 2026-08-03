@@ -1,6 +1,7 @@
 import { createId, saveCase } from "./storage.js";
 import { validateCaseDetails } from "./case-details-model.js";
 import { buildCaseCreationDraft, describeCaseCreationFailure } from "./intake-creation-model.js";
+import { noteLocalCaseStored } from "./case-history-model.js";
 const form = document.querySelector("#intake-form");
 const summary = document.querySelector("#summary");
 const count = document.querySelector("#summary-count");
@@ -108,6 +109,7 @@ form.addEventListener("submit", async (event) => {
   });
   try {
     await saveCase(pendingDraft);
+    noteLocalCaseStored();
     form.classList.add("hidden");
     document.querySelector(".intake-aside").classList.add("hidden");
     const created = document.querySelector("#created-state");
