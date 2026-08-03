@@ -2,6 +2,7 @@ import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProce
 import { processPdf } from "./pdf-processing.js";
 import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
 import { canStartImageOcr, inspectImageOcrReadiness, IMAGE_OCR_UNAVAILABLE_MESSAGE } from "./image-ocr-readiness.js";
+import { getScannedPdfRecovery } from "./scanned-pdf-recovery.js";
 import { requestAnalysis } from "./analysis-client.js";
 import { inspectProcessingJob } from "./processing-integrity.js";
 import { buildGroundedSuggestions } from "./suggestion-handoff.js";
@@ -96,6 +97,9 @@ async function refresh() {
       const status = inspection.status;
       const isImage = ["image/png", "image/jpeg", "image/webp"].includes(file.type);
       const imageOcrUnavailable = isImage && !imageOcrReadiness.available && ["unprocessed", "failed", "cancelled"].includes(status);
+      const scannedPdfRecovery = file.type === "application/pdf"
+        ? getScannedPdfRecovery({ status, imageOcrAvailable: imageOcrReadiness.available })
+        : null;
       const displayedStatus = imageOcrUnavailable ? "ocr_unavailable" : status;
 
       let badge = actions.querySelector(".processing-status");
@@ -104,7 +108,7 @@ async function refresh() {
         actions.prepend(badge);
       }
       badge.className = `processing-status ${displayedStatus}`;
-      badge.textContent = labels[displayedStatus] || "Not processed";
+      badge.textContent = scannedPdfRecovery?.label || labels[displayedStatus] || "Not processed";
 
       let processButton = actions.querySelector(".process-file");
       const canProcessPdf = file.type === "application/pdf" && (!job || status === "failed" || status === "cancelled");
@@ -164,7 +168,7 @@ async function refresh() {
       }
 
       let note = row.querySelector(".processing-note");
-      const noteMessage = imageOcrUnavailable ? IMAGE_OCR_UNAVAILABLE_MESSAGE : inspection.message;
+      const noteMessage = imageOcrUnavailable ? IMAGE_OCR_UNAVAILABLE_MESSAGE : scannedPdfRecovery?.message || inspection.message;
       if (noteMessage) {
         if (!note) {
           note = document.createElement("p");

@@ -20,11 +20,15 @@ function createImageOnlyPdf() {
   return Buffer.from(pdf, "ascii");
 }
 
-const ocrMessage = "This PDF has too little selectable text. OCR is needed.";
+const recoveryMessage = "This PDF appears scanned or has too little selectable text. CaseFind does not yet OCR PDF pages. The original remains stored locally; review it manually. For local extraction, export only the pages you need as PNG or JPEG, then add those images as separate records.";
 
-test("routes an image-only PDF to an explicit OCR-needed state", async ({ page }) => {
+test("routes a scanned PDF to truthful local recovery without AI actions", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, "TextDetector", { configurable: true, value: class {} });
+    Object.defineProperty(globalThis, "createImageBitmap", { configurable: true, value: async () => ({ close() {} }) });
+  });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {
     const url = new URL(request.url());
@@ -35,7 +39,7 @@ test("routes an image-only PDF to an explicit OCR-needed state", async ({ page }
   await page.locator("#case-title").fill("Scanned PDF boundary");
   await page.locator("#client").fill("Example client");
   await page.locator("#amount").fill("5000");
-  await page.locator("#summary").fill("A synthetic case verifying that image-only PDFs require honest OCR handling.");
+  await page.locator("#summary").fill("A synthetic case verifying truthful scanned-PDF recovery.");
   await page.locator("#continue-button").click();
   await page.locator("#continue-button").click();
   await page.locator("#local-storage-ack").check();
@@ -43,17 +47,13 @@ test("routes an image-only PDF to an explicit OCR-needed state", async ({ page }
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible();
 
-  await page.locator("#file-input").setInputFiles({
-    name: "scanned-invoice.pdf",
-    mimeType: "application/pdf",
-    buffer: createImageOnlyPdf(),
-  });
+  await page.locator("#file-input").setInputFiles({ name: "scanned-invoice.pdf", mimeType: "application/pdf", buffer: createImageOnlyPdf() });
   const row = page.locator(".file-row", { hasText: "scanned-invoice.pdf" });
   await expect(row.locator(".processing-status")).toHaveText("Not processed");
   await row.locator(".process-file").click();
 
-  await expect(row.locator(".processing-status")).toHaveText("OCR needed", { timeout: 30_000 });
-  await expect(row.locator(".processing-note")).toHaveText(ocrMessage);
+  await expect(row.locator(".processing-status")).toHaveText("Scanned PDF", { timeout: 30_000 });
+  await expect(row.locator(".processing-note")).toHaveText(recoveryMessage);
   await expect(row.locator(".process-file")).toHaveCount(0);
   await expect(row.locator(".view-extracted-text")).toHaveCount(0);
   await expect(row.locator(".analyze-record")).toHaveCount(0);
@@ -69,9 +69,11 @@ test("routes an image-only PDF to an explicit OCR-needed state", async ({ page }
 
   await page.reload();
   const persisted = page.locator(".file-row", { hasText: "scanned-invoice.pdf" });
-  await expect(persisted.locator(".processing-status")).toHaveText("OCR needed");
-  await expect(persisted.locator(".processing-note")).toHaveText(ocrMessage);
+  await expect(persisted.locator(".processing-status")).toHaveText("Scanned PDF");
+  await expect(persisted.locator(".processing-note")).toHaveText(recoveryMessage);
+  await expect(persisted.locator(".process-file")).toHaveCount(0);
   await expect(persisted.locator(".view-extracted-text")).toHaveCount(0);
+  await expect(persisted.locator(".analyze-record")).toHaveCount(0);
   await expect(page.locator(".file-row")).toHaveCount(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
