@@ -10,7 +10,7 @@ test("passes the active workspace cancellation signal into PDF extraction", () =
 });
 
 test("PDF processing races loading and page extraction against cancellation", () => {
-  assert.match(pdf, /abortable\(task\.promise, signal, destroyTask\)/);
+  assert.match(pdf, /abortable\(task\.promise, workSignal, destroyTask\)/);
   assert.match(pdf, /abortable\(page\.getTextContent/);
   assert.match(pdf, /status: "cancelled"/);
   assert.match(pdf, /failure: \{ code: "cancelled", retryable: false \}/);
