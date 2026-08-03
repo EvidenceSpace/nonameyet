@@ -1,3 +1,5 @@
+import { buildImageOcrQuality } from "./image-ocr-quality.js";
+
 export const MAX_ANALYSIS_CHARACTERS = 200_000;
 export const MAX_ANALYSIS_PAGES = 500;
 const MAX_METADATA_LENGTH = 200;
@@ -7,6 +9,14 @@ const MAX_WARNING_CHARACTERS = 20_000;
 
 function boundedText(value, maximum = MAX_METADATA_LENGTH) {
   return typeof value === "string" && value.trim().length > 0 && value.length <= maximum;
+}
+
+export function isValidExtractionQuality(quality) {
+  if (!quality || typeof quality !== "object" || Array.isArray(quality) || quality.reviewRequired !== true) return false;
+  const { confidence } = quality;
+  if (confidence !== null && (typeof confidence !== "number" || !Number.isFinite(confidence) || confidence < 0 || confidence > 1)) return false;
+  const expected = buildImageOcrQuality(confidence);
+  return quality.level === expected.level && quality.warning === expected.warning;
 }
 
 export function isValidAnalysisPages(pages, maxCharacters = MAX_ANALYSIS_CHARACTERS) {
@@ -41,6 +51,8 @@ export function isValidExtractionArtifact(artifact, { maxCharacters = MAX_ANALYS
       if (warningCharacters > MAX_WARNING_CHARACTERS) return false;
     }
   }
+
+  if (artifact.quality !== undefined && !isValidExtractionQuality(artifact.quality)) return false;
 
   const hasRanges = artifact.pages.some((page) => page?.start !== undefined || page?.end !== undefined);
   if (hasRanges) {
