@@ -20,8 +20,12 @@ export function inspectImageOcrReadiness(scope = globalThis) {
   };
 }
 
+const PERMANENT_IMAGE_FAILURE_CODES = new Set(["unsupported_type", "corrupt_file", "file_too_large", "empty_text"]);
+
 export function canStartImageOcr({ fileType, jobStatus, failureCode, readiness }) {
   if (!["image/png", "image/jpeg", "image/webp"].includes(fileType)) return false;
   if (!readiness?.available) return false;
-  return !jobStatus || jobStatus === "failed" || jobStatus === "cancelled";
+  if (!jobStatus || jobStatus === "cancelled") return true;
+  if (jobStatus !== "failed") return false;
+  return !PERMANENT_IMAGE_FAILURE_CODES.has(failureCode);
 }

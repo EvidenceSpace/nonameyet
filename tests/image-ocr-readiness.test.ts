@@ -23,4 +23,7 @@ test("permits supported images only when the runtime is ready", () => {
   assert.equal(canStartImageOcr({ fileType: "image/webp", jobStatus: "cancelled", failureCode: "cancelled", readiness }), true);
   assert.equal(canStartImageOcr({ fileType: "application/pdf", jobStatus: undefined, failureCode: undefined, readiness }), false);
   assert.equal(canStartImageOcr({ fileType: "image/png", jobStatus: "ready_for_ai", failureCode: undefined, readiness }), false);
+  assert.equal(canStartImageOcr({ fileType: "image/png", jobStatus: "failed", failureCode: "corrupt_file", readiness }), false);
+  assert.equal(canStartImageOcr({ fileType: "image/png", jobStatus: "failed", failureCode: "empty_text", readiness }), false);
+  assert.equal(canStartImageOcr({ fileType: "image/png", jobStatus: "failed", failureCode: "ocr_timeout", readiness }), true);
 });
