@@ -1,5 +1,4 @@
-const DB_NAME = "casefind-preview";
-const DB_VERSION = 5;
+import { DB_NAME, DB_VERSION, upgradeDatabaseSchema } from "./storage-schema.js";
 
 function requestResult(request) {
   return new Promise((resolve, reject) => {
@@ -8,39 +7,47 @@ function requestResult(request) {
   });
 }
 
+export class StorageOpenError extends Error {
+  constructor(code, message, cause) {
+    super(message);
+    this.name = "StorageOpenError";
+    this.code = code;
+    this.cause = cause;
+  }
+}
+
 export function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let settled = false;
+    const rejectOnce = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
     request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains("cases")) db.createObjectStore("cases", { keyPath: "id" });
-      if (!db.objectStoreNames.contains("files")) {
-        const store = db.createObjectStore("files", { keyPath: "id" });
-        store.createIndex("caseId", "caseId", { unique: false });
-        store.createIndex("caseHash", ["caseId", "sha256"], { unique: true });
-      }
-      if (!db.objectStoreNames.contains("facts")) {
-        const store = db.createObjectStore("facts", { keyPath: "id" });
-        store.createIndex("caseId", "caseId", { unique: false });
-        store.createIndex("sourceFileId", "sourceFileId", { unique: false });
-      }
-      if (!db.objectStoreNames.contains("suggestions")) {
-        const store = db.createObjectStore("suggestions", { keyPath: "id" });
-        store.createIndex("caseId", "caseId", { unique: false });
-        store.createIndex("fileId", "fileId", { unique: false });
-      }
-      if (!db.objectStoreNames.contains("processing")) {
-        const store = db.createObjectStore("processing", { keyPath: "fileId" });
-        store.createIndex("caseId", "caseId", { unique: false });
-      }
-      if (!db.objectStoreNames.contains("events")) {
-        const store = db.createObjectStore("events", { keyPath: "id" });
-        store.createIndex("caseId", "caseId", { unique: false });
-        store.createIndex("sourceFileId", "sourceFileId", { unique: false });
+      try {
+        upgradeDatabaseSchema(request.result, request.transaction);
+      } catch {
+        request.transaction?.abort();
       }
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onblocked = () => rejectOnce(new StorageOpenError(
+      "upgrade_blocked",
+      "Local storage needs an upgrade, but another CaseFind tab is still using it. Close other CaseFind tabs and try again.",
+    ));
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      if (settled) { db.close(); return; }
+      settled = true;
+      resolve(db);
+    };
+    request.onerror = () => rejectOnce(new StorageOpenError(
+      "open_failed",
+      "Local storage could not be opened safely. Nothing was changed.",
+      request.error,
+    ));
   });
 }
 
