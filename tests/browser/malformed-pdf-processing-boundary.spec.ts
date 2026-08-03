@@ -4,8 +4,9 @@ const malformedPdf = Buffer.from(
   "%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\nThis file is intentionally truncated.",
   "ascii",
 );
+const corruptMessage = "This PDF appears damaged or incomplete. CaseFind did not extract text. The original remains stored locally; replace it with a complete PDF or review it manually.";
 
-test("fails closed for a malformed PDF while preserving the original", async ({ page }) => {
+test("fails permanently for a malformed PDF while preserving the original", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -26,20 +27,15 @@ test("fails closed for a malformed PDF while preserving the original", async ({ 
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible();
 
-  await page.locator("#file-input").setInputFiles({
-    name: "damaged-invoice.pdf",
-    mimeType: "application/pdf",
-    buffer: malformedPdf,
-  });
+  await page.locator("#file-input").setInputFiles({ name: "damaged-invoice.pdf", mimeType: "application/pdf", buffer: malformedPdf });
   const row = page.locator(".file-row", { hasText: "damaged-invoice.pdf" });
   await expect(row).toContainText("Stored locally");
   await expect(row.locator(".processing-status")).toHaveText("Not processed");
   await row.locator(".process-file").click();
 
-  await expect(row.locator(".processing-status")).toHaveText("Failed", { timeout: 30_000 });
-  await expect(row.locator(".processing-note")).not.toHaveText("");
-  await expect(row.locator(".processing-note")).not.toContainText("Text ready");
-  await expect(row.locator(".process-file")).toHaveText("Retry");
+  await expect(row.locator(".processing-status")).toHaveText("Needs attention", { timeout: 30_000 });
+  await expect(row.locator(".processing-note")).toHaveText(corruptMessage);
+  await expect(row.locator(".process-file")).toHaveCount(0);
   await expect(row.locator(".view-extracted-text")).toHaveCount(0);
   await expect(row.locator(".analyze-record")).toHaveCount(0);
 
@@ -55,10 +51,11 @@ test("fails closed for a malformed PDF while preserving the original", async ({ 
 
   await page.reload();
   const persisted = page.locator(".file-row", { hasText: "damaged-invoice.pdf" });
-  await expect(persisted.locator(".processing-status")).toHaveText("Failed");
-  await expect(persisted.locator(".processing-note")).not.toHaveText("");
-  await expect(persisted.locator(".process-file")).toHaveText("Retry");
+  await expect(persisted.locator(".processing-status")).toHaveText("Needs attention");
+  await expect(persisted.locator(".processing-note")).toHaveText(corruptMessage);
+  await expect(persisted.locator(".process-file")).toHaveCount(0);
   await expect(persisted.locator(".view-extracted-text")).toHaveCount(0);
+  await expect(persisted.locator(".analyze-record")).toHaveCount(0);
   await expect(page.locator(".file-row")).toHaveCount(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);

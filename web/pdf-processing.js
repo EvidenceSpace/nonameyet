@@ -1,5 +1,6 @@
 import { loadLocalPdfEngine } from "./pdf-engine.js";
 import { SCANNED_PDF_BASE_MESSAGE } from "./scanned-pdf-recovery.js";
+import { classifyPdfFailure } from "./pdf-failure-recovery.js";
 
 export const PDF_CANCELLED_MESSAGE = "Local PDF text extraction was cancelled.";
 
@@ -56,7 +57,7 @@ export async function processPdf(file, { signal, runtime } = {}) {
     task = pdfjs.getDocument({ data: new Uint8Array(originalBytes), isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
     doc = await abortable(task.promise, signal, destroyTask);
     throwIfAborted(signal);
-    if (doc.numPages > 500) throw new Error("This PDF has more than 500 pages.");
+    if (doc.numPages > 500) throw Object.assign(new Error("This PDF has more than 500 pages."), { code: "too_many_pages" });
     const pages = [];
     let characters = 0;
     for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
@@ -95,7 +96,8 @@ export async function processPdf(file, { signal, runtime } = {}) {
     if (signal?.aborted || error?.name === "AbortError") {
       return { ...base, status: "cancelled", message: PDF_CANCELLED_MESSAGE, failure: { code: "cancelled", retryable: false } };
     }
-    return { ...base, status: "failed", message: error instanceof Error ? error.message : "PDF processing failed." };
+    const failure = classifyPdfFailure(error);
+    return { ...base, status: "failed", message: failure.message, failure: { code: failure.code, retryable: failure.retryable } };
   } finally {
     try { await doc?.destroy?.(); } catch {}
   }

@@ -101,6 +101,7 @@ async function refresh() {
         ? getScannedPdfRecovery({ status, imageOcrAvailable: imageOcrReadiness.available })
         : null;
       const displayedStatus = imageOcrUnavailable ? "ocr_unavailable" : status;
+      const pdfFailureNeedsAttention = file.type === "application/pdf" && status === "failed" && job?.failure?.retryable === false;
 
       let badge = actions.querySelector(".processing-status");
       if (!badge) {
@@ -108,10 +109,11 @@ async function refresh() {
         actions.prepend(badge);
       }
       badge.className = `processing-status ${displayedStatus}`;
-      badge.textContent = scannedPdfRecovery?.label || labels[displayedStatus] || "Not processed";
+      badge.textContent = scannedPdfRecovery?.label || (pdfFailureNeedsAttention ? "Needs attention" : labels[displayedStatus] || "Not processed");
 
       let processButton = actions.querySelector(".process-file");
-      const canProcessPdf = file.type === "application/pdf" && (!job || status === "failed" || status === "cancelled");
+      const canProcessPdf = file.type === "application/pdf"
+        && (!job || status === "cancelled" || (status === "failed" && job?.failure?.retryable !== false));
       const canProcessImage = canStartImageOcr({
         fileType: file.type,
         jobStatus: job && status,
