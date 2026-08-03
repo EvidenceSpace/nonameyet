@@ -11,6 +11,8 @@ The shared browser validator requires:
 5. When source ranges are present, exact contiguous offsets into the combined text.
 6. At most 100 non-empty warnings, with 1,000 characters per warning and 20,000 warning characters in total.
 
+The case workspace applies this complete validator before exposing **View text** or **Find details**. A derivative whose pages appear readable but whose combined text, ranges, warning metadata, adapter provenance, case ownership, or original-file hash is inconsistent is marked failed and can only be regenerated from the preserved original.
+
 Analysis consent is not enough to bypass this boundary. Invalid artifacts are rejected before session or provider traffic. Backup restore also validates ready artifacts and their original-file hash before persistence, preventing malformed or mismatched derivatives from being reintroduced through an encrypted backup.
 
 Original bytes remain authoritative. Rejected derivatives can be regenerated from the preserved local original; they must never be repaired by guessing.

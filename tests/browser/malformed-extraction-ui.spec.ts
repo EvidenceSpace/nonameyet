@@ -7,7 +7,7 @@ const imageBytes = Buffer.from(
 
 const invalidMessage = "Stored extraction is invalid. Process the source again.";
 
-test("blocks malformed derived pages before review or analysis", async ({ page }) => {
+test("blocks an inconsistent artifact even when its pages alone are valid", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -41,12 +41,9 @@ test("blocks malformed derived pages before review or analysis", async ({ page }
       updatedAt: new Date().toISOString(),
       artifact: {
         adapterId: "local-image-ocr",
-        adapterVersion: "1.0.0+malformed-test-1",
-        text: "Conflicting text",
-        pages: [
-          { pageNumber: 1, text: "First value", start: 0, end: 11 },
-          { pageNumber: 1, text: "Conflicting value", start: 12, end: 29 },
-        ],
+        adapterVersion: "1.0.0+malformed-test-2",
+        text: "Conflicting combined text",
+        pages: [{ pageNumber: 1, text: "Individually valid page text", start: 0, end: 28 }],
         warnings: [],
       },
     });
