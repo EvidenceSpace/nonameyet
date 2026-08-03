@@ -5,9 +5,9 @@ const imageBytes = Buffer.from(
   "base64",
 );
 
-const unavailableMessage = "Local image OCR is unavailable in this browser. Your image remains stored locally and was not uploaded.";
+const unavailableMessage = "Local OCR is unavailable before processing begins. This browser does not provide the on-device text detection CaseFind currently requires. The original remains stored locally; review it manually or try a browser or device with on-device text detection.";
 
-test("fails honestly when local image OCR is unavailable and preserves the original", async ({ page }) => {
+test("preflights unavailable local OCR without creating a doomed processing job", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   await page.addInitScript(() => {
@@ -31,19 +31,14 @@ test("fails honestly when local image OCR is unavailable and preserves the origi
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible();
 
-  await page.locator("#file-input").setInputFiles({
-    name: "message.png",
-    mimeType: "image/png",
-    buffer: imageBytes,
-  });
+  await page.locator("#file-input").setInputFiles({ name: "message.png", mimeType: "image/png", buffer: imageBytes });
   const row = page.locator(".file-row", { hasText: "message.png" });
   await expect(row).toContainText("Stored locally");
-  await expect(row.locator(".processing-status")).toHaveText("Not processed");
-  await row.locator(".process-file").click();
-
-  await expect(row.locator(".processing-status")).toHaveText("Failed");
+  await expect(row.locator(".processing-status")).toHaveText("OCR unavailable");
   await expect(row.locator(".processing-note")).toHaveText(unavailableMessage);
-  await expect(row.locator(".process-file")).toHaveText("Retry");
+  await expect(row.locator(".process-file")).toHaveCount(0);
+  await expect(page.locator(".ocr-readiness-notice")).toContainText("Local OCR unavailable");
+  await expect(page.locator(".ocr-readiness-notice")).toContainText("original remains stored locally");
   await expect(row.locator(".view-extracted-text")).toHaveCount(0);
   await expect(row.locator(".analyze-record")).toHaveCount(0);
 
@@ -58,9 +53,9 @@ test("fails honestly when local image OCR is unavailable and preserves the origi
 
   await page.reload();
   const persisted = page.locator(".file-row", { hasText: "message.png" });
-  await expect(persisted.locator(".processing-status")).toHaveText("Failed");
+  await expect(persisted.locator(".processing-status")).toHaveText("OCR unavailable");
   await expect(persisted.locator(".processing-note")).toHaveText(unavailableMessage);
-  await expect(persisted.locator(".process-file")).toHaveText("Retry");
+  await expect(persisted.locator(".process-file")).toHaveCount(0);
   await expect(page.locator(".file-row")).toHaveCount(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
