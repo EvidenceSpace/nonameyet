@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Create a private case — CaseFind</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="intake-draft-lifecycle.css" />
   <script type="module" src="intake.js"></script>
   <script type="module" src="restore-ui.js"></script>
 </head>
@@ -50,6 +51,7 @@
         <div class="privacy-panel"><strong>Explicit uploads only</strong><p>You choose individual screenshots, images, and PDFs. V1 does not request messages, call history, email, contacts, or unrestricted photo-library access.</p></div>
       </section>
       <p class="form-error creation-error" id="creation-error" role="alert" aria-live="assertive" tabindex="-1"></p>
+      <p class="draft-storage-status" id="draft-storage-status" data-state="pristine" aria-live="polite">Nothing has been saved yet. Case creation happens only after the final confirmation.</p>
       <div class="form-actions"><button type="button" class="button-secondary hidden" id="back-button">Back</button><span id="action-spacer"></span><button class="button" id="continue-button" type="submit">Continue <span aria-hidden="true">→</span></button></div>
     </form>
     <section class="created-state hidden" id="created-state" aria-live="polite"><div class="success-mark">✓</div><span class="eyebrow"><span></span> Private draft created</span><h1>Your collection plan is ready.</h1><p>We created the standard unpaid-work collection checklist for <strong id="created-title"></strong>. Your case and files stay in this browser profile.</p><div class="generated-checklist"><div><span>○</span>Project agreement or proposal</div><div><span>○</span>Agreed price and payment schedule</div><div><span>○</span>Invoice</div><div><span>○</span>Proof the work was delivered</div><div><span>○</span>Client approval or feedback</div><div><span>○</span>Payment reminders and responses</div></div><div class="success-actions"><a class="button" id="open-workspace" href="#">Open case workspace <span aria-hidden="true">→</span></a><button class="button-secondary" type="button" id="restart-button">Start another</button></div></section>

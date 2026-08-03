@@ -2,6 +2,7 @@ import { createId, saveCase } from "./storage.js";
 import { validateCaseDetails } from "./case-details-model.js";
 import { buildCaseCreationDraft, describeCaseCreationFailure } from "./intake-creation-model.js";
 import { noteLocalCaseStored } from "./case-history-model.js";
+import { describeIntakeDraftLifecycle, hasMeaningfulIntakeDraft, shouldWarnBeforeIntakeExit } from "./intake-draft-lifecycle.js";
 const form = document.querySelector("#intake-form");
 const summary = document.querySelector("#summary");
 const count = document.querySelector("#summary-count");
@@ -11,9 +12,11 @@ const back = document.querySelector("#back-button");
 const next = document.querySelector("#continue-button");
 const spacer = document.querySelector("#action-spacer");
 const localStorageAck = document.querySelector("#local-storage-ack");
+const draftStatus = document.querySelector("#draft-storage-status");
 let step = 1;
 let creating = false;
 let pendingDraft;
+let creationCompleted = false;
 
 function values() {
   return {
@@ -23,6 +26,20 @@ function values() {
     summary: summary.value,
     goal: document.querySelector('input[name="goal"]:checked')?.value,
   };
+}
+
+function currentDraftHasMeaningfulEntries() {
+  return hasMeaningfulIntakeDraft({ ...values(), acknowledged: localStorageAck.checked });
+}
+
+function updateDraftLifecycle() {
+  const lifecycle = describeIntakeDraftLifecycle({
+    hasDraft: currentDraftHasMeaningfulEntries(),
+    creating,
+    saved: creationCompleted,
+  });
+  draftStatus.dataset.state = lifecycle.state;
+  draftStatus.textContent = lifecycle.message;
 }
 
 function clearCreationError() {
@@ -75,6 +92,13 @@ function updateSummaryCount() {
   count.className = length >= 30 && length <= 4000 ? "valid" : "hint";
 }
 summary.addEventListener("input", updateSummaryCount);
+form.addEventListener("input", updateDraftLifecycle);
+form.addEventListener("change", updateDraftLifecycle);
+window.addEventListener("beforeunload", (event) => {
+  if (!shouldWarnBeforeIntakeExit({ hasDraft: currentDraftHasMeaningfulEntries(), saved: creationCompleted })) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
 
 document.querySelectorAll('input[name="goal"]').forEach((input) => input.addEventListener("change", () => {
   document.querySelectorAll(".goal-card").forEach((card) => card.classList.toggle("selected", card.querySelector("input").checked));
@@ -99,6 +123,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
   creating = true;
+  updateDraftLifecycle();
   form.setAttribute("aria-busy", "true");
   next.disabled = true;
   next.textContent = "Saving on this device…";
@@ -110,6 +135,9 @@ form.addEventListener("submit", async (event) => {
   try {
     await saveCase(pendingDraft);
     noteLocalCaseStored();
+    creationCompleted = true;
+    updateDraftLifecycle();
+    draftStatus.hidden = true;
     form.classList.add("hidden");
     document.querySelector(".intake-aside").classList.add("hidden");
     const created = document.querySelector("#created-state");
@@ -123,10 +151,14 @@ form.addEventListener("submit", async (event) => {
     creating = false;
     form.removeAttribute("aria-busy");
     next.disabled = false;
-    if (!form.classList.contains("hidden") && !creationError.textContent) setCreateLabel();
+    if (!form.classList.contains("hidden")) {
+      updateDraftLifecycle();
+      if (!creationError.textContent) setCreateLabel();
+    }
   }
 });
 back.addEventListener("click", () => { if (!creating) { step = Math.max(1, step - 1); render(); } });
-document.querySelector("#restart-button").addEventListener("click", () => { form.reset(); step = 1; creating = false; pendingDraft = undefined; form.removeAttribute("aria-busy"); next.disabled = false; form.classList.remove("hidden"); document.querySelector(".intake-aside").classList.remove("hidden"); document.querySelector("#created-state").classList.add("hidden"); clearCreationError(); updateSummaryCount(); render(); });
+document.querySelector("#restart-button").addEventListener("click", () => { form.reset(); step = 1; creating = false; creationCompleted = false; pendingDraft = undefined; draftStatus.hidden = false; form.removeAttribute("aria-busy"); next.disabled = false; form.classList.remove("hidden"); document.querySelector(".intake-aside").classList.remove("hidden"); document.querySelector("#created-state").classList.add("hidden"); clearCreationError(); updateSummaryCount(); updateDraftLifecycle(); render(); });
 updateSummaryCount();
+updateDraftLifecycle();
 render();
