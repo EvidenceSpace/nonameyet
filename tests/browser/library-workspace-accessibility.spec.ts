@@ -12,9 +12,13 @@ test("case library supports skip navigation and named dynamic results", async ({
   await expect(page.getByRole("link", { name: "CaseFind home" })).toHaveCount(1);
 });
 
-test("workspace navigation and dialogs expose stable accessible names", async ({ page }) => {
+test("workspace missing-case recovery keeps navigation and dialogs named", async ({ page }) => {
   await page.goto("/case.html?id=missing-accessibility-case");
-  await expect(page.locator("#workspace-error")).toBeVisible();
+  const error = page.locator("#workspace-error");
+  await expect(error).toBeVisible();
+  await expect(error).toHaveAttribute("data-state", "missing");
+  await expect(error.locator('[role="status"]')).toHaveCount(1);
+  await expect(page.locator(".skip-link")).toHaveAttribute("href", "#workspace-error");
   await expect(page.locator('nav[aria-label="Case sections"]')).toHaveCount(1);
   await expect(page.locator('#delete-dialog[aria-labelledby="delete-dialog-title"]')).toHaveCount(1);
   await expect(page.locator('#preview-dialog[aria-labelledby="preview-title"]')).toHaveCount(1);

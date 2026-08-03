@@ -190,14 +190,4 @@ export async function sha256(file) {
 }
 export const createId = (prefix) => `${prefix}_${crypto.randomUUID()}`;
 
-if (location.pathname.endsWith("/case.html")) {
-  import("./processing-ui.js");
-  import("./report-ui.js");
-  import("./backup-ui.js");
-  import("./library-link.js");
-  import("./case-details-ui.js");
-  import("./workspace-delete-ui.js");
-  import("./timeline-ui.js");
-  import("./consistency-ui.js");
-  import("./readiness-ui.js");
-}
+if (location.pathname.endsWith("/case.html")) import("./workspace-bootstrap.js");
