@@ -20,7 +20,7 @@ export function inspectImageOcrReadiness(scope = globalThis) {
   };
 }
 
-const PERMANENT_IMAGE_FAILURE_CODES = new Set(["unsupported_type", "corrupt_file", "file_too_large", "empty_text"]);
+const PERMANENT_IMAGE_FAILURE_CODES = new Set(["unsupported_type", "corrupt_file", "file_too_large", "empty_text", "output_too_large"]);
 
 export function canStartImageOcr({ fileType, jobStatus, failureCode, readiness }) {
   if (!["image/png", "image/jpeg", "image/webp"].includes(fileType)) return false;

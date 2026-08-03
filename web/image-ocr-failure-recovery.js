@@ -3,6 +3,8 @@ export const IMAGE_TOO_LARGE_MESSAGE = "This image exceeds the 10 MB local OCR l
 export const IMAGE_CORRUPT_MESSAGE = "This image appears damaged or does not match its declared format. CaseFind did not run OCR. The original remains stored locally; verify the file and add a valid PNG, JPEG, or WebP copy explicitly.";
 export const IMAGE_ADAPTER_UNAVAILABLE_MESSAGE = "Local image OCR is unavailable in this browser. Your image remains stored locally and was not uploaded.";
 export const IMAGE_EMPTY_TEXT_MESSAGE = "No readable text was found in this image. The original remains stored locally; review it manually or add a clearer image explicitly.";
+export const IMAGE_OUTPUT_TOO_LARGE_MESSAGE = "Local OCR found more text or metadata than CaseFind can safely store. No extracted text was saved. The original remains stored locally; review it manually or add a smaller crop explicitly.";
+export const IMAGE_INVALID_OUTPUT_MESSAGE = "Local OCR returned an invalid result and CaseFind saved no extracted text. The original remains stored locally. Retry once; if it fails again, review the image manually.";
 export const IMAGE_TIMEOUT_MESSAGE = "Local OCR timed out. Your original remains stored locally. Retry when the device is ready.";
 export const IMAGE_TRANSIENT_MESSAGE = "Local image OCR failed safely. The original remains stored locally. Retry once; if it fails again, review the image manually.";
 
@@ -13,6 +15,8 @@ export function classifyImageOcrFailure(error) {
   if (code === "corrupt_file") return { code, retryable: false, message: IMAGE_CORRUPT_MESSAGE };
   if (code === "adapter_unavailable") return { code, retryable: false, message: IMAGE_ADAPTER_UNAVAILABLE_MESSAGE };
   if (code === "empty_text") return { code, retryable: false, message: IMAGE_EMPTY_TEXT_MESSAGE };
+  if (code === "output_too_large") return { code, retryable: false, message: IMAGE_OUTPUT_TOO_LARGE_MESSAGE };
+  if (code === "invalid_output") return { code, retryable: true, message: IMAGE_INVALID_OUTPUT_MESSAGE };
   if (code === "ocr_timeout") return { code, retryable: true, message: IMAGE_TIMEOUT_MESSAGE };
   return { code: code || "transient_error", retryable: true, message: IMAGE_TRANSIENT_MESSAGE };
 }
