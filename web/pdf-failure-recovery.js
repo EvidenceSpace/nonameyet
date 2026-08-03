@@ -6,6 +6,7 @@ export const PDF_TRANSIENT_MESSAGE = "Local PDF extraction failed safely. The or
 export const PDF_FILE_TOO_LARGE_MESSAGE = "This PDF exceeds the 20 MB local processing limit. The original remains stored locally; split out only the pages you need and add those files explicitly.";
 export const PDF_TEXT_LIMIT_MESSAGE = "This PDF contains more than 2,000,000 selectable characters. CaseFind stopped before creating extracted text. The original remains stored locally; split out only the pages you need and add those files explicitly.";
 export const PDF_TIMEOUT_MESSAGE = "Local PDF extraction did not finish within 60 seconds. The original remains stored locally. Retry once; if it times out again, split the PDF into smaller files and add only the pages you need.";
+export const PDF_INVALID_SIGNATURE_MESSAGE = "This file does not contain a valid PDF header. CaseFind did not open it as a PDF or extract text. The original remains stored locally; verify the file format and add a genuine PDF explicitly.";
 
 export function classifyPdfFailure(error) {
   const name = typeof error?.name === "string" ? error.name : "";
@@ -25,6 +26,9 @@ export function classifyPdfFailure(error) {
   }
   if (code === "processing_timeout") {
     return { code, retryable: true, message: PDF_TIMEOUT_MESSAGE };
+  }
+  if (code === "invalid_pdf_signature") {
+    return { code, retryable: false, message: PDF_INVALID_SIGNATURE_MESSAGE };
   }
   if (["InvalidPDFException", "MissingPDFException", "UnexpectedResponseException"].includes(name)
     || /invalid pdf|format error|xref|trailer|corrupt|malformed|truncated|unexpected end/i.test(message)) {

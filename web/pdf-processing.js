@@ -6,9 +6,20 @@ export const PDF_CANCELLED_MESSAGE = "Local PDF text extraction was cancelled.";
 export const MAX_PDF_BYTES = 20 * 1024 * 1024;
 export const MAX_PDF_TEXT_CHARACTERS = 2_000_000;
 export const PDF_PROCESSING_TIMEOUT_MS = 60_000;
+export const PDF_HEADER_SCAN_BYTES = 1024;
 
 function processingError(code, message) {
   return Object.assign(new Error(message), { code });
+}
+
+export function hasPdfHeader(input, scanBytes = PDF_HEADER_SCAN_BYTES) {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const limit = Math.min(bytes.length, scanBytes);
+  for (let index = 0; index <= limit - 5; index += 1) {
+    if (bytes[index] === 0x25 && bytes[index + 1] === 0x50 && bytes[index + 2] === 0x44
+      && bytes[index + 3] === 0x46 && bytes[index + 4] === 0x2d) return true;
+  }
+  return false;
 }
 
 function cancellationError() {
@@ -92,9 +103,11 @@ export async function processPdf(file, {
     const originalBytes = await abortable(file.original.arrayBuffer(), workSignal);
     throwIfAborted(workSignal);
     if (originalBytes.byteLength > maxBytes) throw processingError("file_too_large", "PDF exceeds local byte limit.");
+    const pdfData = new Uint8Array(originalBytes);
+    if (!hasPdfHeader(pdfData)) throw processingError("invalid_pdf_signature", "PDF header is missing.");
     const pdfjs = runtime || await abortable(loadLocalPdfEngine(), workSignal);
     throwIfAborted(workSignal);
-    task = pdfjs.getDocument({ data: new Uint8Array(originalBytes), isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
+    task = pdfjs.getDocument({ data: pdfData, isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
     doc = await abortable(task.promise, workSignal, destroyTask);
     throwIfAborted(workSignal);
     if (doc.numPages > 500) throw processingError("too_many_pages", "This PDF has more than 500 pages.");

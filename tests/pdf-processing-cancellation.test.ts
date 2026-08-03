@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { PDF_CANCELLED_MESSAGE, processPdf } from "../web/pdf-processing.js";
 
-function file(arrayBuffer = async () => new ArrayBuffer(8)) {
+function pdfBytes(size = 8) {
+  const bytes = new Uint8Array(Math.max(size, 8));
+  bytes.set([0x25, 0x50, 0x44, 0x46, 0x2d]);
+  return bytes.buffer;
+}
+
+function file(arrayBuffer = async () => pdfBytes()) {
   return { id: "pdf-1", caseId: "case-1", sha256: "a".repeat(64), original: { arrayBuffer } };
 }
 

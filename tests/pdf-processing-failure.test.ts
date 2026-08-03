@@ -3,7 +3,9 @@ import test from "node:test";
 import { processPdf } from "../web/pdf-processing.js";
 import { PDF_CORRUPT_MESSAGE, PDF_PASSWORD_MESSAGE, PDF_TRANSIENT_MESSAGE } from "../web/pdf-failure-recovery.js";
 
-const file = { id: "pdf-1", caseId: "case-1", sha256: "a".repeat(64), original: { arrayBuffer: async () => new ArrayBuffer(8) } };
+const bytes = new Uint8Array(8);
+bytes.set([0x25, 0x50, 0x44, 0x46, 0x2d]);
+const file = { id: "pdf-1", caseId: "case-1", sha256: "a".repeat(64), original: { arrayBuffer: async () => bytes.buffer } };
 
 function runtimeFailure(name: string, message: string) {
   return {

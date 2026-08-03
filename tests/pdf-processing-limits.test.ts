@@ -3,6 +3,12 @@ import test from "node:test";
 import { processPdf } from "../web/pdf-processing.js";
 import { PDF_FILE_TOO_LARGE_MESSAGE, PDF_TEXT_LIMIT_MESSAGE, PDF_TIMEOUT_MESSAGE } from "../web/pdf-failure-recovery.js";
 
+function pdfBytes(size = 8) {
+  const bytes = new Uint8Array(Math.max(size, 8));
+  bytes.set([0x25, 0x50, 0x44, 0x46, 0x2d]);
+  return bytes.buffer;
+}
+
 function source(arrayBuffer: () => Promise<ArrayBuffer>, size?: number) {
   return { id: "pdf-1", caseId: "case-1", sha256: "a".repeat(64), original: { arrayBuffer, size } };
 }
@@ -47,7 +53,7 @@ test("rejects oversized stored bytes before starting PDF.js", async () => {
 
 test("stops at the selectable-text cap and cleans resources", async () => {
   const fixture = documentWithText("12345678901");
-  const result = await processPdf(source(async () => new ArrayBuffer(8)), {
+  const result = await processPdf(source(async () => pdfBytes()), {
     maxTextCharacters: 10,
     runtime: { version: "test", getDocument: () => ({ promise: Promise.resolve(fixture.document) }) },
   });
@@ -59,7 +65,7 @@ test("stops at the selectable-text cap and cleans resources", async () => {
 
 test("times out stalled PDF.js work, destroys the task, and remains retryable", async () => {
   let taskDestroys = 0;
-  const result = await processPdf(source(async () => new ArrayBuffer(8)), {
+  const result = await processPdf(source(async () => pdfBytes()), {
     timeoutMs: 5,
     runtime: { getDocument: () => ({ promise: new Promise(() => {}), destroy() { taskDestroys += 1; } }) },
   });
@@ -71,7 +77,7 @@ test("times out stalled PDF.js work, destroys the task, and remains retryable", 
 
 test("keeps normal extraction below all limits", async () => {
   const fixture = documentWithText("Invoice total 5,000 remains unpaid.");
-  const result = await processPdf(source(async () => new ArrayBuffer(8)), {
+  const result = await processPdf(source(async () => pdfBytes()), {
     maxBytes: 8,
     maxTextCharacters: 100,
     timeoutMs: 100,
