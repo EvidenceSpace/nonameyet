@@ -228,7 +228,7 @@ async function run(file) {
   });
   await refresh();
   try {
-    await saveProcessing(isPdf ? await processPdf(file) : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime }));
+    await saveProcessing(isPdf ? await processPdf(file, { signal: controller.signal }) : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime }));
   } finally {
     controllers.delete(file.id);
   }
