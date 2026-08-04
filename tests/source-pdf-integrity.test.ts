@@ -22,24 +22,32 @@ test("selectable text overflow fails closed and cleans parser resources", async 
   let documentDestroyed = false;
   const overflowRuntime: PdfJsRuntime = {
     getDocument() {
-      return {
-        promise: Promise.resolve({
-          numPages: 1,
-          getPage: async () => ({
-            getTextContent: async () => ({ items: [{ str: "abcdef" }] }),
-            cleanup: () => { pageCleaned = true; },
-          }),
-          cleanup: () => { documentCleaned = true; },
-          destroy: () => { documentDestroyed = true; },
-        }),
-      };
+      return { promise: Promise.resolve({
+        numPages: 1,
+        getPage: async () => ({ getTextContent: async () => ({ items: [{ str: "abcdef" }] }), cleanup: () => { pageCleaned = true; } }),
+        cleanup: () => { documentCleaned = true; },
+        destroy: () => { documentDestroyed = true; },
+      }) };
     },
   };
-  await assert.rejects(
-    () => createPdfJsTextAdapter(overflowRuntime, { maxTextCharacters: 5 }).extract(file(), {}),
-    (error: any) => error.name === "ExtractionOutputError" && error.code === "output_too_large",
-  );
+  await assert.rejects(() => createPdfJsTextAdapter(overflowRuntime, { maxTextCharacters: 5 }).extract(file(), {}), (error: any) => error.name === "ExtractionOutputError" && error.code === "output_too_large");
   assert.equal(pageCleaned, true);
   assert.equal(documentCleaned, true);
   assert.equal(documentDestroyed, true);
+});
+
+test("parser timeout returns promptly and destroys a hung loading task", async () => {
+  let destroyed = false;
+  const hungRuntime: PdfJsRuntime = {
+    getDocument() {
+      return { promise: new Promise(() => {}), destroy: () => { destroyed = true; } };
+    },
+  };
+  const startedAt = Date.now();
+  await assert.rejects(
+    () => createPdfJsTextAdapter(hungRuntime, { timeoutMs: 10 }).extract(file(), {}),
+    (error: any) => error.code === "transient_error" && error.retryable === true && /timed out/i.test(error.message),
+  );
+  assert.equal(destroyed, true);
+  assert.ok(Date.now() - startedAt < 250);
 });

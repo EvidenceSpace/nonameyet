@@ -9,42 +9,25 @@ export const DEFAULT_MAX_PDF_BYTES = 20 * 1024 * 1024;
 export const DEFAULT_MAX_PDF_PAGES = 500;
 export const DEFAULT_MIN_PDF_TEXT_CHARACTERS = 20;
 export const DEFAULT_MAX_PDF_TEXT_CHARACTERS = 500_000;
+export const DEFAULT_PDF_PROCESSING_TIMEOUT_MS = 60_000;
 export const PDF_HEADER_SCAN_BYTES = 1024;
 
-export interface BinaryFileDescriptor extends FileDescriptor {
-  readBytes(): Promise<Uint8Array>;
-}
+export interface BinaryFileDescriptor extends FileDescriptor { readBytes(): Promise<Uint8Array> }
 export interface PdfJsTextItem { str?: string; hasEOL?: boolean }
 export interface PdfJsTextContent { items: PdfJsTextItem[] }
-export interface PdfJsPage {
-  getTextContent(options?: Record<string, unknown>): Promise<PdfJsTextContent>;
-  cleanup?(): void;
-}
-export interface PdfJsDocument {
-  numPages: number;
-  getPage(pageNumber: number): Promise<PdfJsPage>;
-  cleanup?(): void;
-  destroy?(): Promise<void> | void;
-}
-export interface PdfJsLoadingTask {
-  promise: Promise<PdfJsDocument>;
-  destroy?(): Promise<void> | void;
-}
+export interface PdfJsPage { getTextContent(options?: Record<string, unknown>): Promise<PdfJsTextContent>; cleanup?(): void }
+export interface PdfJsDocument { numPages: number; getPage(pageNumber: number): Promise<PdfJsPage>; cleanup?(): void; destroy?(): Promise<void> | void }
+export interface PdfJsLoadingTask { promise: Promise<PdfJsDocument>; destroy?(): Promise<void> | void }
 export interface PdfJsRuntime {
   version?: string;
-  getDocument(options: {
-    data: Uint8Array;
-    isEvalSupported: false;
-    useWorkerFetch: false;
-    useSystemFonts: true;
-    stopAtErrors: true;
-  }): PdfJsLoadingTask;
+  getDocument(options: { data: Uint8Array; isEvalSupported: false; useWorkerFetch: false; useSystemFonts: true; stopAtErrors: true }): PdfJsLoadingTask;
 }
 export interface PdfJsAdapterOptions {
   maxBytes?: number;
   maxPages?: number;
   minTextCharacters?: number;
   maxTextCharacters?: number;
+  timeoutMs?: number;
   cryptoImpl?: Sha256Crypto;
 }
 
@@ -60,11 +43,7 @@ function hasPdfHeader(bytes: Uint8Array): boolean {
 }
 function integrityFailure(error: OriginalIntegrityError): ProcessingAdapterError {
   const retryable = error.code === "hash_unavailable";
-  return new ProcessingAdapterError(
-    retryable ? "SHA-256 verification is unavailable in this session." : "The stored PDF bytes do not match their recorded SHA-256 provenance.",
-    retryable ? "adapter_unavailable" : "corrupt_file",
-    retryable,
-  );
+  return new ProcessingAdapterError(retryable ? "SHA-256 verification is unavailable in this session." : "The stored PDF bytes do not match their recorded SHA-256 provenance.", retryable ? "adapter_unavailable" : "corrupt_file", retryable);
 }
 function textFromItems(items: readonly PdfJsTextItem[]): string {
   let text = "";
@@ -78,6 +57,49 @@ function textFromItems(items: readonly PdfJsTextItem[]): string {
     if (item.hasEOL && !text.endsWith("\n")) text += "\n";
   }
   return text;
+}
+function cancellationError(): DOMException {
+  return new DOMException("PDF extraction was cancelled.", "AbortError");
+}
+function abortable<T>(operation: Promise<T>, signal: AbortSignal, onAbort?: () => void): Promise<T> {
+  if (signal.aborted) {
+    onAbort?.();
+    return Promise.reject(cancellationError());
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (handler: (value: any) => void, value: any) => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener("abort", handleAbort);
+      handler(value);
+    };
+    const handleAbort = () => {
+      try { onAbort?.(); } catch {}
+      finish(reject, cancellationError());
+    };
+    signal.addEventListener("abort", handleAbort, { once: true });
+    operation.then(value => finish(resolve, value), error => finish(reject, error));
+  });
+}
+function createDeadlineSignal(signal: AbortSignal | undefined, timeoutMs: number) {
+  const controller = new AbortController();
+  let timedOut = false;
+  const forwardAbort = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  else signal?.addEventListener("abort", forwardAbort, { once: true });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  return {
+    signal: controller.signal,
+    timedOut: () => timedOut,
+    cleanup() {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", forwardAbort);
+    },
+  };
 }
 function classifyPdfError(error: unknown): ProcessingAdapterError {
   const name = error instanceof Error ? error.name : "";
@@ -93,6 +115,7 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
   const maxPages = options.maxPages ?? DEFAULT_MAX_PDF_PAGES;
   const minTextCharacters = options.minTextCharacters ?? DEFAULT_MIN_PDF_TEXT_CHARACTERS;
   const maxTextCharacters = options.maxTextCharacters ?? DEFAULT_MAX_PDF_TEXT_CHARACTERS;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_PDF_PROCESSING_TIMEOUT_MS;
   return {
     id: PDFJS_ADAPTER_ID,
     version: `${PDFJS_ADAPTER_VERSION}+pdfjs-${runtime.version ?? "unknown"}`,
@@ -100,9 +123,9 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
     async extract(file, context): Promise<AdapterExtractionResult> {
       if (!isBinaryFile(file)) throw new ProcessingAdapterError("The PDF adapter requires access to the original local bytes.", "adapter_unavailable", false);
       if (file.size > maxBytes) throw new ProcessingAdapterError(`The PDF exceeds the ${Math.floor(maxBytes / 1024 / 1024)} MB processing limit.`, "file_too_large", false);
-      if (context.signal?.aborted) throw new DOMException("PDF extraction was cancelled.", "AbortError");
+      if (context.signal?.aborted) throw cancellationError();
       const bytes = await file.readBytes();
-      if (context.signal?.aborted) throw new DOMException("PDF extraction was cancelled.", "AbortError");
+      if (context.signal?.aborted) throw cancellationError();
       if (bytes.byteLength !== file.size) throw new ProcessingAdapterError("The stored PDF size no longer matches its file record.", "corrupt_file", false);
       if (!hasPdfHeader(bytes)) throw new ProcessingAdapterError("The original bytes do not contain a valid PDF signature.", "corrupt_file", false);
       try {
@@ -111,13 +134,14 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         if (error instanceof OriginalIntegrityError) throw integrityFailure(error);
         throw error;
       }
-      if (context.signal?.aborted) throw new DOMException("PDF extraction was cancelled.", "AbortError");
+      if (context.signal?.aborted) throw cancellationError();
+      const deadline = createDeadlineSignal(context.signal, timeoutMs);
+      const workSignal = deadline.signal;
       const loadingTask = runtime.getDocument({ data: bytes, isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
       const abort = () => { void loadingTask.destroy?.(); };
-      context.signal?.addEventListener("abort", abort, { once: true });
       let document: PdfJsDocument | undefined;
       try {
-        document = await loadingTask.promise;
+        document = await abortable(loadingTask.promise, workSignal, abort);
         if (document.numPages < 1 || !Number.isInteger(document.numPages)) throw new ProcessingAdapterError("The PDF does not contain a valid page count.", "corrupt_file", false);
         if (document.numPages > maxPages) throw new ProcessingAdapterError(`The PDF has more than ${maxPages} pages. Split it into smaller records.`, "too_many_pages", false);
         const pages: Array<{ pageNumber: number; text: string }> = [];
@@ -125,15 +149,13 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         let readableCharacters = 0;
         let extractedCharacters = 0;
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-          if (context.signal?.aborted) throw new DOMException("PDF extraction was cancelled.", "AbortError");
-          const page = await document.getPage(pageNumber);
+          if (workSignal.aborted) throw cancellationError();
+          const page = await abortable(document.getPage(pageNumber), workSignal, abort);
           try {
-            const content = await page.getTextContent({ disableNormalization: false, includeMarkedContent: false });
+            const content = await abortable(page.getTextContent({ disableNormalization: false, includeMarkedContent: false }), workSignal, abort);
             const text = textFromItems(content.items);
             extractedCharacters += text.length;
-            if (extractedCharacters > maxTextCharacters) {
-              throw new ExtractionOutputError(`Extracted PDF text exceeds ${maxTextCharacters} characters.`, "output_too_large");
-            }
+            if (extractedCharacters > maxTextCharacters) throw new ExtractionOutputError(`Extracted PDF text exceeds ${maxTextCharacters} characters.`, "output_too_large");
             readableCharacters += text.replace(/\s/g, "").length;
             if (!text.trim()) warnings.push(`Page ${pageNumber} has no readable text layer.`);
             pages.push({ pageNumber, text });
@@ -144,11 +166,13 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         if (readableCharacters < minTextCharacters) return { kind: "needs_ocr", reason: "The PDF contains too little selectable text for reliable extraction.", warnings };
         return { kind: "text", pages, warnings };
       } catch (error) {
-        if (context.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
+        if (context.signal?.aborted) throw cancellationError();
+        if (deadline.timedOut()) throw new ProcessingAdapterError("Local PDF text extraction timed out.", "transient_error", true);
+        if (error instanceof Error && error.name === "AbortError") throw error;
         if (error instanceof ProcessingAdapterError || error instanceof ExtractionOutputError) throw error;
         throw classifyPdfError(error);
       } finally {
-        context.signal?.removeEventListener("abort", abort);
+        deadline.cleanup();
         document?.cleanup?.();
         await document?.destroy?.();
       }
