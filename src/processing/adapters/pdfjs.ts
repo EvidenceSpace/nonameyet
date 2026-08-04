@@ -11,6 +11,7 @@ export const DEFAULT_MIN_PDF_TEXT_CHARACTERS = 20;
 export const DEFAULT_MAX_PDF_TEXT_CHARACTERS = 500_000;
 export const DEFAULT_PDF_PROCESSING_TIMEOUT_MS = 60_000;
 export const PDF_HEADER_SCAN_BYTES = 1024;
+export const MAX_PDF_WARNING_PAGE_REFERENCES = 20;
 
 export interface BinaryFileDescriptor extends FileDescriptor { readBytes(): Promise<Uint8Array> }
 export interface PdfJsTextItem { str?: string; hasEOL?: boolean }
@@ -57,6 +58,14 @@ function textFromItems(items: readonly PdfJsTextItem[]): string {
     if (item.hasEOL && !text.endsWith("\n")) text += "\n";
   }
   return text;
+}
+function noTextLayerWarnings(pageNumbers: readonly number[]): string[] {
+  if (pageNumbers.length === 0) return [];
+  if (pageNumbers.length === 1) return [`Page ${pageNumbers[0]} has no readable text layer.`];
+  const sample = pageNumbers.slice(0, MAX_PDF_WARNING_PAGE_REFERENCES).join(", ");
+  const remaining = pageNumbers.length - MAX_PDF_WARNING_PAGE_REFERENCES;
+  const suffix = remaining > 0 ? `, and ${remaining} more` : "";
+  return [`${pageNumbers.length} pages have no readable text layer (${sample}${suffix}).`];
 }
 function cancellationError(): DOMException {
   return new DOMException("PDF extraction was cancelled.", "AbortError");
@@ -145,7 +154,7 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         if (document.numPages < 1 || !Number.isInteger(document.numPages)) throw new ProcessingAdapterError("The PDF does not contain a valid page count.", "corrupt_file", false);
         if (document.numPages > maxPages) throw new ProcessingAdapterError(`The PDF has more than ${maxPages} pages. Split it into smaller records.`, "too_many_pages", false);
         const pages: Array<{ pageNumber: number; text: string }> = [];
-        const warnings: string[] = [];
+        const pagesWithoutText: number[] = [];
         let readableCharacters = 0;
         let extractedCharacters = 0;
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
@@ -157,12 +166,13 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
             extractedCharacters += text.length;
             if (extractedCharacters > maxTextCharacters) throw new ExtractionOutputError(`Extracted PDF text exceeds ${maxTextCharacters} characters.`, "output_too_large");
             readableCharacters += text.replace(/\s/g, "").length;
-            if (!text.trim()) warnings.push(`Page ${pageNumber} has no readable text layer.`);
+            if (!text.trim()) pagesWithoutText.push(pageNumber);
             pages.push({ pageNumber, text });
           } finally {
             page.cleanup?.();
           }
         }
+        const warnings = noTextLayerWarnings(pagesWithoutText);
         if (readableCharacters < minTextCharacters) return { kind: "needs_ocr", reason: "The PDF contains too little selectable text for reliable extraction.", warnings };
         return { kind: "text", pages, warnings };
       } catch (error) {
