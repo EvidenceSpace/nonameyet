@@ -17,7 +17,8 @@
     "benchmark:extraction": "tsx scripts/build-extraction-benchmark.ts",
     "benchmark:compare": "tsx scripts/compare-extraction-benchmarks.ts",
     "check:dependencies": "node scripts/check-dependency-policy.mjs",
-    "check": "npm run check:dependencies && npm run typecheck && npm test"
+    "check:workflow-actions": "node scripts/check-workflow-action-pins.mjs",
+    "check": "npm run check:dependencies && npm run check:workflow-actions && npm run typecheck && npm test"
   },
   "dependencies": {
     "pdfjs-dist": "4.10.38"
