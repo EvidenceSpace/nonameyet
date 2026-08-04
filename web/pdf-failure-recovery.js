@@ -17,13 +17,27 @@ export function classifyPdfFailure(error) {
   if (name === "PasswordException" || /password (?:is )?(?:required|protected)/i.test(message)) {
     return { code: "password_protected", retryable: false, message: PDF_PASSWORD_MESSAGE };
   }
-  if (code === "too_many_pages") return { code, retryable: false, message: PDF_TOO_MANY_PAGES_MESSAGE };
-  if (code === "file_too_large") return { code, retryable: false, message: PDF_FILE_TOO_LARGE_MESSAGE };
-  if (code === "text_limit_exceeded") return { code, retryable: false, message: PDF_TEXT_LIMIT_MESSAGE };
-  if (code === "processing_timeout") return { code, retryable: true, message: PDF_TIMEOUT_MESSAGE };
-  if (code === "invalid_pdf_signature") return { code, retryable: false, message: PDF_INVALID_SIGNATURE_MESSAGE };
-  if (code === "original_hash_mismatch" || code === "invalid_original_hash") return { code, retryable: false, message: PDF_HASH_MISMATCH_MESSAGE };
-  if (code === "hash_unavailable") return { code, retryable: true, message: PDF_HASH_UNAVAILABLE_MESSAGE };
+  if (code === "too_many_pages") {
+    return { code, retryable: false, message: PDF_TOO_MANY_PAGES_MESSAGE };
+  }
+  if (code === "file_too_large") {
+    return { code, retryable: false, message: PDF_FILE_TOO_LARGE_MESSAGE };
+  }
+  if (code === "text_limit_exceeded") {
+    return { code, retryable: false, message: PDF_TEXT_LIMIT_MESSAGE };
+  }
+  if (code === "processing_timeout") {
+    return { code, retryable: true, message: PDF_TIMEOUT_MESSAGE };
+  }
+  if (code === "invalid_pdf_signature") {
+    return { code, retryable: false, message: PDF_INVALID_SIGNATURE_MESSAGE };
+  }
+  if (code === "original_hash_mismatch" || code === "invalid_original_hash") {
+    return { code, retryable: false, message: PDF_HASH_MISMATCH_MESSAGE };
+  }
+  if (code === "hash_unavailable") {
+    return { code, retryable: true, message: PDF_HASH_UNAVAILABLE_MESSAGE };
+  }
   if (["InvalidPDFException", "MissingPDFException", "UnexpectedResponseException"].includes(name)
     || /invalid pdf|format error|xref|trailer|corrupt|malformed|truncated|unexpected end/i.test(message)) {
     return { code: "corrupt_file", retryable: false, message: PDF_CORRUPT_MESSAGE };

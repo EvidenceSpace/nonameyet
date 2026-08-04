@@ -19,20 +19,43 @@ function detectMimeType(bytes) {
   if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "image/webp";
 }
 function normalizeText(value) { return value.normalize("NFKC").replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").split("\n").map((line) => line.replace(/[ \t]+$/g, "")).join("\n").trim(); }
+
 function abortable(operation, signal) {
   if (signal?.aborted) return Promise.reject(new DOMException("cancelled", "AbortError"));
-  return new Promise((resolve, reject) => { let settled = false; const finish = (handler, value) => { if (settled) return; settled = true; signal?.removeEventListener("abort", onAbort); handler(value); }; const onAbort = () => finish(reject, new DOMException("cancelled", "AbortError")); signal?.addEventListener("abort", onAbort, { once: true }); Promise.resolve(operation).then((value) => finish(resolve, value), (error) => finish(reject, error)); });
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (handler, value) => { if (settled) return; settled = true; signal?.removeEventListener("abort", onAbort); handler(value); };
+    const onAbort = () => finish(reject, new DOMException("cancelled", "AbortError"));
+    signal?.addEventListener("abort", onAbort, { once: true });
+    Promise.resolve(operation).then((value) => finish(resolve, value), (error) => finish(reject, error));
+  });
 }
+
 function bounded(operation, signal, timeoutMs) {
-  return new Promise((resolve, reject) => { let settled = false; const workController = new AbortController(); let timer; const finish = (handler, value) => { if (settled) return; settled = true; clearTimeout(timer); signal?.removeEventListener("abort", onAbort); handler(value); }; const onAbort = () => { workController.abort(); finish(reject, new DOMException("cancelled", "AbortError")); }; timer = setTimeout(() => { workController.abort(); finish(reject, codedError("Local OCR timed out.", "ocr_timeout")); }, timeoutMs); if (signal?.aborted) return onAbort(); signal?.addEventListener("abort", onAbort, { once: true }); Promise.resolve().then(() => operation(workController.signal)).then((value) => finish(resolve, value), (error) => finish(reject, error)); });
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const workController = new AbortController();
+    let timer;
+    const finish = (handler, value) => { if (settled) return; settled = true; clearTimeout(timer); signal?.removeEventListener("abort", onAbort); handler(value); };
+    const onAbort = () => { workController.abort(); finish(reject, new DOMException("cancelled", "AbortError")); };
+    timer = setTimeout(() => { workController.abort(); finish(reject, codedError("Local OCR timed out.", "ocr_timeout")); }, timeoutMs);
+    if (signal?.aborted) return onAbort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    Promise.resolve().then(() => operation(workController.signal)).then((value) => finish(resolve, value), (error) => finish(reject, error));
+  });
 }
+
 function validateWarnings(value) {
   if (value === undefined) return [];
   if (!Array.isArray(value)) throw codedError("OCR warnings are invalid.", "invalid_output");
   if (value.length > MAX_IMAGE_OCR_WARNINGS) throw codedError("OCR returned too many warnings.", "output_too_large");
-  for (const warning of value) { if (typeof warning !== "string" || !warning.trim()) throw codedError("OCR warnings are invalid.", "invalid_output"); if (warning.length > MAX_IMAGE_OCR_WARNING_LENGTH) throw codedError("OCR warning output is too large.", "output_too_large"); }
+  for (const warning of value) {
+    if (typeof warning !== "string" || !warning.trim()) throw codedError("OCR warnings are invalid.", "invalid_output");
+    if (warning.length > MAX_IMAGE_OCR_WARNING_LENGTH) throw codedError("OCR warning output is too large.", "output_too_large");
+  }
   return [...value];
 }
+
 export function browserTextDetectorRuntime(scope = globalThis) {
   if (typeof scope.TextDetector !== "function" || typeof scope.createImageBitmap !== "function") return null;
   return { id: "text-detector", version: "1", async recognize({ bytes, mimeType, signal }) {
@@ -47,7 +70,11 @@ export function browserTextDetectorRuntime(scope = globalThis) {
       if (!Array.isArray(blocks)) throw codedError("OCR blocks are invalid.", "invalid_output");
       if (blocks.length > MAX_IMAGE_OCR_BLOCKS) throw codedError("OCR returned too many text blocks.", "output_too_large");
       let characters = 0;
-      for (const block of blocks) { if (!block || (block.rawValue !== undefined && typeof block.rawValue !== "string")) throw codedError("OCR block text is invalid.", "invalid_output"); characters += block.rawValue?.length || 0; if (characters > MAX_IMAGE_OCR_CHARACTERS) throw codedError("OCR text exceeds the safe limit.", "output_too_large"); }
+      for (const block of blocks) {
+        if (!block || (block.rawValue !== undefined && typeof block.rawValue !== "string")) throw codedError("OCR block text is invalid.", "invalid_output");
+        characters += block.rawValue?.length || 0;
+        if (characters > MAX_IMAGE_OCR_CHARACTERS) throw codedError("OCR text exceeds the safe limit.", "output_too_large");
+      }
       blocks.sort((a, b) => (a.boundingBox?.y || 0) - (b.boundingBox?.y || 0) || (a.boundingBox?.x || 0) - (b.boundingBox?.x || 0));
       const confidences = blocks.map((block) => block.confidence).filter((value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1);
       const confidence = confidences.length ? confidences.reduce((sum, value) => sum + value, 0) / confidences.length : undefined;
@@ -55,6 +82,7 @@ export function browserTextDetectorRuntime(scope = globalThis) {
     } finally { bitmap.close?.(); }
   } };
 }
+
 export async function processImage(file, { signal, runtime = browserTextDetectorRuntime(), timeoutMs = IMAGE_OCR_TIMEOUT_MS, cryptoImpl = globalThis.crypto } = {}) {
   const common = base(file);
   try {
@@ -74,8 +102,16 @@ export async function processImage(file, { signal, runtime = browserTextDetector
     if (!Number.isInteger(result.width) || !Number.isInteger(result.height) || result.width < 1 || result.height < 1) throw codedError("Invalid OCR dimensions.", "corrupt_file");
     if (result.width > MAX_IMAGE_OCR_EDGE || result.height > MAX_IMAGE_OCR_EDGE || result.width * result.height > MAX_IMAGE_OCR_PIXELS) throw codedError("Image dimensions exceed the limit.", "file_too_large");
     if (result.text.length > MAX_IMAGE_OCR_CHARACTERS) throw codedError("OCR text exceeds the safe limit.", "output_too_large");
-    const text = normalizeText(result.text); if (text.length > MAX_IMAGE_OCR_CHARACTERS) throw codedError("Normalized OCR text exceeds the safe limit.", "output_too_large"); if (!text) throw codedError("OCR returned empty text.", "empty_text");
-    const quality = buildImageOcrQuality(result.confidence); const warnings = validateWarnings(result.warnings); if (quality.warning && !warnings.includes(quality.warning)) warnings.push(quality.warning);
+    const text = normalizeText(result.text);
+    if (text.length > MAX_IMAGE_OCR_CHARACTERS) throw codedError("Normalized OCR text exceeds the safe limit.", "output_too_large");
+    if (!text) throw codedError("OCR returned empty text.", "empty_text");
+    const quality = buildImageOcrQuality(result.confidence);
+    const warnings = validateWarnings(result.warnings);
+    if (quality.warning && !warnings.includes(quality.warning)) warnings.push(quality.warning);
     return { ...common, status: "ready_for_ai", message: "Local OCR text is ready for review.", artifact: { adapterId: "local-image-ocr", adapterVersion: `1.0.0+${runtime.id}-${runtime.version}`, pages: [{ pageNumber: 1, text, start: 0, end: text.length }], text, warnings, quality } };
-  } catch (error) { if (signal?.aborted || error?.name === "AbortError") return { ...common, status: "cancelled", message: "Local OCR was cancelled.", failure: { code: "cancelled", retryable: false } }; const failure = classifyImageOcrFailure(error); return { ...common, status: "failed", message: failure.message, failure: { code: failure.code, retryable: failure.retryable } }; }
+  } catch (error) {
+    if (signal?.aborted || error?.name === "AbortError") return { ...common, status: "cancelled", message: "Local OCR was cancelled.", failure: { code: "cancelled", retryable: false } };
+    const failure = classifyImageOcrFailure(error);
+    return { ...common, status: "failed", message: failure.message, failure: { code: failure.code, retryable: failure.retryable } };
+  }
 }
