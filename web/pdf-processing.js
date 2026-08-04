@@ -1,4 +1,5 @@
 import { loadLocalPdfEngine } from "./pdf-engine.js";
+import { buildPdfPageCoverageWarnings } from "./pdf-page-coverage.js";
 import { SCANNED_PDF_BASE_MESSAGE } from "./scanned-pdf-recovery.js";
 import { classifyPdfFailure } from "./pdf-failure-recovery.js";
 import { assertOriginalBytesMatchHash } from "./original-byte-integrity.js";
@@ -17,8 +18,11 @@ export function hasPdfHeader(input, scanBytes = PDF_HEADER_SCAN_BYTES) {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   const limit = Math.min(bytes.length, scanBytes);
   for (let index = 0; index <= limit - 5; index += 1) {
-    if (bytes[index] === 0x25 && bytes[index + 1] === 0x50 && bytes[index + 2] === 0x44
-      && bytes[index + 3] === 0x46 && bytes[index + 4] === 0x2d) return true;
+    if (bytes[index] === 0x25
+      && bytes[index + 1] === 0x50
+      && bytes[index + 2] === 0x44
+      && bytes[index + 3] === 0x46
+      && bytes[index + 4] === 0x2d) return true;
   }
   return false;
 }
@@ -50,10 +54,7 @@ function abortable(operation, signal, onAbort) {
       finish(reject, cancellationError());
     };
     signal.addEventListener("abort", handleAbort, { once: true });
-    Promise.resolve(operation).then(
-      (value) => finish(resolve, value),
-      (error) => finish(reject, error),
-    );
+    Promise.resolve(operation).then(value => finish(resolve, value), error => finish(reject, error));
   });
 }
 
@@ -104,18 +105,31 @@ export async function processPdf(file, {
     }
     const originalBytes = await abortable(file.original.arrayBuffer(), workSignal);
     throwIfAborted(workSignal);
-    if (originalBytes.byteLength > maxBytes) throw processingError("file_too_large", "PDF exceeds local byte limit.");
+    if (originalBytes.byteLength > maxBytes) {
+      throw processingError("file_too_large", "PDF exceeds local byte limit.");
+    }
     const pdfData = new Uint8Array(originalBytes);
-    if (!hasPdfHeader(pdfData)) throw processingError("invalid_pdf_signature", "PDF header is missing.");
+    if (!hasPdfHeader(pdfData)) {
+      throw processingError("invalid_pdf_signature", "PDF header is missing.");
+    }
     await abortable(assertOriginalBytesMatchHash(pdfData, file.sha256, { cryptoImpl }), workSignal);
     throwIfAborted(workSignal);
     const pdfjs = runtime || await abortable(loadLocalPdfEngine(), workSignal);
     throwIfAborted(workSignal);
-    task = pdfjs.getDocument({ data: pdfData, isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
+    task = pdfjs.getDocument({
+      data: pdfData,
+      isEvalSupported: false,
+      useWorkerFetch: false,
+      useSystemFonts: true,
+      stopAtErrors: true,
+    });
     doc = await abortable(task.promise, workSignal, destroyTask);
     throwIfAborted(workSignal);
-    if (doc.numPages > 500) throw processingError("too_many_pages", "This PDF has more than 500 pages.");
+    if (doc.numPages > 500) {
+      throw processingError("too_many_pages", "This PDF has more than 500 pages.");
+    }
     const pages = [];
+    const pagesWithoutText = [];
     let readableCharacters = 0;
     let extractedCharacters = 0;
     for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
@@ -136,22 +150,31 @@ export async function processPdf(file, {
           text += separator + item.str + ending;
         }
         readableCharacters += text.replace(/\s/g, "").length;
+        if (!text.trim()) pagesWithoutText.push(pageNumber);
         pages.push({ pageNumber, text });
       } finally {
         page.cleanup?.();
       }
     }
     throwIfAborted(workSignal);
-    if (readableCharacters < 20) return { ...base, status: "needs_ocr", message: SCANNED_PDF_BASE_MESSAGE, pages: [] };
+    if (readableCharacters < 20) {
+      return { ...base, status: "needs_ocr", message: SCANNED_PDF_BASE_MESSAGE, pages: [] };
+    }
+    const warnings = buildPdfPageCoverageWarnings(pagesWithoutText);
+    const readablePages = pages.length - pagesWithoutText.length;
+    const readyMessage = warnings.length
+      ? `Text ready from ${readablePages} of ${pages.length} pages. ${warnings[0]}`
+      : `Text ready from ${pages.length} page${pages.length === 1 ? "" : "s"}.`;
     return {
       ...base,
       status: "ready_for_ai",
-      message: `Text ready from ${pages.length} page${pages.length === 1 ? "" : "s"}.`,
+      message: readyMessage,
       artifact: {
         adapterId: "pdfjs-text",
         adapterVersion: `1.0.0+pdfjs-${pdfjs.version}`,
         pages,
-        text: pages.map((page) => page.text.trim()).filter(Boolean).join("\n\n"),
+        text: pages.map(page => page.text.trim()).filter(Boolean).join("\n\n"),
+        warnings,
       },
     };
   } catch (error) {
