@@ -41,6 +41,9 @@ function detectedType(bytes: Uint8Array) {
   if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "image/webp";
 }
 function abortError() { return new DOMException("Image OCR was cancelled.", "AbortError"); }
+function validRuntimeIdentity(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= 100 && value.trim() === value && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value);
+}
 function bounded<T>(operation: (signal: AbortSignal) => Promise<T>, signal: AbortSignal | undefined, timeoutMs: number, onStop?: () => void): Promise<T> {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -67,6 +70,7 @@ function integrityFailure(error: OriginalIntegrityError) {
 }
 
 export function createImageOcrAdapter(runtime: ImageOcrRuntime, options: ImageOcrAdapterOptions = {}): DocumentExtractionAdapter {
+  if (!runtime || typeof runtime !== "object" || !validRuntimeIdentity(runtime.id) || !validRuntimeIdentity(runtime.version) || typeof runtime.recognize !== "function") throw new ProcessingAdapterError("OCR runtime identity metadata is invalid.", "adapter_unavailable", false);
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_IMAGE_BYTES;
   const maxPixels = options.maxPixels ?? DEFAULT_MAX_IMAGE_PIXELS;
   const maxEdge = options.maxEdge ?? DEFAULT_MAX_IMAGE_EDGE;
