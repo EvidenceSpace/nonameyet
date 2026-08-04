@@ -1,12 +1,14 @@
 import { OriginalIntegrityError, assertOriginalBytesMatchHash, type Sha256Crypto } from "../integrity.js";
+import { ExtractionOutputError } from "../normalize.js";
 import { ProcessingAdapterError } from "../pipeline.js";
-import type { AdapterExtractionResult, DocumentExtractionAdapter, ExtractionContext, FileDescriptor } from "../types.js";
+import type { AdapterExtractionResult, DocumentExtractionAdapter, FileDescriptor } from "../types.js";
 
 export const PDFJS_ADAPTER_ID = "pdfjs-text";
 export const PDFJS_ADAPTER_VERSION = "1.0.0";
 export const DEFAULT_MAX_PDF_BYTES = 20 * 1024 * 1024;
 export const DEFAULT_MAX_PDF_PAGES = 500;
 export const DEFAULT_MIN_PDF_TEXT_CHARACTERS = 20;
+export const DEFAULT_MAX_PDF_TEXT_CHARACTERS = 500_000;
 export const PDF_HEADER_SCAN_BYTES = 1024;
 
 export interface BinaryFileDescriptor extends FileDescriptor {
@@ -42,6 +44,7 @@ export interface PdfJsAdapterOptions {
   maxBytes?: number;
   maxPages?: number;
   minTextCharacters?: number;
+  maxTextCharacters?: number;
   cryptoImpl?: Sha256Crypto;
 }
 
@@ -89,6 +92,7 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_PDF_BYTES;
   const maxPages = options.maxPages ?? DEFAULT_MAX_PDF_PAGES;
   const minTextCharacters = options.minTextCharacters ?? DEFAULT_MIN_PDF_TEXT_CHARACTERS;
+  const maxTextCharacters = options.maxTextCharacters ?? DEFAULT_MAX_PDF_TEXT_CHARACTERS;
   return {
     id: PDFJS_ADAPTER_ID,
     version: `${PDFJS_ADAPTER_VERSION}+pdfjs-${runtime.version ?? "unknown"}`,
@@ -119,12 +123,17 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         const pages: Array<{ pageNumber: number; text: string }> = [];
         const warnings: string[] = [];
         let readableCharacters = 0;
+        let extractedCharacters = 0;
         for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
           if (context.signal?.aborted) throw new DOMException("PDF extraction was cancelled.", "AbortError");
           const page = await document.getPage(pageNumber);
           try {
             const content = await page.getTextContent({ disableNormalization: false, includeMarkedContent: false });
             const text = textFromItems(content.items);
+            extractedCharacters += text.length;
+            if (extractedCharacters > maxTextCharacters) {
+              throw new ExtractionOutputError(`Extracted PDF text exceeds ${maxTextCharacters} characters.`, "output_too_large");
+            }
             readableCharacters += text.replace(/\s/g, "").length;
             if (!text.trim()) warnings.push(`Page ${pageNumber} has no readable text layer.`);
             pages.push({ pageNumber, text });
@@ -136,7 +145,7 @@ export function createPdfJsTextAdapter(runtime: PdfJsRuntime, options: PdfJsAdap
         return { kind: "text", pages, warnings };
       } catch (error) {
         if (context.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
-        if (error instanceof ProcessingAdapterError) throw error;
+        if (error instanceof ProcessingAdapterError || error instanceof ExtractionOutputError) throw error;
         throw classifyPdfError(error);
       } finally {
         context.signal?.removeEventListener("abort", abort);

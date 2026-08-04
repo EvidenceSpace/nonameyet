@@ -15,3 +15,31 @@ test("matching PDF reaches parser", async () => { const state = { called: false 
 test("mismatched and malformed hashes never reach parser", async () => { for (const sha256 of ["0".repeat(64), "bad"]) { const state = { called: false }; await assert.rejects(() => createPdfJsTextAdapter(runtime(state)).extract(file({ sha256 }), {}), (error: any) => error.code === "corrupt_file" && error.retryable === false); assert.equal(state.called, false); } });
 test("missing PDF signature never reaches parser", async () => { const bytes = Uint8Array.from([1, 2, 3, 4, 5, 6]); const state = { called: false }; await assert.rejects(() => createPdfJsTextAdapter(runtime(state)).extract(file({ size: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), readBytes: async () => bytes }), {}), (error: any) => error.code === "corrupt_file"); assert.equal(state.called, false); });
 test("unavailable SHA-256 blocks parser retryably", async () => { const state = { called: false }; await assert.rejects(() => createPdfJsTextAdapter(runtime(state), { cryptoImpl: {} }).extract(file(), {}), (error: any) => error.code === "adapter_unavailable" && error.retryable === true); assert.equal(state.called, false); });
+
+test("selectable text overflow fails closed and cleans parser resources", async () => {
+  let pageCleaned = false;
+  let documentCleaned = false;
+  let documentDestroyed = false;
+  const overflowRuntime: PdfJsRuntime = {
+    getDocument() {
+      return {
+        promise: Promise.resolve({
+          numPages: 1,
+          getPage: async () => ({
+            getTextContent: async () => ({ items: [{ str: "abcdef" }] }),
+            cleanup: () => { pageCleaned = true; },
+          }),
+          cleanup: () => { documentCleaned = true; },
+          destroy: () => { documentDestroyed = true; },
+        }),
+      };
+    },
+  };
+  await assert.rejects(
+    () => createPdfJsTextAdapter(overflowRuntime, { maxTextCharacters: 5 }).extract(file(), {}),
+    (error: any) => error.name === "ExtractionOutputError" && error.code === "output_too_large",
+  );
+  assert.equal(pageCleaned, true);
+  assert.equal(documentCleaned, true);
+  assert.equal(documentDestroyed, true);
+});
