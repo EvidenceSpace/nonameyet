@@ -5,9 +5,10 @@ export const IMAGE_ADAPTER_UNAVAILABLE_MESSAGE = "Local image OCR is unavailable
 export const IMAGE_EMPTY_TEXT_MESSAGE = "No readable text was found in this image. The original remains stored locally; review it manually or add a clearer image explicitly.";
 export const IMAGE_OUTPUT_TOO_LARGE_MESSAGE = "Local OCR found more text or metadata than CaseFind can safely store. No extracted text was saved. The original remains stored locally; review it manually or add a smaller crop explicitly.";
 export const IMAGE_INVALID_OUTPUT_MESSAGE = "Local OCR returned an invalid result and CaseFind saved no extracted text. The original remains stored locally. Retry once; if it fails again, review the image manually.";
+export const IMAGE_HASH_MISMATCH_MESSAGE = "This locally stored image no longer matches the SHA-256 recorded when it was added. CaseFind did not run OCR or save extracted text. Keep the original for review and add a verified copy explicitly.";
+export const IMAGE_HASH_UNAVAILABLE_MESSAGE = "CaseFind could not verify this image with SHA-256 in the current browser session. No OCR text was saved. Reload CaseFind and retry before using extracted text.";
 export const IMAGE_TIMEOUT_MESSAGE = "Local OCR timed out. Your original remains stored locally. Retry when the device is ready.";
 export const IMAGE_TRANSIENT_MESSAGE = "Local image OCR failed safely. The original remains stored locally. Retry once; if it fails again, review the image manually.";
-
 export function classifyImageOcrFailure(error) {
   const code = typeof error?.code === "string" ? error.code : "";
   if (code === "unsupported_type") return { code, retryable: false, message: IMAGE_UNSUPPORTED_TYPE_MESSAGE };
@@ -17,6 +18,8 @@ export function classifyImageOcrFailure(error) {
   if (code === "empty_text") return { code, retryable: false, message: IMAGE_EMPTY_TEXT_MESSAGE };
   if (code === "output_too_large") return { code, retryable: false, message: IMAGE_OUTPUT_TOO_LARGE_MESSAGE };
   if (code === "invalid_output") return { code, retryable: true, message: IMAGE_INVALID_OUTPUT_MESSAGE };
+  if (code === "original_hash_mismatch" || code === "invalid_original_hash") return { code, retryable: false, message: IMAGE_HASH_MISMATCH_MESSAGE };
+  if (code === "hash_unavailable") return { code, retryable: true, message: IMAGE_HASH_UNAVAILABLE_MESSAGE };
   if (code === "ocr_timeout") return { code, retryable: true, message: IMAGE_TIMEOUT_MESSAGE };
   return { code: code || "transient_error", retryable: true, message: IMAGE_TRANSIENT_MESSAGE };
 }
