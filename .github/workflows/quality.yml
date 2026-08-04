@@ -30,8 +30,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install pinned runtime and development dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify direct dependency policy
+        run: node scripts/check-dependency-policy.mjs
+
+      - name: Install pinned direct runtime and development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
 
       - name: Synchronize pinned local PDF.js assets
         run: npm run sync:pdfjs
