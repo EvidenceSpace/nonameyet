@@ -1,6 +1,7 @@
 import { loadLocalPdfEngine } from "./pdf-engine.js";
 import { SCANNED_PDF_BASE_MESSAGE } from "./scanned-pdf-recovery.js";
 import { classifyPdfFailure } from "./pdf-failure-recovery.js";
+import { assertOriginalBytesMatchHash } from "./original-byte-integrity.js";
 
 export const PDF_CANCELLED_MESSAGE = "Local PDF text extraction was cancelled.";
 export const MAX_PDF_BYTES = 20 * 1024 * 1024;
@@ -82,6 +83,7 @@ export async function processPdf(file, {
   maxBytes = MAX_PDF_BYTES,
   maxTextCharacters = MAX_PDF_TEXT_CHARACTERS,
   timeoutMs = PDF_PROCESSING_TIMEOUT_MS,
+  cryptoImpl = globalThis.crypto,
 } = {}) {
   const base = { fileId: file.id, caseId: file.caseId, fileHash: file.sha256, updatedAt: new Date().toISOString() };
   const deadline = createDeadlineSignal(signal, timeoutMs);
@@ -105,6 +107,8 @@ export async function processPdf(file, {
     if (originalBytes.byteLength > maxBytes) throw processingError("file_too_large", "PDF exceeds local byte limit.");
     const pdfData = new Uint8Array(originalBytes);
     if (!hasPdfHeader(pdfData)) throw processingError("invalid_pdf_signature", "PDF header is missing.");
+    await abortable(assertOriginalBytesMatchHash(pdfData, file.sha256, { cryptoImpl }), workSignal);
+    throwIfAborted(workSignal);
     const pdfjs = runtime || await abortable(loadLocalPdfEngine(), workSignal);
     throwIfAborted(workSignal);
     task = pdfjs.getDocument({ data: pdfData, isEvalSupported: false, useWorkerFetch: false, useSystemFonts: true, stopAtErrors: true });
