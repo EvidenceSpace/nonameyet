@@ -11,6 +11,7 @@ export const DEFAULT_MAX_IMAGE_EDGE = 10_000;
 export const DEFAULT_MAX_OCR_TEXT_CHARACTERS = 500_000;
 export const DEFAULT_MAX_OCR_WARNINGS = 20;
 export const DEFAULT_MAX_OCR_WARNING_CHARACTERS = 500;
+export const DEFAULT_IMAGE_OCR_TIMEOUT_MS = 30_000;
 
 export interface BinaryImageDescriptor extends FileDescriptor { readBytes(): Promise<Uint8Array> }
 export interface ImageOcrResult { text: string; width: number; height: number; confidence?: number; warnings?: string[] }
@@ -18,6 +19,7 @@ export interface ImageOcrRuntime {
   id: string;
   version: string;
   recognize(input: { bytes: Uint8Array; mimeType: string; signal?: AbortSignal }): Promise<ImageOcrResult>;
+  cancel?(): Promise<void> | void;
 }
 export interface ImageOcrAdapterOptions {
   maxBytes?: number;
@@ -27,26 +29,41 @@ export interface ImageOcrAdapterOptions {
   maxTextCharacters?: number;
   maxWarnings?: number;
   maxWarningCharacters?: number;
+  timeoutMs?: number;
   cryptoImpl?: Sha256Crypto;
 }
 
 const SUPPORTED = new Set(["image/png", "image/jpeg", "image/webp"]);
-function isBinary(file: FileDescriptor): file is BinaryImageDescriptor {
-  return typeof (file as Partial<BinaryImageDescriptor>).readBytes === "function";
-}
+function isBinary(file: FileDescriptor): file is BinaryImageDescriptor { return typeof (file as Partial<BinaryImageDescriptor>).readBytes === "function"; }
 function detectedType(bytes: Uint8Array) {
   if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a) return "image/png";
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "image/webp";
 }
 function abortError() { return new DOMException("Image OCR was cancelled.", "AbortError"); }
+function bounded<T>(operation: (signal: AbortSignal) => Promise<T>, signal: AbortSignal | undefined, timeoutMs: number, onStop?: () => void): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const finish = (handler: (value: any) => void, value: any) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      handler(value);
+    };
+    const stop = () => { controller.abort(); try { onStop?.(); } catch {} };
+    const onAbort = () => { stop(); finish(reject, abortError()); };
+    timer = setTimeout(() => { stop(); finish(reject, new ProcessingAdapterError("Local image OCR timed out.", "transient_error", true)); }, timeoutMs);
+    if (signal?.aborted) return onAbort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    Promise.resolve().then(() => operation(controller.signal)).then(value => finish(resolve, value), error => finish(reject, error));
+  });
+}
 function integrityFailure(error: OriginalIntegrityError) {
   const retryable = error.code === "hash_unavailable";
-  return new ProcessingAdapterError(
-    retryable ? "SHA-256 verification is unavailable in this session." : "The stored image bytes do not match their recorded SHA-256 provenance.",
-    retryable ? "adapter_unavailable" : "corrupt_file",
-    retryable,
-  );
+  return new ProcessingAdapterError(retryable ? "SHA-256 verification is unavailable in this session." : "The stored image bytes do not match their recorded SHA-256 provenance.", retryable ? "adapter_unavailable" : "corrupt_file", retryable);
 }
 
 export function createImageOcrAdapter(runtime: ImageOcrRuntime, options: ImageOcrAdapterOptions = {}): DocumentExtractionAdapter {
@@ -57,6 +74,7 @@ export function createImageOcrAdapter(runtime: ImageOcrRuntime, options: ImageOc
   const maxTextCharacters = options.maxTextCharacters ?? DEFAULT_MAX_OCR_TEXT_CHARACTERS;
   const maxWarnings = options.maxWarnings ?? DEFAULT_MAX_OCR_WARNINGS;
   const maxWarningCharacters = options.maxWarningCharacters ?? DEFAULT_MAX_OCR_WARNING_CHARACTERS;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_IMAGE_OCR_TIMEOUT_MS;
   return {
     id: IMAGE_OCR_ADAPTER_ID,
     version: `${IMAGE_OCR_ADAPTER_VERSION}+${runtime.id}-${runtime.version}`,
@@ -70,16 +88,12 @@ export function createImageOcrAdapter(runtime: ImageOcrRuntime, options: ImageOc
       if (bytes.byteLength !== file.size) throw new ProcessingAdapterError("The stored image size no longer matches its file record.", "corrupt_file", false);
       const actualType = detectedType(bytes);
       if (!actualType || actualType !== file.type) throw new ProcessingAdapterError("The image bytes do not match the declared image type.", "corrupt_file", false);
-      try {
-        await assertOriginalBytesMatchHash(bytes, file.sha256, options.cryptoImpl);
-      } catch (error) {
-        if (error instanceof OriginalIntegrityError) throw integrityFailure(error);
-        throw error;
-      }
+      try { await assertOriginalBytesMatchHash(bytes, file.sha256, options.cryptoImpl); }
+      catch (error) { if (error instanceof OriginalIntegrityError) throw integrityFailure(error); throw error; }
       if (context.signal?.aborted) throw abortError();
       let result: ImageOcrResult;
       try {
-        result = await runtime.recognize({ bytes, mimeType: actualType, ...(context.signal ? { signal: context.signal } : {}) });
+        result = await bounded(workSignal => runtime.recognize({ bytes, mimeType: actualType, signal: workSignal }), context.signal, timeoutMs, () => { void runtime.cancel?.(); });
       } catch (error) {
         if (context.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
         if (error instanceof ProcessingAdapterError) throw error;
