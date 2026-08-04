@@ -1,6 +1,9 @@
 import { PROCESSING_PIPELINE_VERSION, type ExtractedPage, type ExtractionArtifact, type NormalizedPage } from "./types.js";
 
 export const DEFAULT_MAX_EXTRACTED_CHARACTERS = 500_000;
+export const DEFAULT_MAX_EXTRACTION_WARNINGS = 100;
+export const DEFAULT_MAX_EXTRACTION_WARNING_CHARACTERS = 1_000;
+export const DEFAULT_MAX_EXTRACTION_WARNING_TOTAL_CHARACTERS = 20_000;
 
 export class ExtractionOutputError extends Error {
   constructor(
@@ -10,6 +13,21 @@ export class ExtractionOutputError extends Error {
     super(message);
     this.name = "ExtractionOutputError";
   }
+}
+
+function validateWarnings(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw new ExtractionOutputError("Extraction warnings are malformed.", "corrupt_file");
+  if (value.length > DEFAULT_MAX_EXTRACTION_WARNINGS) throw new ExtractionOutputError("Extraction returned too many warnings.", "output_too_large");
+
+  let totalCharacters = 0;
+  for (const warning of value) {
+    if (typeof warning !== "string" || !warning.trim()) throw new ExtractionOutputError("Extraction warnings are malformed.", "corrupt_file");
+    if (warning.length > DEFAULT_MAX_EXTRACTION_WARNING_CHARACTERS) throw new ExtractionOutputError("An extraction warning exceeds the safe limit.", "output_too_large");
+    totalCharacters += warning.length;
+    if (totalCharacters > DEFAULT_MAX_EXTRACTION_WARNING_TOTAL_CHARACTERS) throw new ExtractionOutputError("Extraction warnings exceed the total safe limit.", "output_too_large");
+  }
+  return [...value];
 }
 
 /** Removes control characters while preserving tabs and line breaks. */
@@ -35,6 +53,7 @@ export function buildExtractionArtifact(args: {
   maxCharacters?: number;
 }): ExtractionArtifact {
   const maxCharacters = args.maxCharacters ?? DEFAULT_MAX_EXTRACTED_CHARACTERS;
+  const warnings = validateWarnings(args.warnings);
   if (args.pages.length === 0) throw new ExtractionOutputError("The adapter returned no pages.", "empty_text");
 
   const pageNumbers = new Set<number>();
@@ -72,6 +91,6 @@ export function buildExtractionArtifact(args: {
     extractedAt: args.extractedAt,
     text,
     pages,
-    warnings: [...(args.warnings ?? [])],
+    warnings,
   };
 }
