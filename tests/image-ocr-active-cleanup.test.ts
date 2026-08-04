@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { browserTextDetectorRuntime, processImage } from "../web/image-ocr.js";
 
 const png = Uint8Array.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0,0,0,0]);
-const file = { id: "file-1", caseId: "case-1", sha256: "a".repeat(64), type: "image/png", size: png.length, original: { async arrayBuffer() { return png.buffer; } } };
+const file = { id: "file-1", caseId: "case-1", sha256: createHash("sha256").update(png).digest("hex"), type: "image/png", size: png.length, original: { async arrayBuffer() { return png.buffer; } } };
 
 function hangingRuntime(state: { closed: boolean; resolve?: (value: unknown) => void }) {
   return browserTextDetectorRuntime({

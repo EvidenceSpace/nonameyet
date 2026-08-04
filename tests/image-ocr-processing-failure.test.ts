@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { processImage } from "../web/image-ocr.js";
 import { IMAGE_CORRUPT_MESSAGE, IMAGE_TRANSIENT_MESSAGE } from "../web/image-ocr-failure-recovery.js";
 
 const png = new Uint8Array([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,1]);
 function file(bytes = png, type = "image/png") {
-  return { id: "img", caseId: "case", sha256: "a".repeat(64), type, size: bytes.length, original: { arrayBuffer: async () => bytes.buffer } };
+  return { id: "img", caseId: "case", sha256: createHash("sha256").update(bytes).digest("hex"), type, size: bytes.length, original: { arrayBuffer: async () => bytes.buffer } };
 }
 
 test("mismatched bytes fail permanently before OCR starts", async () => {
