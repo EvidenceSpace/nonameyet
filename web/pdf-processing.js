@@ -218,6 +218,7 @@ export async function processPdf(file, {
     taskDestroyed = true;
     try { Promise.resolve(task.destroy()).catch(() => {}); } catch {}
   };
+
   try {
     throwIfAborted(workSignal);
     const declaredBytes = Number(file.original?.size ?? file.size ?? 0);
@@ -385,6 +386,7 @@ export async function processPdf(file, {
       ...base,
       status: "ready_for_ai",
       message: textReadyMessage(mergedPages, warnings, usedOcr),
+      ...(ocrFailure ? { failure: ocrFailure } : {}),
       artifact: {
         adapterId,
         adapterVersion,

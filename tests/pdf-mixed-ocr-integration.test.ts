@@ -142,6 +142,7 @@ test("preserves selectable text with a truthful warning when OCR fails", async (
   assert.equal(result.artifact?.adapterId, "pdfjs-text");
   assert.equal(result.artifact?.text, "Readable selectable contract text.");
   assert.match(result.artifact?.warnings[0], /Local OCR did not complete for page 2/);
+  assert.deepEqual(result.failure, { code: "ocr_timeout", retryable: true });
   assert.equal(result.artifact?.quality, undefined);
   assert.equal(isValidExtractionArtifact(result.artifact), true);
 });
