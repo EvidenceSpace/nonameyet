@@ -10,6 +10,7 @@ const marker = {
   fileId: "file-recovery",
   caseId: "case-recovery",
   fileHash: "a".repeat(64),
+  runId: "run-private-1",
   status: "extracting",
   message: "private decoder pointer 0xbeef",
   updatedAt: "2026-08-05T16:00:00.000Z",
@@ -31,6 +32,7 @@ test("unexpected run failures keep only exact ownership and safe retry metadata"
   });
   assert.equal("artifact" in failure, false);
   assert.equal("nextRetryAt" in failure, false);
+  assert.equal("runId" in failure, false);
   assert.equal(JSON.stringify(failure).includes("0xbeef"), false);
 });
 
