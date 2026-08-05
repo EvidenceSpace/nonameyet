@@ -121,6 +121,55 @@ export const saveSuggestion = (value) => saveWithActivity("suggestions", value, 
 export const getSuggestionsForCase = (id) => transaction("suggestions", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteSuggestion = (id) => deleteWithActivity("suggestions", id);
 export const saveProcessing = (value) => saveWithActivity("processing", value, "put");
+
+function processingValuesMatch(current, expected) {
+  if (!current || !expected) return false;
+  try {
+    return JSON.stringify(current) === JSON.stringify(expected);
+  } catch {
+    return false;
+  }
+}
+
+export async function saveProcessingIfCurrent(expected, replacement, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  const sameIdentity = expected && replacement
+    && ["fileId", "caseId", "fileHash"].every((key) => (
+      typeof expected[key] === "string"
+      && Boolean(expected[key])
+      && expected[key] === replacement[key]
+    ));
+  if (!sameIdentity) throw new TypeError("Processing replacement identity is invalid.");
+
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction(["processing", "cases"], "readwrite");
+    const processing = tx.objectStore("processing");
+    const cases = tx.objectStore("cases");
+    let replaced = false;
+    let currentRequest;
+    const completion = new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || currentRequest?.error || new Error("Transaction failed"));
+      tx.onabort = () => reject(tx.error || currentRequest?.error || new Error("Transaction aborted"));
+    });
+    currentRequest = processing.get(expected.fileId);
+    currentRequest.onsuccess = () => {
+      if (!processingValuesMatch(currentRequest.result, expected)) return;
+      processing.put(replacement);
+      const caseRequest = cases.get(replacement.caseId);
+      caseRequest.onsuccess = () => {
+        if (caseRequest.result) cases.put({ ...caseRequest.result, updatedAt: now() });
+      };
+      replaced = true;
+    };
+    await completion;
+    return replaced;
+  } finally { db.close(); }
+}
+
 export const getProcessingForCase = (id) => transaction("processing", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteProcessing = (id) => deleteWithActivity("processing", id);
 export const saveEvent = (value) => saveWithActivity("events", value, "put");

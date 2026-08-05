@@ -1,0 +1,84 @@
+import { expect, test } from "playwright/test";
+
+test("atomically keeps a newer processing result when a stale retry finishes", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const externalRequests: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
+  });
+
+  await page.goto("/index.html");
+  const result = await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase("casefind-preview");
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    const storage = await import(`/storage.js?cas=${Date.now()}`);
+    const caseId = "case-cas";
+    const fileId = "file-cas";
+    const expected = {
+      fileId,
+      caseId,
+      fileHash: "a".repeat(64),
+      status: "ready_for_ai",
+      message: "Text ready with one missing page.",
+      updatedAt: "2026-08-05T12:00:00.000Z",
+      artifact: {
+        adapterId: "pdfjs-text",
+        adapterVersion: "1.0.0+pdfjs-4.10.38",
+        pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "" }],
+        text: "Existing text",
+        warnings: ["Page 2 needs OCR."],
+      },
+      failure: { code: "ocr_timeout", retryable: true },
+    };
+    const improved = {
+      ...expected,
+      message: "Text ready from 2 pages.",
+      updatedAt: "2026-08-05T12:01:00.000Z",
+      artifact: {
+        ...expected.artifact,
+        adapterId: "pdfjs-text+local-pdf-ocr",
+        pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "Recovered text" }],
+        text: "Existing text\n\nRecovered text",
+        warnings: [],
+      },
+      failure: undefined,
+    };
+
+    await storage.saveCase({ id: caseId, title: "CAS test", updatedAt: "2026-08-05T11:59:00.000Z" });
+    await storage.saveProcessing(expected);
+    const firstReplacement = await storage.saveProcessingIfCurrent(expected, improved);
+    const afterFirst = (await storage.getProcessingForCase(caseId))[0];
+
+    const staleSnapshot = structuredClone(afterFirst);
+    const newer = { ...afterFirst, message: "Newer processing result", updatedAt: "2026-08-05T12:02:00.000Z" };
+    await storage.saveProcessing(newer);
+    const activityBeforeConflict = (await storage.getCase(caseId)).updatedAt;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const staleReplacement = { ...afterFirst, message: "Stale retry result", updatedAt: "2026-08-05T12:03:00.000Z" };
+    const secondReplacement = await storage.saveProcessingIfCurrent(staleSnapshot, staleReplacement);
+    const afterConflict = (await storage.getProcessingForCase(caseId))[0];
+    const activityAfterConflict = (await storage.getCase(caseId)).updatedAt;
+
+    return {
+      firstReplacement,
+      firstMessage: afterFirst.message,
+      secondReplacement,
+      finalMessage: afterConflict.message,
+      activityBeforeConflict,
+      activityAfterConflict,
+    };
+  });
+
+  expect(result.firstReplacement).toBe(true);
+  expect(result.firstMessage).toBe("Text ready from 2 pages.");
+  expect(result.secondReplacement).toBe(false);
+  expect(result.finalMessage).toBe("Newer processing result");
+  expect(result.activityAfterConflict).toBe(result.activityBeforeConflict);
+  expect(externalRequests).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
