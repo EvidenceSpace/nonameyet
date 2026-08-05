@@ -1,5 +1,6 @@
 import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProcessing, saveSuggestion } from "./storage.js";
 import { processPdf } from "./pdf-processing.js";
+import { createPdfOcrProgressTracker } from "./pdf-ocr-progress.js";
 import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
 import { formatImageOcrQuality } from "./image-ocr-quality.js";
 import { canStartImageOcr, inspectImageOcrReadiness, IMAGE_OCR_UNAVAILABLE_MESSAGE } from "./image-ocr-readiness.js";
@@ -13,6 +14,7 @@ const root = document.querySelector("#file-list");
 const imageOcrRuntime = browserTextDetectorRuntime();
 const imageOcrReadiness = inspectImageOcrReadiness();
 let refreshing = false;
+let refreshDone = Promise.resolve();
 const labels = {
   extracting: "Processing…",
   ready_for_ai: "Text ready",
@@ -22,6 +24,7 @@ const labels = {
   ocr_unavailable: "OCR unavailable",
 };
 const controllers = new Map();
+const pdfOcrProgress = createPdfOcrProgressTracker();
 
 const viewer = document.createElement("dialog");
 viewer.className = "text-source-dialog";
@@ -34,7 +37,7 @@ let viewedIndex = 0;
 function renderViewedPage() {
   const page = viewedPages[viewedIndex];
   viewer.querySelector("#text-source-page").textContent = `Page ${page.pageNumber} of ${viewedPages.length}`;
-  viewer.querySelector("#text-source-content").textContent = page.text || "No selectable text on this page.";
+  viewer.querySelector("#text-source-content").textContent = page.text || "No readable text was extracted from this page.";
   viewer.querySelector("#previous-text-page").disabled = viewedIndex === 0;
   viewer.querySelector("#next-text-page").disabled = viewedIndex === viewedPages.length - 1;
 }
@@ -86,15 +89,48 @@ function renderOcrReadinessNotice(files) {
   notice.innerHTML = `<span aria-hidden="true">i</span><div><strong>${imageOcrReadiness.label}</strong><small>${imageOcrReadiness.message}</small></div>`;
 }
 
+function ensureProcessingNote(row) {
+  let note = row.querySelector(".processing-note");
+  if (!note) {
+    note = document.createElement("p");
+    note.className = "processing-note";
+    row.append(note);
+  }
+  note.setAttribute("role", "status");
+  note.setAttribute("aria-live", "polite");
+  return note;
+}
+
+function setProcessingNote(row, message) {
+  const note = row.querySelector(".processing-note");
+  if (!message) {
+    note?.remove();
+    return;
+  }
+  const target = note || ensureProcessingNote(row);
+  if (target.textContent !== message) target.textContent = message;
+}
+
+function showLivePdfOcrProgress(fileId, message) {
+  if (!root || !message) return;
+  const row = [...root.querySelectorAll(".file-row")]
+    .find((candidate) => candidate.dataset.fileId === fileId);
+  if (row) setProcessingNote(row, message);
+}
+
 async function refresh() {
-  if (!caseId || !root || refreshing) return;
+  if (!caseId || !root) return;
+  if (refreshing) return refreshDone;
+  let resolveRefresh;
   refreshing = true;
+  refreshDone = new Promise((resolve) => { resolveRefresh = resolve; });
   try {
     const [files, jobs] = await Promise.all([getFilesForCase(caseId), getProcessingForCase(caseId)]);
     renderOcrReadinessNotice(files);
     [...root.querySelectorAll(".file-row")].forEach((row, index) => {
       const file = files[index];
       if (!file) return;
+      row.dataset.fileId = file.id;
       const actions = row.querySelector(".file-actions");
       if (!actions) return;
       const job = jobs.find((item) => item.fileId === file.id);
@@ -175,27 +211,30 @@ async function refresh() {
         actions.querySelector(".analyze-record")?.remove();
       }
 
-      let note = row.querySelector(".processing-note");
-      const noteMessage = imageOcrUnavailable ? IMAGE_OCR_UNAVAILABLE_MESSAGE : scannedPdfRecovery?.message || inspection.message;
-      if (noteMessage) {
-        if (!note) {
-          note = document.createElement("p");
-          note.className = "processing-note";
-          row.append(note);
-        }
-        note.textContent = noteMessage;
-      } else note?.remove();
+      const livePdfProgress = file.type === "application/pdf" && status === "extracting"
+        ? pdfOcrProgress.message(file.id)
+        : "";
+      const noteMessage = livePdfProgress || (imageOcrUnavailable
+        ? IMAGE_OCR_UNAVAILABLE_MESSAGE
+        : scannedPdfRecovery?.message || inspection.message);
+      setProcessingNote(row, noteMessage);
     });
   } finally {
     refreshing = false;
+    resolveRefresh();
   }
+}
+
+async function refreshLatest() {
+  if (refreshing) await refreshDone;
+  await refresh();
 }
 
 async function analyze(file, job, row, button) {
   if (!confirm(`Send extracted text from “${file.name}” to the configured AI provider?\n\nThe original file stays on this device. AI results are suggestions only and must be reviewed.`)) return;
   button.disabled = true;
   button.textContent = "Analyzing…";
-  let note = row.querySelector(".processing-note");
+  const note = ensureProcessingNote(row);
   try {
     const candidates = await requestAnalysis({ file, processingJob: job, consentAccepted: true });
     const grounded = buildGroundedSuggestions({ caseId, file, processingJob: job, candidates });
@@ -223,24 +262,38 @@ async function analyze(file, job, row, button) {
 }
 
 async function run(file) {
+  if (controllers.has(file.id)) return;
   const controller = new AbortController();
   controllers.set(file.id, controller);
   const isPdf = file.type === "application/pdf";
-  await saveProcessing({
-    fileId: file.id,
-    caseId,
-    fileHash: file.sha256,
-    status: "extracting",
-    message: isPdf ? "Reading selectable text locally…" : "Running OCR locally in this browser…",
-    updatedAt: new Date().toISOString(),
-  });
-  await refresh();
+  if (isPdf) pdfOcrProgress.start(file.id, controller);
   try {
-    await saveProcessing(isPdf ? await processPdf(file, { signal: controller.signal }) : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime }));
+    await saveProcessing({
+      fileId: file.id,
+      caseId,
+      fileHash: file.sha256,
+      status: "extracting",
+      message: isPdf
+        ? "Reading this PDF locally and checking pages that may need OCR…"
+        : "Running OCR locally in this browser…",
+      updatedAt: new Date().toISOString(),
+    });
+    await refreshLatest();
+    const result = isPdf
+      ? await processPdf(file, {
+        signal: controller.signal,
+        onOcrProgress(progress) {
+          const message = pdfOcrProgress.update(file.id, controller, progress);
+          if (message) showLivePdfOcrProgress(file.id, message);
+        },
+      })
+      : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime });
+    await saveProcessing(result);
   } finally {
-    controllers.delete(file.id);
+    if (controllers.get(file.id) === controller) controllers.delete(file.id);
+    if (isPdf) pdfOcrProgress.finish(file.id, controller);
+    await refreshLatest();
   }
-  await refresh();
 }
 
 if (root) {

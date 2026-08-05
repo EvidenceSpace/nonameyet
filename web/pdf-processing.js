@@ -92,6 +92,15 @@ function createDeadlineSignal(signal, timeoutMs) {
   };
 }
 
+function reportOcrProgress(callback, progress) {
+  if (typeof callback !== "function") return;
+  try {
+    Promise.resolve(callback(progress)).catch(() => {});
+  } catch {
+    // Progress reporting must never break local extraction.
+  }
+}
+
 function validateOcrMetadata(value, label) {
   if (typeof value !== "string" || !value.trim() || value.length > 100) {
     throw processingError("invalid_output", `PDF OCR ${label} is invalid.`);
@@ -291,6 +300,12 @@ export async function processPdf(file, {
           throw processingError("output_too_large", "No safe character budget remains for PDF OCR.");
         }
         const originalPageNumbers = [...pagesWithoutText];
+        reportOcrProgress(onOcrProgress, {
+          completedPages: 0,
+          totalPages: originalPageNumbers.length,
+          pageNumber: originalPageNumbers[0],
+          status: "starting",
+        });
         const rawOcr = await abortable(ocrDocument(
           subsetDocument(doc, originalPageNumbers),
           {
@@ -299,7 +314,7 @@ export async function processPdf(file, {
             maxCharacters: remainingBudget,
             timeoutMs: ocrTimeoutMs,
             onProgress: typeof onOcrProgress === "function"
-              ? (progress) => onOcrProgress({
+              ? (progress) => reportOcrProgress(onOcrProgress, {
                 ...progress,
                 pageNumber: originalPageNumbers[progress.pageNumber - 1],
                 totalPages: originalPageNumbers.length,

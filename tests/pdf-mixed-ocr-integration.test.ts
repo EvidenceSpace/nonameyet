@@ -66,7 +66,10 @@ test("OCRs only missing pages and merges them in original order", async () => {
   });
   assert.equal(result.status, "ready_for_ai");
   assert.deepEqual(loadedOriginalPages, [2]);
-  assert.deepEqual(progress.map((item) => item.pageNumber), [2]);
+  assert.deepEqual(progress.map(({ completedPages, pageNumber, status }) => ({ completedPages, pageNumber, status })), [
+    { completedPages: 0, pageNumber: 2, status: "starting" },
+    { completedPages: 1, pageNumber: 2, status: "recognized" },
+  ]);
   assert.deepEqual(result.artifact?.pages, [
     { pageNumber: 1, text: "Selectable contract text remains available." },
     { pageNumber: 2, text: "OCR exhibit page text." },
@@ -77,6 +80,21 @@ test("OCRs only missing pages and merges them in original order", async () => {
   assert.equal(isValidExtractionArtifact(result.artifact), true);
   assert.match(result.message, /selectable text and local OCR/);
   assert.deepEqual(fixture.counters, { pageCleanups: 4, documentDestroys: 1 });
+});
+
+test("progress callback failures cannot break successful local extraction", async () => {
+  const fixture = pdfRuntime([""]);
+  const result = await processPdf(file, {
+    runtime: fixture.runtime,
+    ocrRuntime: detector,
+    onOcrProgress: () => { throw new Error("UI detached"); },
+    ocrDocument: async (_document: any, options: any) => {
+      options.onProgress({ completedPages: 1, totalPages: 1, pageNumber: 1, status: "recognized" });
+      return ocrResult([{ pageNumber: 1, text: "Recovered despite detached progress UI.", confidence: 0.9 }], 0.9);
+    },
+  });
+  assert.equal(result.status, "ready_for_ai");
+  assert.equal(result.artifact?.text, "Recovered despite detached progress UI.");
 });
 
 test("promotes a fully scanned PDF only after successful local OCR", async () => {
@@ -175,6 +193,7 @@ test("cancellation during OCR remains cancellation and destroys the document", a
   assert.equal(result.artifact, undefined);
   assert.equal(fixture.counters.documentDestroys, 1);
 });
+
 
 test("gives local OCR its own bounded phase deadline", async () => {
   const fixture = pdfRuntime([""]);
