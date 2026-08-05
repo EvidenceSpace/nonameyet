@@ -20,7 +20,7 @@ test("wires a distinct non-destructive retry action for mixed PDFs", () => {
 
 test("does not overwrite the persisted artifact before a preserved retry improves it", () => {
   assert.match(ui, /if \(!preserveExisting\) \{[\s\S]*?await saveProcessing\(\{[\s\S]*?status: "extracting"/);
-  assert.match(ui, /if \(outcome\.replaceExisting\) await saveProcessing\(result\)/);
+  assert.match(ui, /if \(outcome\.replaceExisting\) \{[\s\S]*?saveProcessingIfCurrent\(preserveJob, result\)/);
   assert.match(ui, /MIXED_PDF_OCR_RETRY_FAILED_MESSAGE/);
 });
 

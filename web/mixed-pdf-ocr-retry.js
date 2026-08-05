@@ -6,6 +6,7 @@ export const MIXED_PDF_OCR_RETRY_CANCELLED_MESSAGE = "Local OCR retry was cancel
 export const MIXED_PDF_OCR_RETRY_NO_IMPROVEMENT_MESSAGE = "Local OCR retry did not recover any additional pages. Existing extracted text was kept.";
 export const MIXED_PDF_OCR_RETRY_REJECTED_MESSAGE = "CaseFind rejected the local OCR retry result. Existing extracted text was kept.";
 export const MIXED_PDF_OCR_RETRY_FAILED_MESSAGE = "Local OCR retry could not finish safely. Existing extracted text was kept.";
+export const MIXED_PDF_OCR_RETRY_STALE_MESSAGE = "Local processing changed while this OCR retry was running. The retry result was not saved; review the current text status before trying again.";
 
 function jobMatchesFile(file, job) {
   return Boolean(file && job

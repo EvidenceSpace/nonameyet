@@ -1,4 +1,4 @@
-import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProcessing, saveSuggestion } from "./storage.js";
+import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProcessing, saveProcessingIfCurrent, saveSuggestion } from "./storage.js";
 import { processPdf } from "./pdf-processing.js";
 import { createPdfOcrProgressTracker } from "./pdf-ocr-progress.js";
 import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
@@ -9,6 +9,7 @@ import {
   getMixedPdfOcrRetry,
   MIXED_PDF_OCR_RETRY_FAILED_MESSAGE,
   MIXED_PDF_OCR_RETRY_RUNNING_MESSAGE,
+  MIXED_PDF_OCR_RETRY_STALE_MESSAGE,
   resolveMixedPdfOcrRetry,
 } from "./mixed-pdf-ocr-retry.js";
 import { requestAnalysis } from "./analysis-client.js";
@@ -326,8 +327,10 @@ async function run(file, { preserveJob } = {}) {
       : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime });
     if (preserveExisting) {
       const outcome = resolveMixedPdfOcrRetry({ file, previousJob: preserveJob, result });
-      if (outcome.replaceExisting) await saveProcessing(result);
-      else processingNotices.set(file.id, outcome.notice);
+      if (outcome.replaceExisting) {
+        const replaced = await saveProcessingIfCurrent(preserveJob, result);
+        if (!replaced) processingNotices.set(file.id, MIXED_PDF_OCR_RETRY_STALE_MESSAGE);
+      } else processingNotices.set(file.id, outcome.notice);
     } else await saveProcessing(result);
   } catch (error) {
     if (!preserveExisting) throw error;
