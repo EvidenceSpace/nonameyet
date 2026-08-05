@@ -5,6 +5,12 @@ import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
 import { formatImageOcrQuality } from "./image-ocr-quality.js";
 import { canStartImageOcr, inspectImageOcrReadiness, IMAGE_OCR_UNAVAILABLE_MESSAGE } from "./image-ocr-readiness.js";
 import { getScannedPdfRecovery } from "./scanned-pdf-recovery.js";
+import {
+  getMixedPdfOcrRetry,
+  MIXED_PDF_OCR_RETRY_FAILED_MESSAGE,
+  MIXED_PDF_OCR_RETRY_RUNNING_MESSAGE,
+  resolveMixedPdfOcrRetry,
+} from "./mixed-pdf-ocr-retry.js";
 import { requestAnalysis } from "./analysis-client.js";
 import { inspectProcessingJob } from "./processing-integrity.js";
 import { buildGroundedSuggestions } from "./suggestion-handoff.js";
@@ -25,6 +31,8 @@ const labels = {
 };
 const controllers = new Map();
 const pdfOcrProgress = createPdfOcrProgressTracker();
+const mixedPdfRetryRuns = new Set();
+const processingNotices = new Map();
 
 const viewer = document.createElement("dialog");
 viewer.className = "text-source-dialog";
@@ -135,7 +143,12 @@ async function refresh() {
       if (!actions) return;
       const job = jobs.find((item) => item.fileId === file.id);
       const inspection = inspectProcessingJob(file, job);
-      const status = inspection.status;
+      const storedStatus = inspection.status;
+      const mixedPdfRetry = file.type === "application/pdf"
+        ? getMixedPdfOcrRetry({ file, job })
+        : null;
+      const mixedPdfRetryActive = mixedPdfRetryRuns.has(file.id) && controllers.has(file.id);
+      const status = mixedPdfRetryActive ? "extracting" : storedStatus;
       const isImage = ["image/png", "image/jpeg", "image/webp"].includes(file.type);
       const imageOcrUnavailable = isImage && !imageOcrReadiness.available && ["unprocessed", "failed", "cancelled"].includes(status);
       const scannedPdfRecovery = file.type === "application/pdf"
@@ -159,10 +172,12 @@ async function refresh() {
 
       let processButton = actions.querySelector(".process-file");
       const canProcessPdf = file.type === "application/pdf"
+        && !controllers.has(file.id)
         && (!job
           || status === "cancelled"
           || (status === "failed" && job?.failure?.retryable !== false)
-          || scannedPdfRecovery?.canRetryPdfExtraction);
+          || scannedPdfRecovery?.canRetryPdfExtraction
+          || mixedPdfRetry?.canRetry);
       const canProcessImage = canStartImageOcr({
         fileType: file.type,
         jobStatus: job && status,
@@ -175,11 +190,14 @@ async function refresh() {
         processButton.type = "button";
         processButton.className = "process-file";
         actions.insertBefore(processButton, badge.nextSibling);
-        processButton.onclick = () => run(file);
       }
       if (processButton) {
-        if (canProcess) processButton.textContent = scannedPdfRecovery?.retryLabel
-          || (job ? "Retry" : file.type === "application/pdf" ? "Extract text" : "Run local OCR");
+        if (canProcess) {
+          processButton.textContent = mixedPdfRetry?.retryLabel
+            || scannedPdfRecovery?.retryLabel
+            || (job ? "Retry" : file.type === "application/pdf" ? "Extract text" : "Run local OCR");
+          processButton.onclick = () => run(file, mixedPdfRetry ? { preserveJob: job } : undefined);
+        }
         else processButton.remove();
       }
 
@@ -222,9 +240,12 @@ async function refresh() {
       const livePdfProgress = file.type === "application/pdf" && status === "extracting"
         ? pdfOcrProgress.message(file.id)
         : "";
-      const noteMessage = livePdfProgress || (imageOcrUnavailable
+      const mixedRetryMessage = mixedPdfRetryActive && !livePdfProgress
+        ? MIXED_PDF_OCR_RETRY_RUNNING_MESSAGE
+        : "";
+      const noteMessage = livePdfProgress || mixedRetryMessage || processingNotices.get(file.id) || (imageOcrUnavailable
         ? IMAGE_OCR_UNAVAILABLE_MESSAGE
-        : scannedPdfRecovery?.message || inspection.message);
+        : mixedPdfRetry?.message || scannedPdfRecovery?.message || inspection.message);
       setProcessingNote(row, noteMessage);
     });
   } finally {
@@ -269,23 +290,30 @@ async function analyze(file, job, row, button) {
   }
 }
 
-async function run(file) {
+async function run(file, { preserveJob } = {}) {
   if (controllers.has(file.id)) return;
+  const mixedPdfRetry = preserveJob ? getMixedPdfOcrRetry({ file, job: preserveJob }) : null;
+  if (preserveJob && !mixedPdfRetry) return;
+  const preserveExisting = Boolean(mixedPdfRetry);
+  processingNotices.delete(file.id);
   const controller = new AbortController();
   controllers.set(file.id, controller);
   const isPdf = file.type === "application/pdf";
   if (isPdf) pdfOcrProgress.start(file.id, controller);
+  if (preserveExisting) mixedPdfRetryRuns.add(file.id);
   try {
-    await saveProcessing({
-      fileId: file.id,
-      caseId,
-      fileHash: file.sha256,
-      status: "extracting",
-      message: isPdf
-        ? "Reading this PDF locally and checking pages that may need OCR…"
-        : "Running OCR locally in this browser…",
-      updatedAt: new Date().toISOString(),
-    });
+    if (!preserveExisting) {
+      await saveProcessing({
+        fileId: file.id,
+        caseId,
+        fileHash: file.sha256,
+        status: "extracting",
+        message: isPdf
+          ? "Reading this PDF locally and checking pages that may need OCR…"
+          : "Running OCR locally in this browser…",
+        updatedAt: new Date().toISOString(),
+      });
+    }
     await refreshLatest();
     const result = isPdf
       ? await processPdf(file, {
@@ -296,10 +324,18 @@ async function run(file) {
         },
       })
       : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime });
-    await saveProcessing(result);
+    if (preserveExisting) {
+      const outcome = resolveMixedPdfOcrRetry({ file, previousJob: preserveJob, result });
+      if (outcome.replaceExisting) await saveProcessing(result);
+      else processingNotices.set(file.id, outcome.notice);
+    } else await saveProcessing(result);
+  } catch (error) {
+    if (!preserveExisting) throw error;
+    processingNotices.set(file.id, MIXED_PDF_OCR_RETRY_FAILED_MESSAGE);
   } finally {
     if (controllers.get(file.id) === controller) controllers.delete(file.id);
     if (isPdf) pdfOcrProgress.finish(file.id, controller);
+    if (preserveExisting) mixedPdfRetryRuns.delete(file.id);
     await refreshLatest();
   }
 }

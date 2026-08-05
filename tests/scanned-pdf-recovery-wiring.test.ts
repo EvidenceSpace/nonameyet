@@ -16,7 +16,7 @@ test("renders scanned-PDF recovery from persisted bounded failure metadata", () 
 test("offers the shared retry action only when the recovery model allows it", () => {
   assert.match(ui, /scannedPdfRecovery\?\.canRetryPdfExtraction/);
   assert.match(ui, /scannedPdfRecovery\?\.retryLabel/);
-  assert.match(ui, /processButton\.onclick = \(\) => run\(file\)/);
+  assert.match(ui, /processButton\.onclick = \(\) => run\(file/);
   assert.match(ui, /if \(controllers\.has\(file\.id\)\) return/);
 });
 
