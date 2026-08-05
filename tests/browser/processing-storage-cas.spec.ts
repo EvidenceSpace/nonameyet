@@ -17,6 +17,7 @@ test("atomically keeps newer processing state when stale work finishes", async (
       request.onerror = () => reject(request.error);
     });
     const storage = await import(`/storage.js?cas=${Date.now()}`);
+    const recovery = await import(`/processing-run-recovery.js?cas=${Date.now()}`);
     const caseId = "case-cas";
     const fileId = "file-cas";
     const expected = {
@@ -90,6 +91,19 @@ test("atomically keeps newer processing state when stale work finishes", async (
     const afterOrdinaryConflict = (await storage.getProcessingForCase(caseId))[0];
     const ordinaryActivityAfterConflict = (await storage.getCase(caseId)).updatedAt;
 
+    const failedRunMarker = {
+      ...firstRunMarker,
+      message: "Run that exits unexpectedly",
+      updatedAt: "2026-08-05T12:07:00.000Z",
+    };
+    await storage.saveProcessing(failedRunMarker);
+    const failureJob = recovery.buildUnexpectedProcessingFailure(
+      failedRunMarker,
+      "2026-08-05T12:08:00.000Z",
+    );
+    const failureRecovered = await storage.saveProcessingIfCurrent(failedRunMarker, failureJob);
+    const afterFailureRecovery = (await storage.getProcessingForCase(caseId))[0];
+
     return {
       firstReplacement,
       firstMessage: afterFirst.message,
@@ -101,6 +115,12 @@ test("atomically keeps newer processing state when stale work finishes", async (
       ordinaryFinalMessage: afterOrdinaryConflict.message,
       ordinaryActivityBeforeConflict,
       ordinaryActivityAfterConflict,
+      failureRecovered,
+      failureStatus: afterFailureRecovery.status,
+      failureCode: afterFailureRecovery.failure?.code,
+      failureRetryable: afterFailureRecovery.failure?.retryable,
+      failureMessage: afterFailureRecovery.message,
+      failureHasArtifact: Object.hasOwn(afterFailureRecovery, "artifact"),
     };
   });
 
@@ -112,6 +132,12 @@ test("atomically keeps newer processing state when stale work finishes", async (
   expect(result.ordinaryReplacement).toBe(false);
   expect(result.ordinaryFinalMessage).toBe("Newer processing run");
   expect(result.ordinaryActivityAfterConflict).toBe(result.ordinaryActivityBeforeConflict);
+  expect(result.failureRecovered).toBe(true);
+  expect(result.failureStatus).toBe("failed");
+  expect(result.failureCode).toBe("transient_error");
+  expect(result.failureRetryable).toBe(true);
+  expect(result.failureMessage).toContain("original remains stored locally");
+  expect(result.failureHasArtifact).toBe(false);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
