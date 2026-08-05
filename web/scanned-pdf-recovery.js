@@ -1,4 +1,4 @@
-export const SCANNED_PDF_BASE_MESSAGE = "This PDF appears scanned or has too little selectable text. CaseFind does not yet OCR PDF pages. The original remains stored locally; review it manually.";
+export const SCANNED_PDF_BASE_MESSAGE = "This PDF appears scanned or has too little readable text. CaseFind could not produce AI-ready text from it in this browser session. The original remains stored locally; review it manually.";
 export const SCANNED_PDF_IMAGE_RECOVERY_MESSAGE = "For local extraction, export only the pages you need as PNG or JPEG, then add those images as separate records.";
 export const SCANNED_PDF_IMAGE_UNAVAILABLE_MESSAGE = "This browser also cannot run CaseFind’s current local image OCR.";
 
