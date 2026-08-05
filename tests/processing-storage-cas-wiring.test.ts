@@ -26,3 +26,16 @@ test("ordinary processing commits only while its run marker remains current", ()
   assert.match(ui, /if \(!replaced\) processingNotices\.set\(file\.id, PROCESSING_STALE_MESSAGE\)/);
   assert.doesNotMatch(ui, /else await saveProcessing\(result\)/);
 });
+
+test("unexpected ordinary exits become retryable failures only for the owned marker", () => {
+  assert.match(ui, /let runMarkerSaved = false;/);
+  assert.match(ui, /await saveProcessing\(runMarker\);\s*runMarkerSaved = true;/);
+  assert.match(ui, /else if \(runMarkerSaved\) \{[\s\S]*?buildUnexpectedProcessingFailure\(runMarker\)[\s\S]*?saveProcessingIfCurrent\(runMarker, failure\)[\s\S]*?replaced \? failure\.message : PROCESSING_STALE_MESSAGE/);
+  assert.doesNotMatch(ui, /if \(!preserveExisting\) throw error/);
+});
+
+test("storage failures stay visible without an unhandled final refresh", () => {
+  assert.match(ui, /function showProcessingNotice\(fileId, message\)/);
+  assert.match(ui, /else \{\s*showProcessingNotice\(file\.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE\);\s*\}/);
+  assert.match(ui, /try \{\s*await refreshLatest\(\);\s*\} catch \{\s*showProcessingNotice\(file\.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE\);/);
+});

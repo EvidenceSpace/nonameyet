@@ -14,6 +14,10 @@ import {
 } from "./mixed-pdf-ocr-retry.js";
 import { requestAnalysis } from "./analysis-client.js";
 import { inspectProcessingJob } from "./processing-integrity.js";
+import {
+  buildUnexpectedProcessingFailure,
+  PROCESSING_STORAGE_UNAVAILABLE_MESSAGE,
+} from "./processing-run-recovery.js";
 import { buildGroundedSuggestions } from "./suggestion-handoff.js";
 
 const caseId = new URLSearchParams(location.search).get("id");
@@ -122,6 +126,14 @@ function setProcessingNote(row, message) {
 }
 
 function showLivePdfOcrProgress(fileId, message) {
+  if (!root || !message) return;
+  const row = [...root.querySelectorAll(".file-row")]
+    .find((candidate) => candidate.dataset.fileId === fileId);
+  if (row) setProcessingNote(row, message);
+}
+
+function showProcessingNotice(fileId, message) {
+  processingNotices.set(fileId, message);
   if (!root || !message) return;
   const row = [...root.querySelectorAll(".file-row")]
     .find((candidate) => candidate.dataset.fileId === fileId);
@@ -304,6 +316,7 @@ async function run(file, { preserveJob } = {}) {
   if (isPdf) pdfOcrProgress.start(file.id, controller);
   if (preserveExisting) mixedPdfRetryRuns.add(file.id);
   let runMarker;
+  let runMarkerSaved = false;
   try {
     if (!preserveExisting) {
       runMarker = {
@@ -317,6 +330,7 @@ async function run(file, { preserveJob } = {}) {
         updatedAt: new Date().toISOString(),
       };
       await saveProcessing(runMarker);
+      runMarkerSaved = true;
     }
     await refreshLatest();
     const result = isPdf
@@ -338,14 +352,29 @@ async function run(file, { preserveJob } = {}) {
       const replaced = await saveProcessingIfCurrent(runMarker, result);
       if (!replaced) processingNotices.set(file.id, PROCESSING_STALE_MESSAGE);
     }
-  } catch (error) {
-    if (!preserveExisting) throw error;
-    processingNotices.set(file.id, MIXED_PDF_OCR_RETRY_FAILED_MESSAGE);
+  } catch {
+    if (preserveExisting) {
+      showProcessingNotice(file.id, MIXED_PDF_OCR_RETRY_FAILED_MESSAGE);
+    } else if (runMarkerSaved) {
+      try {
+        const failure = buildUnexpectedProcessingFailure(runMarker);
+        const replaced = await saveProcessingIfCurrent(runMarker, failure);
+        showProcessingNotice(file.id, replaced ? failure.message : PROCESSING_STALE_MESSAGE);
+      } catch {
+        showProcessingNotice(file.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+      }
+    } else {
+      showProcessingNotice(file.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+    }
   } finally {
     if (controllers.get(file.id) === controller) controllers.delete(file.id);
     if (isPdf) pdfOcrProgress.finish(file.id, controller);
     if (preserveExisting) mixedPdfRetryRuns.delete(file.id);
-    await refreshLatest();
+    try {
+      await refreshLatest();
+    } catch {
+      showProcessingNotice(file.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+    }
   }
 }
 
