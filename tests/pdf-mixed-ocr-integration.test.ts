@@ -175,3 +175,25 @@ test("cancellation during OCR remains cancellation and destroys the document", a
   assert.equal(result.artifact, undefined);
   assert.equal(fixture.counters.documentDestroys, 1);
 });
+
+test("gives local OCR its own bounded phase deadline", async () => {
+  const fixture = pdfRuntime([""]);
+  let receivedTimeout: number | undefined;
+  const result = await processPdf(file, {
+    runtime: fixture.runtime,
+    ocrRuntime: detector,
+    timeoutMs: 40,
+    ocrTimeoutMs: 250,
+    ocrDocument: async (_document: any, options: any) => {
+      receivedTimeout = options.timeoutMs;
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      return ocrResult([
+        { pageNumber: 1, text: "Recovered after selectable extraction deadline.", confidence: 0.9 },
+      ], 0.9);
+    },
+  });
+  assert.equal(receivedTimeout, 250);
+  assert.equal(result.status, "ready_for_ai");
+  assert.equal(result.artifact?.adapterId, "local-pdf-ocr");
+  assert.equal(isValidExtractionArtifact(result.artifact), true);
+});

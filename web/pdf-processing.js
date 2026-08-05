@@ -7,7 +7,11 @@ import {
 import { SCANNED_PDF_BASE_MESSAGE } from "./scanned-pdf-recovery.js";
 import { classifyPdfFailure } from "./pdf-failure-recovery.js";
 import { assertOriginalBytesMatchHash } from "./original-byte-integrity.js";
-import { MAX_PDF_OCR_CHARACTERS, ocrPdfDocument } from "./pdf-document-ocr.js";
+import {
+  MAX_PDF_OCR_CHARACTERS,
+  PDF_DOCUMENT_OCR_TIMEOUT_MS,
+  ocrPdfDocument,
+} from "./pdf-document-ocr.js";
 import { browserRasterTextDetectorRuntime } from "./raster-text-detector.js";
 import { buildImageOcrQuality } from "./image-ocr-quality.js";
 
@@ -180,6 +184,7 @@ export async function processPdf(file, {
   ocrRuntime,
   ocrDocument = ocrPdfDocument,
   onOcrProgress,
+  ocrTimeoutMs = PDF_DOCUMENT_OCR_TIMEOUT_MS,
   maxBytes = MAX_PDF_BYTES,
   maxTextCharacters = MAX_PDF_TEXT_CHARACTERS,
   timeoutMs = PDF_PROCESSING_TIMEOUT_MS,
@@ -191,8 +196,8 @@ export async function processPdf(file, {
     fileHash: file.sha256,
     updatedAt: new Date().toISOString(),
   };
-  const deadline = createDeadlineSignal(signal, timeoutMs);
-  const workSignal = deadline.signal;
+  let deadline = createDeadlineSignal(signal, timeoutMs);
+  let workSignal = deadline.signal;
   let task;
   let doc;
   let taskDestroyed = false;
@@ -271,6 +276,12 @@ export async function processPdf(file, {
       ? browserRasterTextDetectorRuntime()
       : ocrRuntime;
     if (pagesWithoutText.length && selectedOcrRuntime) {
+      if (!Number.isFinite(ocrTimeoutMs) || ocrTimeoutMs <= 0) {
+        throw processingError("invalid_output", "PDF OCR time limit is invalid.");
+      }
+      deadline.cleanup();
+      deadline = createDeadlineSignal(signal, ocrTimeoutMs + 1_000);
+      workSignal = deadline.signal;
       const remainingBudget = Math.min(
         MAX_PDF_OCR_CHARACTERS,
         maxTextCharacters - extractedCharacters,
@@ -286,6 +297,7 @@ export async function processPdf(file, {
             signal: workSignal,
             runtime: selectedOcrRuntime,
             maxCharacters: remainingBudget,
+            timeoutMs: ocrTimeoutMs,
             onProgress: typeof onOcrProgress === "function"
               ? (progress) => onOcrProgress({
                 ...progress,
