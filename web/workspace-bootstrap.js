@@ -1,4 +1,5 @@
 import { getCase } from "./storage.js";
+import { recoverOrphanedProcessingRuns } from "./processing-orphan-recovery.js";
 import { renderStorageRecovery } from "./storage-recovery-ui.js";
 import { loadWorkspaceModules } from "./workspace-modules.js";
 
@@ -54,8 +55,10 @@ async function boot() {
     const record = await getCase(caseId);
     if (!record) { showMissingCase(); return; }
     const state = await waitForBaseWorkspace();
-    if (state === "ready") await loadWorkspaceModules();
-    else showStorageRecovery(new Error("Workspace storage became unavailable."));
+    if (state === "ready") {
+      await recoverOrphanedProcessingRuns(caseId);
+      await loadWorkspaceModules();
+    } else showStorageRecovery(new Error("Workspace storage became unavailable."));
   } catch (error) {
     showStorageRecovery(error);
   }

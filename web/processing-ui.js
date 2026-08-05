@@ -18,6 +18,15 @@ import {
   buildUnexpectedProcessingFailure,
   PROCESSING_STORAGE_UNAVAILABLE_MESSAGE,
 } from "./processing-run-recovery.js";
+import {
+  PROCESSING_ACTIVE_ELSEWHERE_MESSAGE,
+  PROCESSING_BUSY_MESSAGE,
+  PROCESSING_LEASE_UNAVAILABLE_MESSAGE,
+  PROCESSING_OWNERSHIP_UNCONFIRMED_MESSAGE,
+  processingLeaseSupported,
+  withProcessingLease,
+} from "./processing-lease.js";
+import { recoverOrphanedProcessingRuns } from "./processing-orphan-recovery.js";
 import { buildGroundedSuggestions } from "./suggestion-handoff.js";
 
 const caseId = new URLSearchParams(location.search).get("id");
@@ -35,6 +44,7 @@ const labels = {
   ocr_unavailable: "OCR unavailable",
 };
 const controllers = new Map();
+const leaseRequests = new Set();
 const pdfOcrProgress = createPdfOcrProgressTracker();
 const mixedPdfRetryRuns = new Set();
 const processingNotices = new Map();
@@ -187,6 +197,7 @@ async function refresh() {
       let processButton = actions.querySelector(".process-file");
       const canProcessPdf = file.type === "application/pdf"
         && !controllers.has(file.id)
+        && !leaseRequests.has(file.id)
         && (!job
           || status === "cancelled"
           || (status === "failed" && job?.failure?.retryable !== false)
@@ -257,7 +268,12 @@ async function refresh() {
       const mixedRetryMessage = mixedPdfRetryActive && !livePdfProgress
         ? MIXED_PDF_OCR_RETRY_RUNNING_MESSAGE
         : "";
-      const noteMessage = livePdfProgress || mixedRetryMessage || processingNotices.get(file.id) || (imageOcrUnavailable
+      const crossTabProcessingMessage = status === "extracting" && !controllers.has(file.id)
+        ? (processingLeaseSupported()
+          ? PROCESSING_ACTIVE_ELSEWHERE_MESSAGE
+          : PROCESSING_OWNERSHIP_UNCONFIRMED_MESSAGE)
+        : "";
+      const noteMessage = livePdfProgress || mixedRetryMessage || processingNotices.get(file.id) || crossTabProcessingMessage || (imageOcrUnavailable
         ? IMAGE_OCR_UNAVAILABLE_MESSAGE
         : mixedPdfRetry?.message || scannedPdfRecovery?.message || inspection.message);
       setProcessingNote(row, noteMessage);
@@ -304,7 +320,30 @@ async function analyze(file, job, row, button) {
   }
 }
 
-async function run(file, { preserveJob } = {}) {
+async function run(file, options = {}) {
+  if (controllers.has(file.id) || leaseRequests.has(file.id)) return;
+  processingNotices.delete(file.id);
+  leaseRequests.add(file.id);
+  try {
+    const lease = await withProcessingLease(file.id, () => runOwned(file, options));
+    if (!lease.acquired) {
+      showProcessingNotice(file.id, lease.reason === "busy"
+        ? PROCESSING_BUSY_MESSAGE
+        : PROCESSING_LEASE_UNAVAILABLE_MESSAGE);
+      try {
+        await refreshLatest();
+      } catch {
+        showProcessingNotice(file.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+      }
+    }
+  } catch {
+    showProcessingNotice(file.id, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+  } finally {
+    leaseRequests.delete(file.id);
+  }
+}
+
+async function runOwned(file, { preserveJob } = {}) {
   if (controllers.has(file.id)) return;
   const mixedPdfRetry = preserveJob ? getMixedPdfOcrRetry({ file, job: preserveJob }) : null;
   if (preserveJob && !mixedPdfRetry) return;
@@ -323,6 +362,7 @@ async function run(file, { preserveJob } = {}) {
         fileId: file.id,
         caseId,
         fileHash: file.sha256,
+        runId: crypto.randomUUID(),
         status: "extracting",
         message: isPdf
           ? "Reading this PDF locally and checking pages that may need OCR…"
@@ -377,6 +417,35 @@ async function run(file, { preserveJob } = {}) {
     }
   }
 }
+
+let crossTabRecovery = null;
+async function recoverCrossTabProcessing() {
+  if (!caseId || document.visibilityState === "hidden") return;
+  if (crossTabRecovery) return crossTabRecovery;
+  crossTabRecovery = (async () => {
+    try {
+      await recoverOrphanedProcessingRuns(caseId);
+      await refreshLatest();
+    } catch {
+      if (root) {
+        [...root.querySelectorAll(".file-row")].forEach((row) => {
+          const fileId = row.dataset.fileId;
+          if (fileId && !controllers.has(fileId) && row.querySelector(".processing-status.extracting")) {
+            showProcessingNotice(fileId, PROCESSING_STORAGE_UNAVAILABLE_MESSAGE);
+          }
+        });
+      }
+    } finally {
+      crossTabRecovery = null;
+    }
+  })();
+  return crossTabRecovery;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") void recoverCrossTabProcessing();
+});
+window.addEventListener("focus", () => { void recoverCrossTabProcessing(); });
 
 if (root) {
   new MutationObserver(() => queueMicrotask(refresh)).observe(root, { childList: true, subtree: true });
