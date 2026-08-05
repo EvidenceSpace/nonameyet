@@ -139,7 +139,11 @@ async function refresh() {
       const isImage = ["image/png", "image/jpeg", "image/webp"].includes(file.type);
       const imageOcrUnavailable = isImage && !imageOcrReadiness.available && ["unprocessed", "failed", "cancelled"].includes(status);
       const scannedPdfRecovery = file.type === "application/pdf"
-        ? getScannedPdfRecovery({ status, imageOcrAvailable: imageOcrReadiness.available })
+        ? getScannedPdfRecovery({
+          status,
+          imageOcrAvailable: imageOcrReadiness.available,
+          failure: job?.failure,
+        })
         : null;
       const displayedStatus = imageOcrUnavailable ? "ocr_unavailable" : status;
       const pdfFailureNeedsAttention = file.type === "application/pdf" && status === "failed" && job?.failure?.retryable === false;
@@ -155,7 +159,10 @@ async function refresh() {
 
       let processButton = actions.querySelector(".process-file");
       const canProcessPdf = file.type === "application/pdf"
-        && (!job || status === "cancelled" || (status === "failed" && job?.failure?.retryable !== false));
+        && (!job
+          || status === "cancelled"
+          || (status === "failed" && job?.failure?.retryable !== false)
+          || scannedPdfRecovery?.canRetryPdfExtraction);
       const canProcessImage = canStartImageOcr({
         fileType: file.type,
         jobStatus: job && status,
@@ -171,7 +178,8 @@ async function refresh() {
         processButton.onclick = () => run(file);
       }
       if (processButton) {
-        if (canProcess) processButton.textContent = job ? "Retry" : file.type === "application/pdf" ? "Extract text" : "Run local OCR";
+        if (canProcess) processButton.textContent = scannedPdfRecovery?.retryLabel
+          || (job ? "Retry" : file.type === "application/pdf" ? "Extract text" : "Run local OCR");
         else processButton.remove();
       }
 

@@ -4,7 +4,10 @@ import {
   buildPdfOcrFailureWarnings,
   buildPdfPageCoverageWarnings,
 } from "./pdf-page-coverage.js";
-import { SCANNED_PDF_BASE_MESSAGE } from "./scanned-pdf-recovery.js";
+import {
+  classifyScannedPdfOcrFailure,
+  SCANNED_PDF_BASE_MESSAGE,
+} from "./scanned-pdf-recovery.js";
 import { classifyPdfFailure } from "./pdf-failure-recovery.js";
 import { assertOriginalBytesMatchHash } from "./original-byte-integrity.js";
 import {
@@ -280,6 +283,7 @@ export async function processPdf(file, {
     throwIfAborted(workSignal);
     let mergedPages = pages;
     let ocr;
+    let ocrFailure;
     let ocrFailureWarnings = [];
     const selectedOcrRuntime = ocrRuntime === undefined
       ? browserRasterTextDetectorRuntime()
@@ -327,8 +331,11 @@ export async function processPdf(file, {
         mergedPages = mergeOcrPages(pages, ocr.pages);
       } catch (error) {
         if (workSignal.aborted) throw error;
+        ocrFailure = classifyScannedPdfOcrFailure(error);
         ocrFailureWarnings = buildPdfOcrFailureWarnings(pagesWithoutText);
       }
+    } else if (pagesWithoutText.length) {
+      ocrFailure = { code: "ocr_unavailable", retryable: false };
     }
 
     throwIfAborted(workSignal);
@@ -337,11 +344,13 @@ export async function processPdf(file, {
       0,
     );
     if (readableCharacters < 20) {
+      ocrFailure ||= { code: "insufficient_text", retryable: false };
       return {
         ...base,
         status: "needs_ocr",
         message: SCANNED_PDF_BASE_MESSAGE,
         pages: [],
+        failure: ocrFailure,
       };
     }
 
