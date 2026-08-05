@@ -1,6 +1,6 @@
 import { expect, test } from "playwright/test";
 
-test("atomically keeps a newer processing result when a stale retry finishes", async ({ page }) => {
+test("atomically keeps newer processing state when stale work finishes", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -64,6 +64,32 @@ test("atomically keeps a newer processing result when a stale retry finishes", a
     const afterConflict = (await storage.getProcessingForCase(caseId))[0];
     const activityAfterConflict = (await storage.getCase(caseId)).updatedAt;
 
+    const firstRunMarker = {
+      fileId,
+      caseId,
+      fileHash: expected.fileHash,
+      status: "extracting",
+      message: "Older processing run",
+      updatedAt: "2026-08-05T12:04:00.000Z",
+    };
+    await storage.saveProcessing(firstRunMarker);
+    const newerRunMarker = {
+      ...firstRunMarker,
+      message: "Newer processing run",
+      updatedAt: "2026-08-05T12:05:00.000Z",
+    };
+    await storage.saveProcessing(newerRunMarker);
+    const ordinaryActivityBeforeConflict = (await storage.getCase(caseId)).updatedAt;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const staleRunResult = {
+      ...improved,
+      message: "Older run result",
+      updatedAt: "2026-08-05T12:06:00.000Z",
+    };
+    const ordinaryReplacement = await storage.saveProcessingIfCurrent(firstRunMarker, staleRunResult);
+    const afterOrdinaryConflict = (await storage.getProcessingForCase(caseId))[0];
+    const ordinaryActivityAfterConflict = (await storage.getCase(caseId)).updatedAt;
+
     return {
       firstReplacement,
       firstMessage: afterFirst.message,
@@ -71,6 +97,10 @@ test("atomically keeps a newer processing result when a stale retry finishes", a
       finalMessage: afterConflict.message,
       activityBeforeConflict,
       activityAfterConflict,
+      ordinaryReplacement,
+      ordinaryFinalMessage: afterOrdinaryConflict.message,
+      ordinaryActivityBeforeConflict,
+      ordinaryActivityAfterConflict,
     };
   });
 
@@ -79,6 +109,9 @@ test("atomically keeps a newer processing result when a stale retry finishes", a
   expect(result.secondReplacement).toBe(false);
   expect(result.finalMessage).toBe("Newer processing result");
   expect(result.activityAfterConflict).toBe(result.activityBeforeConflict);
+  expect(result.ordinaryReplacement).toBe(false);
+  expect(result.ordinaryFinalMessage).toBe("Newer processing run");
+  expect(result.ordinaryActivityAfterConflict).toBe(result.ordinaryActivityBeforeConflict);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });

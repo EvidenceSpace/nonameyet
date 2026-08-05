@@ -34,6 +34,7 @@ const controllers = new Map();
 const pdfOcrProgress = createPdfOcrProgressTracker();
 const mixedPdfRetryRuns = new Set();
 const processingNotices = new Map();
+const PROCESSING_STALE_MESSAGE = "Local processing changed while this run was working. This result was not saved; review the current text status before trying again.";
 
 const viewer = document.createElement("dialog");
 viewer.className = "text-source-dialog";
@@ -302,9 +303,10 @@ async function run(file, { preserveJob } = {}) {
   const isPdf = file.type === "application/pdf";
   if (isPdf) pdfOcrProgress.start(file.id, controller);
   if (preserveExisting) mixedPdfRetryRuns.add(file.id);
+  let runMarker;
   try {
     if (!preserveExisting) {
-      await saveProcessing({
+      runMarker = {
         fileId: file.id,
         caseId,
         fileHash: file.sha256,
@@ -313,7 +315,8 @@ async function run(file, { preserveJob } = {}) {
           ? "Reading this PDF locally and checking pages that may need OCR…"
           : "Running OCR locally in this browser…",
         updatedAt: new Date().toISOString(),
-      });
+      };
+      await saveProcessing(runMarker);
     }
     await refreshLatest();
     const result = isPdf
@@ -331,7 +334,10 @@ async function run(file, { preserveJob } = {}) {
         const replaced = await saveProcessingIfCurrent(preserveJob, result);
         if (!replaced) processingNotices.set(file.id, MIXED_PDF_OCR_RETRY_STALE_MESSAGE);
       } else processingNotices.set(file.id, outcome.notice);
-    } else await saveProcessing(result);
+    } else {
+      const replaced = await saveProcessingIfCurrent(runMarker, result);
+      if (!replaced) processingNotices.set(file.id, PROCESSING_STALE_MESSAGE);
+    }
   } catch (error) {
     if (!preserveExisting) throw error;
     processingNotices.set(file.id, MIXED_PDF_OCR_RETRY_FAILED_MESSAGE);

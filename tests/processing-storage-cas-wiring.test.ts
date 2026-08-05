@@ -18,3 +18,11 @@ test("mixed-PDF retry uses atomic replacement and surfaces stale results", () =>
   assert.match(ui, /if \(!replaced\) processingNotices\.set\(file\.id, MIXED_PDF_OCR_RETRY_STALE_MESSAGE\)/);
   assert.doesNotMatch(ui, /if \(outcome\.replaceExisting\) await saveProcessing\(result\)/);
 });
+
+test("ordinary processing commits only while its run marker remains current", () => {
+  assert.match(ui, /let runMarker;/);
+  assert.match(ui, /runMarker = \{[\s\S]*?status: "extracting"[\s\S]*?await saveProcessing\(runMarker\)/);
+  assert.match(ui, /saveProcessingIfCurrent\(runMarker, result\)/);
+  assert.match(ui, /if \(!replaced\) processingNotices\.set\(file\.id, PROCESSING_STALE_MESSAGE\)/);
+  assert.doesNotMatch(ui, /else await saveProcessing\(result\)/);
+});
