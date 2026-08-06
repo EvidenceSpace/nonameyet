@@ -29,24 +29,50 @@ export function formatPdfOcrProgress(progress) {
   return `Local OCR checked ${value.completedPages} of ${value.totalPages} ${pages} without selectable text · ${outcome} on PDF page ${value.pageNumber}.`;
 }
 
+export function buildPdfOcrProgressView(progress) {
+  const value = normalizePdfOcrProgress(progress);
+  if (!value) return null;
+  const pages = value.totalPages === 1 ? "page" : "pages";
+  return {
+    max: value.totalPages,
+    value: value.completedPages,
+    label: `${value.completedPages} / ${value.totalPages} ${pages}`,
+    ariaValueText: `${value.completedPages} of ${value.totalPages} PDF ${pages} checked by local OCR.`,
+  };
+}
+
+function followsAcceptedProgress(previous, next) {
+  if (!previous) return next.status === "starting";
+  if (previous.totalPages !== next.totalPages || next.status === "starting") return false;
+  if (next.completedPages !== previous.completedPages + 1) return false;
+  if (previous.status === "starting") return next.pageNumber === previous.pageNumber;
+  return next.pageNumber > previous.pageNumber;
+}
+
 export function createPdfOcrProgressTracker() {
   const sessions = new Map();
   return {
     start(fileId, token) {
       if (typeof fileId !== "string" || !fileId.trim() || token == null) return false;
-      sessions.set(fileId, { token, message: "" });
+      sessions.set(fileId, { token, message: "", progress: null });
       return true;
     },
     update(fileId, token, progress) {
       const session = sessions.get(fileId);
       if (!session || session.token !== token) return "";
-      const message = formatPdfOcrProgress(progress);
-      if (!message) return "";
+      const value = normalizePdfOcrProgress(progress);
+      if (!value || !followsAcceptedProgress(session.progress, value)) return "";
+      const message = formatPdfOcrProgress(value);
+      session.progress = value;
       session.message = message;
       return message;
     },
     message(fileId) {
       return sessions.get(fileId)?.message || "";
+    },
+    progress(fileId) {
+      const progress = sessions.get(fileId)?.progress;
+      return progress ? { ...progress } : null;
     },
     finish(fileId, token) {
       const session = sessions.get(fileId);

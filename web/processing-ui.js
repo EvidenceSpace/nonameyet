@@ -1,6 +1,6 @@
 import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProcessing, saveProcessingIfCurrent, saveSuggestion } from "./storage.js";
 import { processPdf } from "./pdf-processing.js";
-import { createPdfOcrProgressTracker } from "./pdf-ocr-progress.js";
+import { buildPdfOcrProgressView, createPdfOcrProgressTracker } from "./pdf-ocr-progress.js";
 import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
 import { formatImageOcrQuality } from "./image-ocr-quality.js";
 import { canStartImageOcr, inspectImageOcrReadiness, IMAGE_OCR_UNAVAILABLE_MESSAGE } from "./image-ocr-readiness.js";
@@ -135,11 +135,39 @@ function setProcessingNote(row, message) {
   if (target.textContent !== message) target.textContent = message;
 }
 
-function showLivePdfOcrProgress(fileId, message) {
+function setPdfOcrMeter(row, progress) {
+  const view = buildPdfOcrProgressView(progress);
+  let meter = row.querySelector(".pdf-ocr-meter");
+  if (!view) {
+    meter?.remove();
+    return;
+  }
+  if (!meter) {
+    meter = document.createElement("div");
+    meter.className = "pdf-ocr-meter";
+    const bar = document.createElement("progress");
+    bar.setAttribute("aria-label", "Local PDF OCR progress");
+    const label = document.createElement("span");
+    label.setAttribute("aria-hidden", "true");
+    meter.append(bar, label);
+    row.append(meter);
+  }
+  const bar = meter.querySelector("progress");
+  const label = meter.querySelector("span");
+  bar.max = view.max;
+  bar.value = view.value;
+  bar.setAttribute("aria-valuetext", view.ariaValueText);
+  if (label.textContent !== view.label) label.textContent = view.label;
+}
+
+function showLivePdfOcrProgress(fileId, message, progress) {
   if (!root || !message) return;
   const row = [...root.querySelectorAll(".file-row")]
     .find((candidate) => candidate.dataset.fileId === fileId);
-  if (row) setProcessingNote(row, message);
+  if (row) {
+    setProcessingNote(row, message);
+    setPdfOcrMeter(row, progress);
+  }
 }
 
 function showProcessingNotice(fileId, message) {
@@ -265,6 +293,9 @@ async function refresh() {
       const livePdfProgress = file.type === "application/pdf" && status === "extracting"
         ? pdfOcrProgress.message(file.id)
         : "";
+      const livePdfProgressValue = file.type === "application/pdf" && status === "extracting"
+        ? pdfOcrProgress.progress(file.id)
+        : null;
       const mixedRetryMessage = mixedPdfRetryActive && !livePdfProgress
         ? MIXED_PDF_OCR_RETRY_RUNNING_MESSAGE
         : "";
@@ -277,6 +308,7 @@ async function refresh() {
         ? IMAGE_OCR_UNAVAILABLE_MESSAGE
         : mixedPdfRetry?.message || scannedPdfRecovery?.message || inspection.message);
       setProcessingNote(row, noteMessage);
+      setPdfOcrMeter(row, livePdfProgressValue);
     });
   } finally {
     refreshing = false;
@@ -378,7 +410,13 @@ async function runOwned(file, { preserveJob } = {}) {
         signal: controller.signal,
         onOcrProgress(progress) {
           const message = pdfOcrProgress.update(file.id, controller, progress);
-          if (message) showLivePdfOcrProgress(file.id, message);
+          if (message) {
+            showLivePdfOcrProgress(
+              file.id,
+              message,
+              pdfOcrProgress.progress(file.id),
+            );
+          }
         },
       })
       : await processImage(file, { signal: controller.signal, runtime: imageOcrRuntime });
