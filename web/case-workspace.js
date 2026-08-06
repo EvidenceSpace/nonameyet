@@ -1,3 +1,4 @@
+import { confirmSuggestionAsFact, syncRenderedSuggestionSnapshots } from "./review-transition.js";
 import {
   createId, deleteCase, deleteFact, deleteFile, deleteSuggestion, getCase,
   getFactsForCase, getFilesForCase, getSuggestionsForCase, saveCase, saveFact,
@@ -98,6 +99,7 @@ function confidenceText(value) { return value >= 0.8 ? "Strong text match" : val
 function renderSuggestions() {
   const root = document.querySelector("#suggestion-list");
   const active = activeSuggestions();
+  syncRenderedSuggestionSnapshots(active);
   const signals = active.flatMap((item) => item.injectionSignals || []);
   const warning = document.querySelector("#review-warning");
   warning.hidden = signals.length === 0;
@@ -130,8 +132,7 @@ async function acceptSuggestion(suggestion, value, status) {
     status, manuallyEntered: false, aiSuggested: true, decidedByUser: true,
     createdAt: new Date().toISOString(),
   };
-  await saveFact(fact);
-  await deleteSuggestion(suggestion.id);
+  await confirmSuggestionAsFact(fact, suggestion);
   facts.push(fact);
   suggestions = suggestions.filter((item) => item.id !== suggestion.id);
   renderSuggestions(); renderFacts();
