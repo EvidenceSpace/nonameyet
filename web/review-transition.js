@@ -1,13 +1,23 @@
-import { createId, deleteFact, getFilesForCase, openDatabase, saveFact } from "./storage.js";
+import { createId, getFilesForCase, openDatabase, saveFact } from "./storage.js";
 
 const activeReviewActions = new Set();
 const renderedSuggestionSnapshots = new Map();
+const renderedFactSnapshots = new Map();
 
 export function syncRenderedSuggestionSnapshots(suggestions = []) {
   renderedSuggestionSnapshots.clear();
   for (const suggestion of suggestions) {
     if (!isNonEmptyString(suggestion?.id)) continue;
     try { renderedSuggestionSnapshots.set(suggestion.id, structuredClone(suggestion)); }
+    catch { /* A malformed snapshot must never become actionable. */ }
+  }
+}
+
+export function syncRenderedFactSnapshots(facts = []) {
+  renderedFactSnapshots.clear();
+  for (const fact of facts) {
+    if (!isNonEmptyString(fact?.id)) continue;
+    try { renderedFactSnapshots.set(fact.id, structuredClone(fact)); }
     catch { /* A malformed snapshot must never become actionable. */ }
   }
 }
@@ -34,6 +44,15 @@ function validSuggestionSnapshot(suggestion) {
     && ["suggested", "uncertain"].includes(suggestion.status)
     && suggestion.aiSuggested === true
     && suggestion.decidedByUser === false;
+}
+
+function validFactSnapshot(fact) {
+  return isNonEmptyString(fact?.id)
+    && isNonEmptyString(fact.caseId)
+    && isNonEmptyString(fact.sourceFileId)
+    && isNonEmptyString(fact.value)
+    && ["confirmed", "corrected"].includes(fact.status)
+    && typeof fact.manuallyEntered === "boolean";
 }
 
 function validReviewTransition(fact, suggestion) {
@@ -149,6 +168,81 @@ export class ReviewTransitionError extends Error {
   }
 }
 
+export async function removeFact(expectedFact, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  if (!validFactSnapshot(expectedFact)) {
+    throw new TypeError("Invalid fact removal identity.");
+  }
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction(["facts", "cases"], "readwrite");
+    const facts = tx.objectStore("facts");
+    const cases = tx.objectStore("cases");
+    let transitionError;
+    let currentRequest;
+    let caseRequest;
+    let deleteRequest;
+    const abortWith = (error) => {
+      transitionError = error;
+      try { tx.abort(); }
+      catch (abortError) { transitionError = transitionError || abortError; }
+    };
+    const completion = new Promise((resolve, reject) => {
+      let settled = false;
+      const rejectOnce = () => {
+        if (settled) return;
+        settled = true;
+        reject(transitionError || tx.error || deleteRequest?.error || caseRequest?.error || currentRequest?.error || new Error("Fact removal aborted"));
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve(undefined);
+      };
+      tx.onerror = rejectOnce;
+      tx.onabort = rejectOnce;
+    });
+
+    currentRequest = facts.get(expectedFact.id);
+    currentRequest.onsuccess = () => {
+      if (!storedValuesMatch(currentRequest.result, expectedFact)) {
+        abortWith(new ReviewTransitionError(
+          "stale_fact",
+          "The confirmed fact changed before it could be removed.",
+        ));
+        return;
+      }
+      caseRequest = cases.get(expectedFact.caseId);
+      caseRequest.onsuccess = () => {
+        if (!caseRequest.result) {
+          abortWith(new ReviewTransitionError(
+            "case_missing",
+            "The case no longer exists on this device.",
+          ));
+          return;
+        }
+        try {
+          const updatedAt = now();
+          if (!isNonEmptyString(updatedAt)) throw new TypeError("Invalid fact removal timestamp.");
+          deleteRequest = facts.delete(expectedFact.id);
+          cases.put({ ...caseRequest.result, updatedAt });
+        } catch (error) {
+          abortWith(new ReviewTransitionError(
+            "write_failed",
+            "The fact removal could not be saved atomically.",
+            error,
+          ));
+        }
+      };
+    };
+
+    await completion;
+    return true;
+  } finally { db.close(); }
+}
+
 export async function confirmSuggestionAsFact(fact, expectedSuggestion, {
   openDatabaseImpl = openDatabase,
   now = () => new Date().toISOString(),
@@ -242,7 +336,9 @@ function showFailure(text) {
 }
 
 function ensureReviewStatus(target = "review") {
-  const id = target === "correction" ? "correction-review-status" : "review-decision-status";
+  const id = target === "correction"
+    ? "correction-review-status"
+    : target === "fact" ? "fact-decision-status" : "review-decision-status";
   let status = document.querySelector(`#${id}`);
   if (status) return status;
   status = document.createElement("p");
@@ -257,7 +353,7 @@ function ensureReviewStatus(target = "review") {
     if (actions) actions.before(status);
     else form.append(status);
   } else {
-    const list = document.querySelector("#suggestion-list");
+    const list = document.querySelector(target === "fact" ? "#fact-record-list" : "#suggestion-list");
     if (!list) return null;
     list.before(status);
   }
@@ -277,6 +373,9 @@ function reviewFailureText(error, fallback) {
   }
   if (error?.code === "case_missing") {
     return "This case is no longer available on this device. Nothing was changed.";
+  }
+  if (error?.code === "stale_fact") {
+    return "This fact changed in another tab. Nothing was removed. Reload and review the latest version.";
   }
   return fallback;
 }
@@ -314,6 +413,17 @@ function requireRenderedSuggestion(suggestionId) {
     );
   }
   return structuredClone(suggestion);
+}
+
+function requireRenderedFact(factId) {
+  const fact = renderedFactSnapshots.get(factId);
+  if (!fact) {
+    throw new ReviewTransitionError(
+      "stale_fact",
+      "The displayed fact is no longer available.",
+    );
+  }
+  return structuredClone(fact);
 }
 
 async function runReviewAction(suggestionId, card, action, fallback, {
@@ -380,10 +490,18 @@ if (location.pathname.endsWith("/case.html")) {
     const deleteFactButton = event.target.closest?.(".delete-fact");
     if (deleteFactButton) {
       event.preventDefault(); event.stopImmediatePropagation();
-      void (async () => {
-        try { await deleteFact(deleteFactButton.dataset.id); location.reload(); }
-        catch { showFailure("The fact could not be removed from this device. Nothing was changed. Try again."); }
-      })();
+      const card = deleteFactButton.closest(".fact-record");
+      const factId = deleteFactButton.dataset.id;
+      void runReviewAction(
+        factId,
+        card,
+        async () => {
+          const fact = requireRenderedFact(factId);
+          await removeFact(fact);
+        },
+        "The fact could not be removed from this device. Nothing was changed. Try again.",
+        { errorTarget: "fact" },
+      );
       return;
     }
     const button = event.target.closest?.(".confirm-suggestion");
