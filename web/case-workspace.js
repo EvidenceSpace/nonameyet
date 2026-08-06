@@ -1,6 +1,6 @@
-import { confirmSuggestionAsFact, syncRenderedSuggestionSnapshots } from "./review-transition.js";
+import { confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots } from "./review-transition.js";
 import {
-  createId, deleteCase, deleteFact, deleteFile, deleteSuggestion, getCase,
+  createId, deleteCase, deleteFile, deleteSuggestion, getCase,
   getFactsForCase, getFilesForCase, getSuggestionsForCase, saveCase, saveFact,
   saveFile, saveSuggestion, sha256,
 } from "./storage.js";
@@ -83,14 +83,14 @@ function renderFiles() {
 
 function renderFacts() {
   const root = document.querySelector("#fact-record-list");
+  syncRenderedFactSnapshots(facts);
   if (!facts.length) { root.innerHTML = '<div class="empty-facts">No confirmed facts yet.</div>'; renderStats(); return; }
   root.innerHTML = facts.map((fact) => {
     const file = files.find((item) => item.id === fact.sourceFileId);
     const label = fact.label || factLabels[fact.type] || factLabels.other;
     const decisionBadge = fact.aiSuggested ? `<span class="${fact.status === "corrected" ? "corrected-badge" : "manual-badge"}">${fact.status === "corrected" ? "User-corrected" : "User-confirmed"}</span><span class="ai-badge">AI-assisted</span>` : '<span class="manual-badge">User-entered</span>';
-    return `<div class="fact-record"><span class="fact-record-icon">✓</span><div class="fact-record-copy"><strong>${escapeHtml(label)}</strong><p>${escapeHtml(fact.value)}</p>${fact.note ? `<small>${escapeHtml(fact.note)}</small>` : ""}<div class="fact-record-badges">${decisionBadge}<span class="source-badge">Source: ${escapeHtml(file?.name || "Missing record")}</span></div></div><button class="delete-fact" data-id="${fact.id}" type="button">Remove</button></div>`;
+    return `<div class="fact-record" data-id="${fact.id}"><span class="fact-record-icon">✓</span><div class="fact-record-copy"><strong>${escapeHtml(label)}</strong><p>${escapeHtml(fact.value)}</p>${fact.note ? `<small>${escapeHtml(fact.note)}</small>` : ""}<div class="fact-record-badges">${decisionBadge}<span class="source-badge">Source: ${escapeHtml(file?.name || "Missing record")}</span></div></div><button class="delete-fact" data-id="${fact.id}" type="button">Remove</button></div>`;
   }).join("");
-  root.querySelectorAll(".delete-fact").forEach((button) => button.addEventListener("click", async () => { await deleteFact(button.dataset.id); facts = facts.filter((fact) => fact.id !== button.dataset.id); renderFacts(); }));
   renderStats();
 }
 

@@ -9,7 +9,7 @@ const reviewStyles = readFileSync("web/review.css", "utf8");
 test("the case workspace loads and directly uses the atomic review boundary", () => {
   assert.match(
     workspaceSource,
-    /^import \{ confirmSuggestionAsFact, syncRenderedSuggestionSnapshots \} from "\.\/review-transition\.js";/,
+    /^import \{ confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots \} from "\.\/review-transition\.js";/,
   );
   assert.match(workspaceSource, /syncRenderedSuggestionSnapshots\(active\);/);
   assert.match(workspaceSource, /await confirmSuggestionAsFact\(fact, suggestion\);/);
@@ -17,6 +17,22 @@ test("the case workspace loads and directly uses the atomic review boundary", ()
     workspaceSource,
     /await saveFact\(fact\);\s*await deleteSuggestion\(suggestion\.id\);/,
   );
+});
+
+test("fact removal uses the exact rendered fact and a local recovery state", () => {
+  assert.match(workspaceSource, /syncRenderedFactSnapshots\(facts\);/);
+  assert.match(workspaceSource, /class="fact-record" data-id="\$\{fact\.id\}"/);
+  assert.doesNotMatch(workspaceSource, /deleteFact/);
+  assert.match(transitionSource, /const fact = requireRenderedFact\(factId\);/);
+  assert.match(transitionSource, /await removeFact\(fact\);/);
+  assert.doesNotMatch(transitionSource, /deleteFact\(factId\)/);
+  assert.match(transitionSource, /errorTarget: "fact"/);
+  assert.match(transitionSource, /"fact-decision-status"/);
+  assert.match(
+    transitionSource,
+    /This fact changed in another tab\. Nothing was removed\. Reload and review the latest version\./,
+  );
+  assert.match(reviewStyles, /\.fact-record\[aria-busy="true"\]/);
 });
 
 test("every review decision passes the exact rendered suggestion snapshot", () => {
@@ -42,6 +58,6 @@ test("review decisions expose local failure and busy states", () => {
   assert.match(transitionSource, /activeReviewActions\.has\(suggestionId\)/);
   assert.match(transitionSource, /errorTarget: "correction", busyRoot: dialog/);
   assert.match(reviewStyles, /\.review-decision-status\{/);
-  assert.match(reviewStyles, /\.suggestion-card\[aria-busy="true"\]\{/);
+  assert.match(reviewStyles, /\.suggestion-card\[aria-busy="true"\]/);
   assert.match(reviewStyles, /\.correction-dialog \.review-decision-status\{/);
 });
