@@ -19,7 +19,7 @@ test("the case workspace loads and directly uses the atomic review boundary", ()
   );
 });
 
-test("confirmation and correction pass the exact suggestion snapshot", () => {
+test("every review decision passes the exact rendered suggestion snapshot", () => {
   assert.match(
     transitionSource,
     /confirmSuggestionAsFact\(\s*buildFact\(caseId, suggestion, suggestion\.value, "confirmed"\),\s*suggestion,\s*\)/,
@@ -30,6 +30,10 @@ test("confirmation and correction pass the exact suggestion snapshot", () => {
   );
   assert.doesNotMatch(transitionSource, /confirmSuggestionAsFact\([^;]+suggestion\.id\)/s);
   assert.match(transitionSource, /const suggestion = requireRenderedSuggestion\(suggestionId\);/);
+  assert.match(transitionSource, /await markSuggestionUncertain\(suggestion\);/);
+  assert.match(transitionSource, /await dismissSuggestion\(suggestion\);/);
+  assert.doesNotMatch(transitionSource, /deleteSuggestion\(suggestionId\)/);
+  assert.doesNotMatch(transitionSource, /requireSuggestion\(/);
 });
 
 test("review decisions expose local failure and busy states", () => {

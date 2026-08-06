@@ -1,4 +1,4 @@
-import { createId, deleteFact, deleteSuggestion, getFilesForCase, getSuggestionsForCase, openDatabase, saveFact, saveSuggestion } from "./storage.js";
+import { createId, deleteFact, getFilesForCase, openDatabase, saveFact } from "./storage.js";
 
 const activeReviewActions = new Set();
 const renderedSuggestionSnapshots = new Map();
@@ -25,6 +25,17 @@ function storedValuesMatch(current, expected) {
   }
 }
 
+function validSuggestionSnapshot(suggestion) {
+  return isNonEmptyString(suggestion?.id)
+    && isNonEmptyString(suggestion.caseId)
+    && isNonEmptyString(suggestion.fileId)
+    && isNonEmptyString(suggestion.label)
+    && isNonEmptyString(suggestion.value)
+    && ["suggested", "uncertain"].includes(suggestion.status)
+    && suggestion.aiSuggested === true
+    && suggestion.decidedByUser === false;
+}
+
 function validReviewTransition(fact, suggestion) {
   if (!fact || !suggestion) return false;
   const confirmedValue = fact.status === "confirmed" && fact.value === suggestion.value;
@@ -33,14 +44,7 @@ function validReviewTransition(fact, suggestion) {
     && isNonEmptyString(fact.caseId)
     && isNonEmptyString(fact.sourceFileId)
     && isNonEmptyString(fact.createdAt)
-    && isNonEmptyString(suggestion.id)
-    && isNonEmptyString(suggestion.caseId)
-    && isNonEmptyString(suggestion.fileId)
-    && isNonEmptyString(suggestion.label)
-    && isNonEmptyString(suggestion.value)
-    && ["suggested", "uncertain"].includes(suggestion.status)
-    && suggestion.aiSuggested === true
-    && suggestion.decidedByUser === false
+    && validSuggestionSnapshot(suggestion)
     && fact.caseId === suggestion.caseId
     && fact.sourceFileId === suggestion.fileId
     && fact.label === suggestion.label
@@ -49,6 +53,91 @@ function validReviewTransition(fact, suggestion) {
     && fact.decidedByUser === true
     && (confirmedValue || correctedValue)
     && storedValuesMatch(fact.sourceReference, suggestion.sourceReference);
+}
+
+async function commitSuggestionDisposition(expectedSuggestion, disposition, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  if (!validSuggestionSnapshot(expectedSuggestion) || !["uncertain", "dismissed"].includes(disposition)) {
+    throw new TypeError("Invalid suggestion disposition identity.");
+  }
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction(["suggestions", "cases"], "readwrite");
+    const suggestions = tx.objectStore("suggestions");
+    const cases = tx.objectStore("cases");
+    let transitionError;
+    let suggestionRequest;
+    let caseRequest;
+    let writeRequest;
+    const abortWith = (error) => {
+      transitionError = error;
+      try { tx.abort(); }
+      catch (abortError) { transitionError = transitionError || abortError; }
+    };
+    const completion = new Promise((resolve, reject) => {
+      let settled = false;
+      const rejectOnce = () => {
+        if (settled) return;
+        settled = true;
+        reject(transitionError || tx.error || writeRequest?.error || caseRequest?.error || suggestionRequest?.error || new Error("Suggestion disposition aborted"));
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve(undefined);
+      };
+      tx.onerror = rejectOnce;
+      tx.onabort = rejectOnce;
+    });
+
+    suggestionRequest = suggestions.get(expectedSuggestion.id);
+    suggestionRequest.onsuccess = () => {
+      if (!storedValuesMatch(suggestionRequest.result, expectedSuggestion)) {
+        abortWith(new ReviewTransitionError(
+          "stale_suggestion",
+          "The reviewed suggestion changed before this decision could be saved.",
+        ));
+        return;
+      }
+      caseRequest = cases.get(expectedSuggestion.caseId);
+      caseRequest.onsuccess = () => {
+        if (!caseRequest.result) {
+          abortWith(new ReviewTransitionError(
+            "case_missing",
+            "The case no longer exists on this device.",
+          ));
+          return;
+        }
+        try {
+          const updatedAt = now();
+          if (!isNonEmptyString(updatedAt)) throw new TypeError("Invalid disposition timestamp.");
+          writeRequest = disposition === "dismissed"
+            ? suggestions.delete(expectedSuggestion.id)
+            : suggestions.put({ ...expectedSuggestion, status: "uncertain", updatedAt });
+          cases.put({ ...caseRequest.result, updatedAt });
+        } catch (error) {
+          abortWith(new ReviewTransitionError(
+            "write_failed",
+            "The suggestion decision could not be saved atomically.",
+            error,
+          ));
+        }
+      };
+    };
+
+    await completion;
+    return true;
+  } finally { db.close(); }
+}
+
+export function markSuggestionUncertain(expectedSuggestion, options) {
+  return commitSuggestionDisposition(expectedSuggestion, "uncertain", options);
+}
+
+export function dismissSuggestion(expectedSuggestion, options) {
+  return commitSuggestionDisposition(expectedSuggestion, "dismissed", options);
 }
 
 export class ReviewTransitionError extends Error {
@@ -216,21 +305,6 @@ function setCorrectionBusy(dialog, busy) {
   if (input) input.readOnly = busy;
 }
 
-async function findSuggestion(caseId, suggestionId) {
-  return (await getSuggestionsForCase(caseId)).find((item) => item.id === suggestionId);
-}
-
-async function requireSuggestion(caseId, suggestionId) {
-  const suggestion = await findSuggestion(caseId, suggestionId);
-  if (!suggestion) {
-    throw new ReviewTransitionError(
-      "stale_suggestion",
-      "The suggestion is no longer available.",
-    );
-  }
-  return suggestion;
-}
-
 function requireRenderedSuggestion(suggestionId) {
   const suggestion = renderedSuggestionSnapshots.get(suggestionId);
   if (!suggestion) {
@@ -279,7 +353,10 @@ if (location.pathname.endsWith("/case.html")) {
       void runReviewAction(
         suggestionId,
         card,
-        () => deleteSuggestion(suggestionId),
+        async () => {
+          const suggestion = requireRenderedSuggestion(suggestionId);
+          await dismissSuggestion(suggestion);
+        },
         "The suggestion could not be dismissed on this device. Nothing was changed. Try again.",
       );
       return;
@@ -287,15 +364,14 @@ if (location.pathname.endsWith("/case.html")) {
     const uncertainButton = event.target.closest?.(".uncertain-suggestion");
     if (uncertainButton) {
       event.preventDefault(); event.stopImmediatePropagation();
-      const caseId = new URLSearchParams(location.search).get("id");
       const card = uncertainButton.closest(".suggestion-card");
       const suggestionId = card?.dataset.id;
       void runReviewAction(
         suggestionId,
         card,
         async () => {
-          const suggestion = await requireSuggestion(caseId, suggestionId);
-          await saveSuggestion({ ...suggestion, status: "uncertain", updatedAt: new Date().toISOString() });
+          const suggestion = requireRenderedSuggestion(suggestionId);
+          await markSuggestionUncertain(suggestion);
         },
         "The review status could not be changed on this device. Nothing was changed. Try again.",
       );

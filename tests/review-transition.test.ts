@@ -11,6 +11,14 @@ async function confirmSuggestionAsFact(...args: any[]) {
   const review = await reviewModule;
   return review.confirmSuggestionAsFact(...args);
 }
+async function markSuggestionUncertain(...args: any[]) {
+  const review = await reviewModule;
+  return review.markSuggestionUncertain(...args);
+}
+async function dismissSuggestion(...args: any[]) {
+  const review = await reviewModule;
+  return review.dismissSuggestion(...args);
+}
 
 function suggestion(overrides: Record<string, unknown> = {}) {
   return {
@@ -54,7 +62,7 @@ function factFrom(expected: ReturnType<typeof suggestion>, overrides: Record<str
 function fakeDatabase(
   initialSuggestion: unknown,
   initialCase: unknown = { id: "case-1", updatedAt: "old" },
-  { failFactAdd = false } = {},
+  { failFactAdd = false, failSuggestionWrite = false } = {},
 ) {
   let suggestionValue = structuredClone(initialSuggestion);
   let caseValue = structuredClone(initialCase);
@@ -92,8 +100,17 @@ function fakeDatabase(
               },
               delete(id: string) {
                 return request(() => {
+                  if (failSuggestionWrite) throw new Error("Suggestion write failed");
                   if ((stagedSuggestion as { id?: string })?.id === id) stagedSuggestion = undefined;
                   stagedWrites.push("suggestions");
+                });
+              },
+              put(value: any) {
+                return request(() => {
+                  if (failSuggestionWrite) throw new Error("Suggestion write failed");
+                  stagedSuggestion = structuredClone(value);
+                  stagedWrites.push("suggestions");
+                  return value.id;
                 });
               },
             };
@@ -207,6 +224,72 @@ test("accepts a user correction while preserving the exact source reference", as
   assert.equal(fake.suggestion(), undefined);
 });
 
+test("atomically marks aside or dismisses only the exact suggestion", async () => {
+  const expected = suggestion();
+  const uncertain = fakeDatabase(expected);
+  await markSuggestionUncertain(expected, {
+    openDatabaseImpl: async () => uncertain.db,
+    now: () => "2026-08-06T06:03:00.000Z",
+  });
+  assert.deepEqual(uncertain.suggestion(), {
+    ...expected,
+    status: "uncertain",
+    updatedAt: "2026-08-06T06:03:00.000Z",
+  });
+  assert.deepEqual(uncertain.caseRecord(), { id: "case-1", updatedAt: "2026-08-06T06:03:00.000Z" });
+  assert.deepEqual(uncertain.transactions, [{ stores: ["suggestions", "cases"], mode: "readwrite" }]);
+  assert.deepEqual(uncertain.writes, ["suggestions", "cases"]);
+  assert.equal(uncertain.closed(), true);
+
+  const dismissed = fakeDatabase(expected);
+  await dismissSuggestion(expected, {
+    openDatabaseImpl: async () => dismissed.db,
+    now: () => "2026-08-06T06:04:00.000Z",
+  });
+  assert.equal(dismissed.suggestion(), undefined);
+  assert.deepEqual(dismissed.caseRecord(), { id: "case-1", updatedAt: "2026-08-06T06:04:00.000Z" });
+  assert.deepEqual(dismissed.writes, ["suggestions", "cases"]);
+  assert.equal(dismissed.closed(), true);
+});
+
+test("rejects stale non-acceptance decisions without touching current state", async () => {
+  const expected = suggestion();
+  const current = suggestion({ value: "₹30,000", updatedAt: "later" });
+  for (const action of [markSuggestionUncertain, dismissSuggestion]) {
+    const fake = fakeDatabase(current);
+    await assert.rejects(
+      () => action(expected, { openDatabaseImpl: async () => fake.db }),
+      (error: any) => error?.code === "stale_suggestion",
+    );
+    assert.deepEqual(fake.suggestion(), current);
+    assert.deepEqual(fake.caseRecord(), { id: "case-1", updatedAt: "old" });
+    assert.deepEqual(fake.writes, []);
+    assert.equal(fake.closed(), true);
+  }
+});
+
+test("rolls back non-acceptance decisions when the case or write is unavailable", async () => {
+  const expected = suggestion();
+  for (const action of [markSuggestionUncertain, dismissSuggestion]) {
+    const missingCase = fakeDatabase(expected, null);
+    await assert.rejects(
+      () => action(expected, { openDatabaseImpl: async () => missingCase.db }),
+      (error: any) => error?.code === "case_missing",
+    );
+    assert.deepEqual(missingCase.suggestion(), expected);
+    assert.deepEqual(missingCase.writes, []);
+
+    const failedWrite = fakeDatabase(expected, undefined, { failSuggestionWrite: true });
+    await assert.rejects(
+      () => action(expected, { openDatabaseImpl: async () => failedWrite.db }),
+      /Suggestion write failed/,
+    );
+    assert.deepEqual(failedWrite.suggestion(), expected);
+    assert.deepEqual(failedWrite.caseRecord(), { id: "case-1", updatedAt: "old" });
+    assert.deepEqual(failedWrite.writes, []);
+  }
+});
+
 test("rejects a stale or missing suggestion without writing anything", async () => {
   const expected = suggestion();
   const fact = factFrom(expected);
@@ -270,6 +353,13 @@ test("rejects invalid decision identity before opening storage", async () => {
       { openDatabaseImpl: async () => { opened = true; throw new Error("should not open"); } },
     ),
     /Invalid review transition identity/,
+  );
+  await assert.rejects(
+    () => dismissSuggestion(
+      suggestion({ decidedByUser: true }),
+      { openDatabaseImpl: async () => { opened = true; throw new Error("should not open"); } },
+    ),
+    /Invalid suggestion disposition identity/,
   );
   assert.equal(opened, false);
 });
