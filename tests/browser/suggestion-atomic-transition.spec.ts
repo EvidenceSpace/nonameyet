@@ -156,3 +156,88 @@ test("a stale rendered card cannot confirm a changed suggestion", async ({ page 
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
+
+test("stale rendered cards cannot mark changed suggestions not-sure or dismissed", async ({ page }) => {
+  const pageErrors: string[] = [];
+  const externalRequests: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
+  });
+
+  await page.goto("/cases-new.html");
+  await page.locator("#case-title").fill("Stale non-acceptance protection");
+  await page.locator("#client").fill("Example client");
+  await page.locator("#amount").fill("5000");
+  await page.locator("#summary").fill("A synthetic case verifying that changed suggestions cannot be marked aside or dismissed from stale UI.");
+  await page.locator("#continue-button").click();
+  await page.locator("#continue-button").click();
+  await page.locator("#local-storage-ack").check();
+  await page.locator("#continue-button").click();
+  await page.locator("#open-workspace").click();
+  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+
+  await page.evaluate(async () => {
+    const caseId = new URLSearchParams(location.search).get("id") as string;
+    const storage = await import("/storage.js");
+    const [file] = await storage.getFilesForCase(caseId);
+    const base = {
+      caseId, fileId: file.id, label: "Invoice total", confidence: 0.7,
+      status: "suggested", aiSuggested: true, decidedByUser: false,
+      sourceReference: { fileId: file.id, sha256: file.sha256, locator: { kind: "quote", quote: "Invoice details" } },
+      createdAt: "2026-08-03T00:00:00.000Z",
+    };
+    await storage.saveSuggestion({ ...base, id: "suggestion_stale_uncertain", value: "₹5,200" });
+    await storage.saveSuggestion({ ...base, id: "suggestion_stale_dismiss", value: "₹5,400" });
+  });
+  await page.reload();
+
+  const uncertainCard = page.locator('.suggestion-card[data-id="suggestion_stale_uncertain"]');
+  const dismissCard = page.locator('.suggestion-card[data-id="suggestion_stale_dismiss"]');
+  await expect(uncertainCard.locator(".suggestion-value")).toHaveText("₹5,200");
+  await expect(dismissCard.locator(".suggestion-value")).toHaveText("₹5,400");
+
+  await page.evaluate(async () => {
+    const caseId = new URLSearchParams(location.search).get("id") as string;
+    const storage = await import("/storage.js");
+    const suggestions = await storage.getSuggestionsForCase(caseId);
+    for (const suggestion of suggestions) {
+      const value = suggestion.id === "suggestion_stale_uncertain" ? "₹6,200" : "₹6,400";
+      await storage.saveSuggestion({ ...suggestion, value, updatedAt: "2026-08-06T06:06:00.000Z" });
+    }
+  });
+
+  const uncertainButton = uncertainCard.locator(".uncertain-suggestion");
+  await uncertainButton.click();
+  await expect(page.locator("#review-decision-status")).toHaveText(staleFailureMessage);
+  await expect(uncertainButton).toBeEnabled();
+  await expect(uncertainCard).not.toHaveAttribute("aria-busy", "true");
+
+  const dismissButton = dismissCard.locator(".dismiss-suggestion");
+  await dismissButton.click();
+  await expect(page.locator("#review-decision-status")).toHaveText(staleFailureMessage);
+  await expect(dismissButton).toBeEnabled();
+  await expect(dismissCard).not.toHaveAttribute("aria-busy", "true");
+
+  const stored = await page.evaluate(async () => {
+    const caseId = new URLSearchParams(location.search).get("id") as string;
+    const storage = await import("/storage.js");
+    return {
+      facts: await storage.getFactsForCase(caseId),
+      suggestions: await storage.getSuggestionsForCase(caseId),
+    };
+  });
+  expect(stored.facts).toEqual([]);
+  expect(stored.suggestions.map((item: { id: string; status: string; value: string }) => [item.id, item.status, item.value]).sort()).toEqual([
+    ["suggestion_stale_dismiss", "suggested", "₹6,400"],
+    ["suggestion_stale_uncertain", "suggested", "₹6,200"],
+  ]);
+
+  await page.reload();
+  await expect(page.locator('.suggestion-card[data-id="suggestion_stale_uncertain"] .suggestion-value')).toHaveText("₹6,200");
+  await expect(page.locator('.suggestion-card[data-id="suggestion_stale_dismiss"] .suggestion-value')).toHaveText("₹6,400");
+  await expect(page.locator(".fact-record")).toHaveCount(0);
+  expect(externalRequests).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
