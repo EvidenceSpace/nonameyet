@@ -1,6 +1,7 @@
 import { getFilesForCase, getProcessingForCase, getSuggestionsForCase, saveProcessing, saveProcessingIfCurrent, saveSuggestion } from "./storage.js";
 import { processPdf } from "./pdf-processing.js";
 import { buildPdfOcrProgressView, createPdfOcrProgressTracker } from "./pdf-ocr-progress.js";
+import { createProcessingFileIndex, resolveProcessingFileForRow } from "./processing-row-identity.js";
 import { browserTextDetectorRuntime, processImage } from "./image-ocr.js";
 import { formatImageOcrQuality } from "./image-ocr-quality.js";
 import { canStartImageOcr, inspectImageOcrReadiness, IMAGE_OCR_UNAVAILABLE_MESSAGE } from "./image-ocr-readiness.js";
@@ -186,11 +187,11 @@ async function refresh() {
   refreshDone = new Promise((resolve) => { resolveRefresh = resolve; });
   try {
     const [files, jobs] = await Promise.all([getFilesForCase(caseId), getProcessingForCase(caseId)]);
+    const filesById = createProcessingFileIndex(files);
     renderOcrReadinessNotice(files);
-    [...root.querySelectorAll(".file-row")].forEach((row, index) => {
-      const file = files[index];
+    [...root.querySelectorAll(".file-row")].forEach((row) => {
+      const file = resolveProcessingFileForRow(row, filesById);
       if (!file) return;
-      row.dataset.fileId = file.id;
       const actions = row.querySelector(".file-actions");
       if (!actions) return;
       const job = jobs.find((item) => item.fileId === file.id);
