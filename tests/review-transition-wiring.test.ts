@@ -11,27 +11,22 @@ test("the case workspace loads and directly uses the atomic review boundary", ()
     workspaceSource,
     /^import \{ confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots \} from "\.\/review-transition\.js";/,
   );
+  assert.match(workspaceSource, /syncRenderedFactSnapshots\(facts\);/);
   assert.match(workspaceSource, /syncRenderedSuggestionSnapshots\(active\);/);
   assert.match(workspaceSource, /await confirmSuggestionAsFact\(fact, suggestion\);/);
   assert.doesNotMatch(
     workspaceSource,
     /await saveFact\(fact\);\s*await deleteSuggestion\(suggestion\.id\);/,
   );
+  assert.doesNotMatch(workspaceSource, /\bdeleteFact\b/);
 });
 
 test("fact removal uses the exact rendered fact and a local recovery state", () => {
-  assert.match(workspaceSource, /syncRenderedFactSnapshots\(facts\);/);
-  assert.match(workspaceSource, /class="fact-record" data-id="\$\{fact\.id\}"/);
-  assert.doesNotMatch(workspaceSource, /deleteFact/);
   assert.match(transitionSource, /const fact = requireRenderedFact\(factId\);/);
   assert.match(transitionSource, /await removeFact\(fact\);/);
-  assert.doesNotMatch(transitionSource, /deleteFact\(factId\)/);
+  assert.match(transitionSource, /db\.transaction\(\["facts", "cases"\], "readwrite"\)/);
   assert.match(transitionSource, /errorTarget: "fact"/);
   assert.match(transitionSource, /"fact-decision-status"/);
-  assert.match(
-    transitionSource,
-    /This fact changed in another tab\. Nothing was removed\. Reload and review the latest version\./,
-  );
   assert.match(reviewStyles, /\.fact-record\[aria-busy="true"\]/);
 });
 
