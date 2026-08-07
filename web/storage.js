@@ -87,6 +87,125 @@ async function saveWithActivity(storeName, value, method) {
     });
   } finally { db.close(); }
 }
+
+const SOURCE_LINKED_WRITE_MESSAGES = {
+  source_missing: "The source record no longer exists on this device. Nothing was saved.",
+  source_changed: "The source record changed before this linked item could be saved. Nothing was saved.",
+  case_missing: "This case is no longer available on this device. Nothing was saved.",
+  write_failed: "The source-linked item could not be saved on this device. Nothing was changed.",
+};
+
+export class SourceLinkedWriteError extends Error {
+  constructor(code, cause) {
+    super(SOURCE_LINKED_WRITE_MESSAGES[code] || SOURCE_LINKED_WRITE_MESSAGES.write_failed);
+    this.name = "SourceLinkedWriteError";
+    this.code = code;
+    this.cause = cause;
+  }
+}
+
+function nonEmptyString(value) {
+  return typeof value === "string" && Boolean(value.trim());
+}
+
+function sourceIdentity(storeName, value) {
+  if (!value || !nonEmptyString(value.caseId)) return null;
+  if (storeName === "processing") {
+    if (!nonEmptyString(value.fileId) || !nonEmptyString(value.fileHash)) return null;
+    return { fileId: value.fileId, fileHash: value.fileHash, caseId: value.caseId };
+  }
+  const fileId = storeName === "suggestions" ? value.fileId : value.sourceFileId;
+  const reference = value.sourceReference;
+  if (!nonEmptyString(fileId)
+    || !nonEmptyString(reference?.fileId)
+    || reference.fileId !== fileId
+    || !nonEmptyString(reference.sha256)) return null;
+  return { fileId, fileHash: reference.sha256, caseId: value.caseId };
+}
+
+function sourceMatches(file, identity) {
+  return file?.id === identity.fileId
+    && file.caseId === identity.caseId
+    && file.sha256 === identity.fileHash;
+}
+
+async function saveSourceLinkedWithActivity(storeName, value, method, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  const identity = sourceIdentity(storeName, value);
+  if (!identity) throw new TypeError("Invalid source-linked write identity.");
+
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction([storeName, "files", "cases"], "readwrite");
+    const target = tx.objectStore(storeName);
+    const files = tx.objectStore("files");
+    const cases = tx.objectStore("cases");
+    let writeError;
+    let fileRequest;
+    let caseRequest;
+    let valueRequest;
+    const abortWith = (error) => {
+      writeError = error;
+      try { tx.abort(); }
+      catch (abortError) { writeError = writeError || abortError; }
+    };
+    const completion = new Promise((resolve, reject) => {
+      let settled = false;
+      const rejectOnce = () => {
+        if (settled) return;
+        settled = true;
+        reject(writeError || new SourceLinkedWriteError(
+          "write_failed",
+          tx.error || valueRequest?.error || caseRequest?.error || fileRequest?.error,
+        ));
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve(undefined);
+      };
+      tx.onerror = rejectOnce;
+      tx.onabort = rejectOnce;
+    });
+
+    try {
+      fileRequest = files.get(identity.fileId);
+      fileRequest.onsuccess = () => {
+        if (!fileRequest.result) {
+          abortWith(new SourceLinkedWriteError("source_missing"));
+          return;
+        }
+        if (!sourceMatches(fileRequest.result, identity)) {
+          abortWith(new SourceLinkedWriteError("source_changed"));
+          return;
+        }
+        caseRequest = cases.get(identity.caseId);
+        caseRequest.onsuccess = () => {
+          if (!caseRequest.result) {
+            abortWith(new SourceLinkedWriteError("case_missing"));
+            return;
+          }
+          try {
+            const updatedAt = now();
+            if (!nonEmptyString(updatedAt)) throw new TypeError("Invalid activity timestamp.");
+            valueRequest = target[method](value);
+            cases.put({ ...caseRequest.result, updatedAt });
+          } catch (cause) {
+            abortWith(new SourceLinkedWriteError("write_failed", cause));
+          }
+        };
+      };
+    } catch (cause) {
+      abortWith(new SourceLinkedWriteError("write_failed", cause));
+    }
+
+    await completion;
+    return valueRequest?.result;
+  } finally { db.close(); }
+}
+
 async function deleteWithActivity(storeName, id, relatedStoreNames = []) {
   const db = await openDatabase();
   try {
@@ -290,13 +409,13 @@ export async function deleteFile(expectedFile, {
 }
 
 export const getFilesForCase = (id) => transaction("files", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
-export const saveFact = (value) => saveWithActivity("facts", value, "put");
+export const saveFact = (value, options) => saveSourceLinkedWithActivity("facts", value, "put", options);
 export const getFactsForCase = (id) => transaction("facts", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteFact = (id) => deleteWithActivity("facts", id);
-export const saveSuggestion = (value) => saveWithActivity("suggestions", value, "put");
+export const saveSuggestion = (value, options) => saveSourceLinkedWithActivity("suggestions", value, "put", options);
 export const getSuggestionsForCase = (id) => transaction("suggestions", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteSuggestion = (id) => deleteWithActivity("suggestions", id);
-export const saveProcessing = (value) => saveWithActivity("processing", value, "put");
+export const saveProcessing = (value, options) => saveSourceLinkedWithActivity("processing", value, "put", options);
 
 function processingValuesMatch(current, expected) {
   if (!current || !expected) return false;
@@ -348,7 +467,7 @@ export async function saveProcessingIfCurrent(expected, replacement, {
 
 export const getProcessingForCase = (id) => transaction("processing", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteProcessing = (id) => deleteWithActivity("processing", id);
-export const saveEvent = (value) => saveWithActivity("events", value, "put");
+export const saveEvent = (value, options) => saveSourceLinkedWithActivity("events", value, "put", options);
 export const getEventsForCase = (id) => transaction("events", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteEvent = (id) => deleteWithActivity("events", id);
 export async function markCaseBackedUp(caseId, at = new Date().toISOString()) {
