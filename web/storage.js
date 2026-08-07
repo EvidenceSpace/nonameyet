@@ -112,7 +112,183 @@ async function deleteWithActivity(storeName, id, relatedStoreNames = []) {
   } finally { db.close(); }
 }
 export const saveFile = (value) => saveWithActivity("files", value, "add");
-export const deleteFile = (id) => deleteWithActivity("files", id, ["processing"]);
+
+const FILE_REMOVAL_MESSAGES = {
+  stale_file: "This source record changed in another tab. Nothing was removed. Reload and review the latest version.",
+  file_linked: "Remove any linked facts, suggestions, or timeline items before deleting this source record.",
+  case_missing: "This case is no longer available on this device. Nothing was changed.",
+  write_failed: "This source record could not be removed from this device. Nothing was changed.",
+};
+
+export class FileRemovalError extends Error {
+  constructor(code, cause) {
+    super(FILE_REMOVAL_MESSAGES[code] || FILE_REMOVAL_MESSAGES.write_failed);
+    this.name = "FileRemovalError";
+    this.code = code;
+    this.cause = cause;
+  }
+}
+
+function fileMetadata(value) {
+  if (!value || typeof value !== "object") return undefined;
+  return Object.fromEntries(Object.entries(value).filter(([key]) => key !== "original"));
+}
+
+function originalFileMetadata(value) {
+  const original = value?.original;
+  if (!original || typeof original !== "object") return undefined;
+  return {
+    name: original.name,
+    type: original.type,
+    size: original.size,
+    lastModified: original.lastModified,
+  };
+}
+
+export function validFileRemovalSnapshot(file) {
+  const original = file?.original;
+  return Boolean(
+    file
+    && ["id", "caseId", "name", "type", "sha256", "createdAt"].every((key) => (
+      typeof file[key] === "string" && Boolean(file[key])
+    ))
+    && /^[a-f0-9]{64}$/i.test(file.sha256)
+    && Number.isSafeInteger(file.size)
+    && file.size >= 0
+    && original
+    && typeof original.name === "string"
+    && typeof original.type === "string"
+    && Number.isSafeInteger(original.size)
+    && original.size >= 0
+    && Number.isFinite(original.lastModified)
+    && original.name === file.name
+    && original.type === file.type
+    && original.size === file.size
+  );
+}
+
+export function fileValuesMatch(current, expected) {
+  if (!validFileRemovalSnapshot(current) || !validFileRemovalSnapshot(expected)) return false;
+  try {
+    return JSON.stringify(fileMetadata(current)) === JSON.stringify(fileMetadata(expected))
+      && JSON.stringify(originalFileMetadata(current)) === JSON.stringify(originalFileMetadata(expected));
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteFile(expectedFile, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  if (!validFileRemovalSnapshot(expectedFile)) throw new TypeError("Invalid file removal identity.");
+
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction(["files", "processing", "facts", "suggestions", "events", "cases"], "readwrite");
+    const files = tx.objectStore("files");
+    const processing = tx.objectStore("processing");
+    const facts = tx.objectStore("facts");
+    const suggestions = tx.objectStore("suggestions");
+    const events = tx.objectStore("events");
+    const cases = tx.objectStore("cases");
+    let currentRequest;
+    let transitionError;
+    let settled = false;
+    let rejectCompletion;
+
+    const completion = new Promise((resolve, reject) => {
+      rejectCompletion = reject;
+      const rejectOnce = (error) => {
+        if (settled) return;
+        settled = true;
+        reject(error);
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      tx.onerror = () => rejectOnce(transitionError || new FileRemovalError(
+        "write_failed",
+        tx.error || currentRequest?.error,
+      ));
+      tx.onabort = () => rejectOnce(transitionError || new FileRemovalError(
+        "write_failed",
+        tx.error || currentRequest?.error,
+      ));
+    });
+
+    const abortWith = (error) => {
+      if (transitionError) return;
+      transitionError = error;
+      try {
+        tx.abort();
+      } catch (cause) {
+        if (!settled) {
+          settled = true;
+          rejectCompletion(new FileRemovalError("write_failed", cause));
+        }
+      }
+    };
+
+    try {
+      currentRequest = files.get(expectedFile.id);
+      currentRequest.onsuccess = () => {
+        if (!fileValuesMatch(currentRequest.result, expectedFile)) {
+          abortWith(new FileRemovalError("stale_file"));
+          return;
+        }
+
+        const linkRequests = [
+          facts.index("sourceFileId").getKey(expectedFile.id),
+          suggestions.index("fileId").getKey(expectedFile.id),
+          events.index("sourceFileId").getKey(expectedFile.id),
+        ];
+        let remainingLinks = linkRequests.length;
+        let linked = false;
+        const finishLinkCheck = () => {
+          remainingLinks -= 1;
+          if (remainingLinks) return;
+          if (linked) {
+            abortWith(new FileRemovalError("file_linked"));
+            return;
+          }
+
+          const caseRequest = cases.get(expectedFile.caseId);
+          caseRequest.onsuccess = () => {
+            const caseRecord = caseRequest.result;
+            if (!caseRecord) {
+              abortWith(new FileRemovalError("case_missing"));
+              return;
+            }
+            try {
+              const updatedAt = now();
+              if (typeof updatedAt !== "string" || !updatedAt) throw new TypeError("Invalid activity timestamp.");
+              files.delete(expectedFile.id);
+              processing.delete(expectedFile.id);
+              cases.put({ ...caseRecord, updatedAt });
+            } catch (cause) {
+              abortWith(new FileRemovalError("write_failed", cause));
+            }
+          };
+        };
+        for (const request of linkRequests) {
+          request.onsuccess = () => {
+            linked ||= request.result !== undefined;
+            finishLinkCheck();
+          };
+        }
+      };
+    } catch (cause) {
+      abortWith(new FileRemovalError("write_failed", cause));
+    }
+
+    await completion;
+    return true;
+  } finally { db.close(); }
+}
+
 export const getFilesForCase = (id) => transaction("files", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const saveFact = (value) => saveWithActivity("facts", value, "put");
 export const getFactsForCase = (id) => transaction("facts", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
