@@ -1,6 +1,6 @@
 import { confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots } from "./review-transition.js";
 import {
-  createId, deleteCase, deleteFile, deleteSuggestion, FileRemovalError, getCase,
+  createId, deleteCase, deleteFile, deleteSuggestion, FileRemovalError, FileWriteError, getCase,
   getFactsForCase, getFilesForCase, getSuggestionsForCase, saveCase, saveFact,
   saveFile, saveSuggestion, sha256, validFileRemovalSnapshot,
 } from "./storage.js";
@@ -206,9 +206,11 @@ async function addFiles(selected) {
       if (files.some((item) => item.sha256 === hash)) { message.className = "upload-message error"; message.textContent = `${file.name} is already in this case.`; continue; }
       const stored = { id: createId("file"), caseId, name: file.name, type: file.type, size: file.size, sha256: hash, createdAt: new Date().toISOString(), original: file };
       await saveFile(stored); files.push(stored); message.textContent = `Stored ${file.name} locally.`;
-    } catch {
+    } catch (error) {
       message.className = "upload-message error";
-      message.textContent = `${file.name} could not be stored on this device. Check available browser storage and try again.`;
+      message.textContent = error instanceof FileWriteError && error.code === "case_missing"
+        ? `${file.name} was not stored because this case was removed in another tab. Return to Case Hub to continue.`
+        : `${file.name} could not be stored on this device. Check available browser storage and try again.`;
     }
   }
   fileInput.value = ""; renderFiles();
