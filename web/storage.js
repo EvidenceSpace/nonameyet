@@ -69,25 +69,6 @@ export const saveCase = (value) => transaction("cases", "readwrite", (store) => 
 export const getCase = (id) => transaction("cases", "readonly", (store) => requestResult(store.get(id)));
 export const getAllCases = () => transaction("cases", "readonly", (store) => requestResult(store.getAll()));
 
-async function saveWithActivity(storeName, value, method) {
-  const db = await openDatabase();
-  try {
-    const tx = db.transaction([storeName, "cases"], "readwrite");
-    const resultRequest = tx.objectStore(storeName)[method](value);
-    if (value.caseId) {
-      const cases = tx.objectStore("cases");
-      const caseRequest = cases.get(value.caseId);
-      caseRequest.onsuccess = () => {
-        if (caseRequest.result) cases.put({ ...caseRequest.result, updatedAt: new Date().toISOString() });
-      };
-    }
-    return await new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve(resultRequest.result);
-      tx.onabort = () => reject(tx.error || resultRequest.error || new Error("Transaction aborted"));
-    });
-  } finally { db.close(); }
-}
-
 const SOURCE_LINKED_WRITE_MESSAGES = {
   source_missing: "The source record no longer exists on this device. Nothing was saved.",
   source_changed: "The source record changed before this linked item could be saved. Nothing was saved.",
@@ -230,7 +211,6 @@ async function deleteWithActivity(storeName, id, relatedStoreNames = []) {
     });
   } finally { db.close(); }
 }
-export const saveFile = (value) => saveWithActivity("files", value, "add");
 
 const FILE_REMOVAL_MESSAGES = {
   stale_file: "This source record changed in another tab. Nothing was removed. Reload and review the latest version.",
@@ -284,6 +264,83 @@ export function validFileRemovalSnapshot(file) {
     && original.type === file.type
     && original.size === file.size
   );
+}
+
+const FILE_WRITE_MESSAGES = {
+  case_missing: "This case is no longer available on this device. The source file was not saved.",
+  write_failed: "The source file could not be saved on this device. Nothing was changed.",
+};
+
+export class FileWriteError extends Error {
+  constructor(code, cause) {
+    super(FILE_WRITE_MESSAGES[code] || FILE_WRITE_MESSAGES.write_failed);
+    this.name = "FileWriteError";
+    this.code = code;
+    this.cause = cause;
+  }
+}
+
+export async function saveFile(value, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  if (!validFileRemovalSnapshot(value)) throw new TypeError("Invalid source file identity.");
+
+  const db = await openDatabaseImpl();
+  try {
+    const tx = db.transaction(["files", "cases"], "readwrite");
+    const files = tx.objectStore("files");
+    const cases = tx.objectStore("cases");
+    let caseRequest;
+    let fileRequest;
+    let writeError;
+    const abortWith = (error) => {
+      writeError = error;
+      try { tx.abort(); }
+      catch (abortError) { writeError = writeError || abortError; }
+    };
+    const completion = new Promise((resolve, reject) => {
+      let settled = false;
+      const rejectOnce = () => {
+        if (settled) return;
+        settled = true;
+        reject(writeError || new FileWriteError(
+          "write_failed",
+          tx.error || fileRequest?.error || caseRequest?.error,
+        ));
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve(undefined);
+      };
+      tx.onerror = rejectOnce;
+      tx.onabort = rejectOnce;
+    });
+
+    try {
+      caseRequest = cases.get(value.caseId);
+      caseRequest.onsuccess = () => {
+        if (!caseRequest.result) {
+          abortWith(new FileWriteError("case_missing"));
+          return;
+        }
+        try {
+          const updatedAt = now();
+          if (!nonEmptyString(updatedAt)) throw new TypeError("Invalid activity timestamp.");
+          fileRequest = files.add(value);
+          cases.put({ ...caseRequest.result, updatedAt });
+        } catch (cause) {
+          abortWith(new FileWriteError("write_failed", cause));
+        }
+      };
+    } catch (cause) {
+      abortWith(new FileWriteError("write_failed", cause));
+    }
+
+    await completion;
+    return fileRequest?.result;
+  } finally { db.close(); }
 }
 
 export function fileValuesMatch(current, expected) {
