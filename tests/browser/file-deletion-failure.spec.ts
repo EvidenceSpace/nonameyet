@@ -50,12 +50,12 @@ test("an interrupted removal preserves the original and its processing state", a
     const originalPut = IDBObjectStore.prototype.put;
     let injected = false;
     IDBObjectStore.prototype.put = function (...args) {
-      const request = originalPut.apply(this, args as [unknown]);
-      if (!injected && this.name === "cases" && this.transaction.objectStoreNames.contains("files") && this.transaction.objectStoreNames.contains("processing")) {
+      if (!injected && this.name === "cases" && this.transaction.objectStoreNames.length === 6) {
         injected = true;
         this.transaction.abort();
+        throw new DOMException("Injected case activity failure", "AbortError");
       }
-      return request;
+      return originalPut.apply(this, args as [unknown]);
     };
   });
 
@@ -63,6 +63,7 @@ test("an interrupted removal preserves the original and its processing state", a
   await expect(page.locator("#upload-message")).toHaveClass(/error/);
   await expect(page.locator("#upload-message")).toHaveText(failureMessage);
   await expect(row).toHaveCount(1);
+  await expect(row.locator("button:disabled")).toHaveCount(0);
   await expect(page.locator("#file-count")).toHaveText("1");
 
   const after = await page.evaluate(async ({ fileId }) => {

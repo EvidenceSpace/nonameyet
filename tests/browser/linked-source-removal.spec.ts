@@ -44,9 +44,10 @@ test("blocks source removal until its confirmed fact is removed", async ({ page 
 
   await row.locator(".delete-file").click();
   await expect(page.locator("#upload-message")).toHaveText(
-    "Resolve or remove linked facts and suggestions before deleting this source record.",
+    "Remove any linked facts, suggestions, or timeline items before deleting this source record.",
   );
   await expect(row).toHaveCount(1);
+  await expect(row.locator("button:disabled")).toHaveCount(0);
   await expect(page.locator(".fact-record")).toHaveCount(1);
 
   await page.reload();
