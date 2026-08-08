@@ -68,10 +68,33 @@ jobs:
         run: git diff --exit-code -- web/vendor/pdfjs
 
   tests:
-    name: Deterministic test suite
+    name: Deterministic (${{ matrix.name }})
     needs: install
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        include:
+          - name: core
+            patterns: tests/account-*.test.ts tests/analysis-*.test.ts tests/browser-*.test.ts tests/case-*.test.ts tests/checklist-*.test.ts tests/consistency-*.test.ts
+          - name: extraction
+            patterns: tests/extraction-*.test.ts tests/extraction.test.ts
+          - name: transitions
+            patterns: tests/fact-*.test.ts tests/file-*.test.ts
+          - name: image-intake
+            patterns: tests/image-*.test.ts tests/intake-*.test.ts tests/mixed-*.test.ts
+          - name: identity
+            patterns: tests/oidc-*.test.ts tests/original-*.test.ts
+          - name: pdf
+            patterns: tests/pdf*.test.ts
+          - name: processing
+            patterns: tests/processing-*.test.ts tests/processing.test.ts
+          - name: reports
+            patterns: tests/product-*.test.ts tests/provider-*.test.ts tests/raster-*.test.ts tests/readiness.test.ts tests/report-*.test.ts tests/review-*.test.ts
+          - name: source-storage
+            patterns: tests/scanned-*.test.ts tests/session-*.test.ts tests/source-*.test.ts tests/sqlite-*.test.ts tests/storage-*.test.ts tests/timeline-*.test.ts tests/workspace-*.test.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -86,8 +109,8 @@ jobs:
       - name: Install pinned direct runtime and development dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
 
-      - name: Run deterministic tests
-        run: npm test
+      - name: Run deterministic test group
+        run: ./node_modules/.bin/tsx --test ${{ matrix.patterns }}
 
   browser:
     name: Chromium browser lifecycle
