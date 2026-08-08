@@ -7,7 +7,7 @@ const recovery = readFileSync(new URL("../web/pdf-failure-recovery.js", import.m
 
 test("checks a bounded PDF header before invoking PDF.js", () => {
   assert.match(processing, /PDF_HEADER_SCAN_BYTES = 1024/);
-  assert.match(processing, /if \(!hasPdfHeader\(pdfData\)\) throw processingError\("invalid_pdf_signature"/);
+  assert.match(processing, /if \(!hasPdfHeader\(pdfData\)\) \{\s*throw processingError\("invalid_pdf_signature"/);
   assert.ok(processing.indexOf("hasPdfHeader(pdfData)") < processing.indexOf("pdfjs.getDocument"));
   assert.match(recovery, /invalid_pdf_signature/);
   assert.match(recovery, /retryable: false/);

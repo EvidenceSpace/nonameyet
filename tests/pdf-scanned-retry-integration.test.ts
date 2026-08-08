@@ -7,7 +7,7 @@ const bytes = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]);
 const file = {
   id: "scanned-pdf",
   caseId: "case",
-  sha256: "hash",
+  sha256: "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b",
   original: { size: bytes.length, arrayBuffer: async () => bytes.slice().buffer },
 };
 
