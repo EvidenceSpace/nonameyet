@@ -11,11 +11,23 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
   await page.locator("#local-storage-ack").check();
 }
 
+async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Page) {
+  await page.evaluate(async () => {
+    (globalThis as typeof globalThis & { __casefindIntakeBlocker: IDBDatabase }).__casefindIntakeBlocker.close();
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open("casefind-preview", 6);
+      request.onsuccess = () => { request.result.close(); resolve(); };
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("Database upgrade remained blocked"));
+    });
+  });
+}
+
 test("keeps intake entries through a blocked upgrade and retries one draft", async ({ context, page }) => {
   await page.goto("/index.html");
   await page.evaluate(async () => {
-    await new Promise<void>((resolve, reject) => { const request = indexedDB.deleteDatabase("casefind-preview"); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); });
-    const blocker = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 5); request.onupgradeneeded = () => request.result.createObjectStore("cases", { keyPath: "id" }); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    await new Promise<void>((resolve, reject) => { const request = indexedDB.deleteDatabase("casefind-preview"); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database deletion blocked")); });
+    const blocker = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 5); request.onupgradeneeded = () => request.result.createObjectStore("cases", { keyPath: "id" }); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database creation blocked")); });
     Object.defineProperty(globalThis, "__casefindIntakeBlocker", { configurable: true, value: blocker });
   });
   const intake = await context.newPage();
@@ -32,11 +44,11 @@ test("keeps intake entries through a blocked upgrade and retries one draft", asy
   await expect(intake.locator('input[name="goal"][value="request"]')).toBeChecked();
   await expect(intake.locator("#local-storage-ack")).toBeChecked();
   await expect(intake.locator("#continue-button")).toContainText("Try saving again");
-  await page.evaluate(() => (globalThis as typeof globalThis & { __casefindIntakeBlocker: IDBDatabase }).__casefindIntakeBlocker.close());
+  await closeBlockerAndWaitForUpgrade(page);
   await intake.locator("#continue-button").click();
   await expect(intake.locator("#created-state")).toBeVisible();
   const cases = await intake.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 6); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    const db = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 6); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database read blocked")); });
     const values = await new Promise<unknown[]>((resolve, reject) => { const request = db.transaction("cases").objectStore("cases").getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
     db.close(); return values;
   });
