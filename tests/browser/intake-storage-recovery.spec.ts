@@ -27,6 +27,11 @@ async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Pag
   })).toBe(6);
 }
 
+async function clearDraftAndClose(page: import("playwright/test").Page) {
+  await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
+  await page.close();
+}
+
 test("keeps intake entries through a blocked upgrade and retries one draft", async ({ context, page }) => {
   await page.goto("/index.html");
   await page.evaluate(async () => {
@@ -59,6 +64,7 @@ test("keeps intake entries through a blocked upgrade and retries one draft", asy
   expect(cases).toHaveLength(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
+  await clearDraftAndClose(intake);
 });
 
 test("keeps the complete form open when local storage is unavailable", async ({ page }) => {
@@ -81,4 +87,5 @@ test("keeps the complete form open when local storage is unavailable", async ({ 
   await expect(page.locator("#summary")).toHaveValue("The agreed work was delivered and the remaining payment has not been received.");
   await expect(page.locator("#continue-button")).toHaveAttribute("aria-describedby", "creation-error");
   expect(pageErrors).toEqual([]);
+  await clearDraftAndClose(page);
 });
