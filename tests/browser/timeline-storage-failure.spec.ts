@@ -11,7 +11,11 @@ async function abortNext(page: import("playwright/test").Page, method: "put" | "
     let injected = false;
     prototype[methodName] = function (...args: unknown[]) {
       const request = original.apply(this, args);
-      if (!injected && this.name === "events") { injected = true; this.transaction.abort(); }
+      if (!injected && this.name === "events") {
+        injected = true;
+        const transaction = this.transaction;
+        queueMicrotask(() => transaction.abort());
+      }
       return request;
     };
   }, method);

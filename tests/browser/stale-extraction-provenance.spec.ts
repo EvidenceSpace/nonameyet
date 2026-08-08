@@ -42,7 +42,7 @@ test("blocks derived text whose hash does not match the original", async ({ page
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
     const [file] = await storage.getFilesForCase(caseId);
-    await storage.saveProcessing({
+    const staleJob = {
       fileId: file.id,
       caseId,
       fileHash: "b".repeat(64),
@@ -56,7 +56,19 @@ test("blocks derived text whose hash does not match the original", async ({ page
         pages: [{ pageNumber: 1, text: "Text from different bytes", start: 0, end: 25 }],
         warnings: [],
       },
-    });
+    };
+    const db = await storage.openDatabase();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction("processing", "readwrite");
+        tx.objectStore("processing").put(staleJob);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error("Transaction aborted"));
+      });
+    } finally {
+      db.close();
+    }
   });
   await page.reload();
 
