@@ -183,10 +183,41 @@ jobs:
         run: ./node_modules/.bin/tsx --test ${{ matrix.patterns }}
 
   browser:
-    name: Chromium browser lifecycle
+    name: Chromium (${{ matrix.name }})
     needs: [static, tests]
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 13
+      matrix:
+        include:
+          - name: accessibility-analysis-backup
+            patterns: tests/browser/[ab]*.spec.ts
+          - name: case-lifecycle
+            patterns: tests/browser/case-*.spec.ts
+          - name: checklist-duplicates
+            patterns: tests/browser/checklist-*.spec.ts tests/browser/currency-*.spec.ts tests/browser/duplicate-*.spec.ts
+          - name: evidence-files
+            patterns: tests/browser/[efgh]*.spec.ts
+          - name: image
+            patterns: tests/browser/image-*.spec.ts
+          - name: intake-library-linked
+            patterns: tests/browser/intake-*.spec.ts tests/browser/library-*.spec.ts tests/browser/linked-*.spec.ts
+          - name: malformed-originals
+            patterns: tests/browser/malformed-*.spec.ts tests/browser/manual-*.spec.ts tests/browser/ocr-*.spec.ts tests/browser/original-*.spec.ts tests/browser/oversized-*.spec.ts
+          - name: pdf-processing
+            patterns: tests/browser/pdf-*.spec.ts tests/browser/processing-*.spec.ts
+          - name: reports
+            patterns: tests/browser/report-*.spec.ts
+          - name: scanned-source
+            patterns: tests/browser/scanned-*.spec.ts tests/browser/source-*.spec.ts
+          - name: stale-storage
+            patterns: tests/browser/stale-*.spec.ts tests/browser/storage-*.spec.ts
+          - name: suggestions
+            patterns: tests/browser/suggestion-*.spec.ts
+          - name: timeline-workspace
+            patterns: tests/browser/timeline-*.spec.ts tests/browser/workspace-*.spec.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -207,8 +238,8 @@ jobs:
       - name: Install pinned Chromium for lifecycle testing
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run private-case browser lifecycle
-        run: npm run test:browser
+      - name: Run private-case browser lifecycle group
+        run: ./node_modules/.bin/playwright test ${{ matrix.patterns }}
 
   quality:
     name: Typecheck, tests, assets, and browser lifecycle
