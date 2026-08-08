@@ -9,6 +9,7 @@ test("source removal preserves the established workspace contracts", () => {
     workspaceSource,
     /^import \{ confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots \} from "\.\/review-transition\.js";/,
   );
+  assert.match(workspaceSource, /import \{ formatCaseAmount \} from "\.\/case-details-model\.js";/);
   assert.match(workspaceSource, /fileInput\?\.setAttribute\("accept", "image\/png,image\/jpeg,image\/webp,application\/pdf"\);/);
   assert.match(workspaceSource, /const checklistItems = \[/);
   assert.match(workspaceSource, /record\.checklist\?\.includes\(key\)/);
@@ -16,7 +17,8 @@ test("source removal preserves the established workspace contracts", () => {
   assert.match(workspaceSource, /function activeSuggestions\(\) \{ return suggestions\.filter/);
   assert.match(workspaceSource, /syncRenderedSuggestionSnapshots\(active\);/);
   assert.match(workspaceSource, /file\.type === "application\/pdf" \? `<embed src="\$\{previewUrl\}" type="application\/pdf" \/>`/);
-  assert.match(workspaceSource, /record\.amount \? `₹\$\{record\.amount\}` : "Not entered"/);
+  assert.match(workspaceSource, /querySelector\("#workspace-amount"\)\.textContent = formatCaseAmount\(record\.amount\);/);
+  assert.doesNotMatch(workspaceSource, /`₹\$\{record\.amount\}`/);
   assert.match(workspaceSource, /20 \* 1024 \* 1024/);
   assert.doesNotMatch(workspaceSource, /application\/pdf", "text\/plain"/);
 });
