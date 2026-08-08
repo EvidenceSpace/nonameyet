@@ -9,6 +9,16 @@ const interruptedMessage = "Processing was interrupted before this backup was re
 test("restored in-progress extraction becomes an explicit retryable failure", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, "TextDetector", {
+      configurable: true,
+      value: class { async detect() { return []; } },
+    });
+    Object.defineProperty(globalThis, "createImageBitmap", {
+      configurable: true,
+      value: async () => ({ width: 1, height: 1, close() {} }),
+    });
+  });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {
     const url = new URL(request.url());

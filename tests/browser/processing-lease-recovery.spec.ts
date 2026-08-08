@@ -1,5 +1,7 @@
 import { expect, test } from "playwright/test";
 
+const fileHash = "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b";
+
 test("preserves an active tab and recovers its run after that tab closes", async ({
   context,
   page,
@@ -24,7 +26,7 @@ test("preserves an active tab and recovers its run after that tab closes", async
   const caseId = "case-hard-exit";
   const fileId = "file-hard-exit";
   await page.evaluate(
-    async ({ caseId, fileId }) => {
+    async ({ caseId, fileId, fileHash }) => {
       await new Promise<void>((resolve, reject) => {
         const request = indexedDB.deleteDatabase("casefind-preview");
         request.onsuccess = () => resolve();
@@ -36,10 +38,24 @@ test("preserves an active tab and recovers its run after that tab closes", async
         title: "Hard exit",
         updatedAt: "2026-08-05T18:00:00.000Z",
       });
+      const original = new File([new TextEncoder().encode("%PDF-1.7")], "lease.pdf", {
+        type: "application/pdf",
+        lastModified: 1_754_416_800_000,
+      });
+      await storage.saveFile({
+        id: fileId,
+        caseId,
+        name: original.name,
+        type: original.type,
+        size: original.size,
+        sha256: fileHash,
+        createdAt: "2026-08-05T18:00:30.000Z",
+        original,
+      });
       await storage.saveProcessing({
         fileId,
         caseId,
-        fileHash: "a".repeat(64),
+        fileHash,
         status: "extracting",
         message: "private partial decoder state",
         updatedAt: "2026-08-05T18:01:00.000Z",
@@ -47,7 +63,7 @@ test("preserves an active tab and recovers its run after that tab closes", async
         nextRetryAt: "2026-08-05T18:02:00.000Z",
       });
     },
-    { caseId, fileId },
+    { caseId, fileId, fileHash },
   );
 
   const owner = await context.newPage();

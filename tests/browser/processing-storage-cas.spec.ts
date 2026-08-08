@@ -1,5 +1,7 @@
 import { expect, test } from "playwright/test";
 
+const fileHash = "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b";
+
 test("atomically keeps newer processing state when stale work finishes", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
@@ -10,7 +12,7 @@ test("atomically keeps newer processing state when stale work finishes", async (
   });
 
   await page.goto("/index.html");
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(async (fileHash) => {
     await new Promise<void>((resolve, reject) => {
       const request = indexedDB.deleteDatabase("casefind-preview");
       request.onsuccess = () => resolve();
@@ -23,7 +25,7 @@ test("atomically keeps newer processing state when stale work finishes", async (
     const expected = {
       fileId,
       caseId,
-      fileHash: "a".repeat(64),
+      fileHash,
       status: "ready_for_ai",
       message: "Text ready with one missing page.",
       updatedAt: "2026-08-05T12:00:00.000Z",
@@ -51,6 +53,20 @@ test("atomically keeps newer processing state when stale work finishes", async (
     };
 
     await storage.saveCase({ id: caseId, title: "CAS test", updatedAt: "2026-08-05T11:59:00.000Z" });
+    const original = new File([new TextEncoder().encode("%PDF-1.7")], "cas.pdf", {
+      type: "application/pdf",
+      lastModified: 1_754_395_200_000,
+    });
+    await storage.saveFile({
+      id: fileId,
+      caseId,
+      name: original.name,
+      type: original.type,
+      size: original.size,
+      sha256: fileHash,
+      createdAt: "2026-08-05T11:59:30.000Z",
+      original,
+    });
     await storage.saveProcessing(expected);
     const firstReplacement = await storage.saveProcessingIfCurrent(expected, improved);
     const afterFirst = (await storage.getProcessingForCase(caseId))[0];
@@ -122,7 +138,7 @@ test("atomically keeps newer processing state when stale work finishes", async (
       failureMessage: afterFailureRecovery.message,
       failureHasArtifact: Object.hasOwn(afterFailureRecovery, "artifact"),
     };
-  });
+  }, fileHash);
 
   expect(result.firstReplacement).toBe(true);
   expect(result.firstMessage).toBe("Text ready from 2 pages.");

@@ -20,14 +20,20 @@ function createImageOnlyPdf() {
   return Buffer.from(pdf, "ascii");
 }
 
-const recoveryMessage = "This PDF appears scanned or has too little selectable text. CaseFind does not yet OCR PDF pages. The original remains stored locally; review it manually. For local extraction, export only the pages you need as PNG or JPEG, then add those images as separate records.";
+const recoveryMessage = "This PDF appears scanned or has too little readable text. CaseFind could not produce AI-ready text from it in this browser session. The original remains stored locally. Local OCR checked this PDF but found too little readable text. Review the original. If the scan is clear, export only the pages you need as PNG or JPEG, then add those images as separate records.";
 
 test("routes a scanned PDF to truthful local recovery without AI actions", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   await page.addInitScript(() => {
-    Object.defineProperty(globalThis, "TextDetector", { configurable: true, value: class {} });
-    Object.defineProperty(globalThis, "createImageBitmap", { configurable: true, value: async () => ({ close() {} }) });
+    Object.defineProperty(globalThis, "TextDetector", {
+      configurable: true,
+      value: class { async detect() { return []; } },
+    });
+    Object.defineProperty(globalThis, "createImageBitmap", {
+      configurable: true,
+      value: async () => ({ width: 612, height: 792, close() {} }),
+    });
   });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {

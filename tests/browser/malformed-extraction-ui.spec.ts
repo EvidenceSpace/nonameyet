@@ -10,6 +10,16 @@ const invalidMessage = "Stored extraction is invalid. Process the source again."
 test("blocks an inconsistent artifact even when its pages alone are valid", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, "TextDetector", {
+      configurable: true,
+      value: class { async detect() { return []; } },
+    });
+    Object.defineProperty(globalThis, "createImageBitmap", {
+      configurable: true,
+      value: async () => ({ width: 1, height: 1, close() {} }),
+    });
+  });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {
     const url = new URL(request.url());

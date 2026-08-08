@@ -10,6 +10,16 @@ const staleMessage = "Stored extraction does not match this original. Process th
 test("blocks derived text whose hash does not match the original", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, "TextDetector", {
+      configurable: true,
+      value: class { async detect() { return []; } },
+    });
+    Object.defineProperty(globalThis, "createImageBitmap", {
+      configurable: true,
+      value: async () => ({ width: 1, height: 1, close() {} }),
+    });
+  });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => {
     const url = new URL(request.url());
