@@ -15,8 +15,112 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Typecheck, tests, assets, and browser lifecycle
+  checkout:
+    name: 1. Checkout
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Confirm checkout
+        run: git rev-parse --verify HEAD
+
+  runtime:
+    name: 2. Node runtime
+    needs: checkout
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Confirm runtime
+        run: node --version
+
+  dependency-policy:
+    name: 3. Dependency policy
+    needs: runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Verify direct dependency policy
+        run: node scripts/check-dependency-policy.mjs
+
+  workflow-policy:
+    name: 4. Workflow policy
+    needs: runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Verify workflow supply-chain policy
+        run: node scripts/check-workflow-action-pins.mjs
+
+  install:
+    name: 5. Install dependencies
+    needs: [dependency-policy, workflow-policy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+  deterministic:
+    name: 6. Typecheck, tests, and assets
+    needs: install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+      - name: Run typecheck and automated tests
+        run: npm run check
+      - name: Verify generated PDF.js assets are committed
+        run: git diff --exit-code -- web/vendor/pdfjs
+
+  browser:
+    name: 7. Browser lifecycle
+    needs: deterministic
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -24,32 +128,15 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.14.1
-
-      - name: Verify direct dependency policy
-        run: node scripts/check-dependency-policy.mjs
-
-      - name: Verify workflow supply-chain policy
-        run: node scripts/check-workflow-action-pins.mjs
-
-      - name: Install pinned direct runtime and development dependencies
+      - name: Install pinned dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
-
       - name: Synchronize pinned local PDF.js assets
         run: npm run sync:pdfjs
-
-      - name: Run typecheck and automated tests
-        run: npm run check
-
-      - name: Verify generated PDF.js assets are committed
-        run: git diff --exit-code -- web/vendor/pdfjs
-
-      - name: Install pinned Chromium for lifecycle testing
+      - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
-
       - name: Run private-case browser lifecycle
         run: npm run test:browser
