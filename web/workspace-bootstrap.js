@@ -54,6 +54,7 @@ async function boot() {
   try {
     const record = await getCase(caseId);
     if (!record) { showMissingCase(); return; }
+    await import("./case-workspace.js");
     const state = await waitForBaseWorkspace();
     if (state === "ready") {
       await recoverOrphanedProcessingRuns(caseId);

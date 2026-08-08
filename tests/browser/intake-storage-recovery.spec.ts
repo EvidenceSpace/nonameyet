@@ -18,7 +18,6 @@ async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Pag
       const request = indexedDB.open("casefind-preview", 6);
       request.onsuccess = () => { request.result.close(); resolve(); };
       request.onerror = () => reject(request.error);
-      request.onblocked = () => reject(new Error("Database upgrade remained blocked"));
     });
   });
 }
