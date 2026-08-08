@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Typecheck, tests, assets, and browser lifecycle
+  deterministic:
+    name: Typecheck, tests, and generated assets
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -48,8 +48,45 @@ jobs:
       - name: Verify generated PDF.js assets are committed
         run: git diff --exit-code -- web/vendor/pdfjs
 
+  browser:
+    name: Chromium browser lifecycle
+    needs: deterministic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned direct runtime and development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+
       - name: Install pinned Chromium for lifecycle testing
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run private-case browser lifecycle
         run: npm run test:browser
+
+  quality:
+    name: Typecheck, tests, assets, and browser lifecycle
+    if: ${{ always() }}
+    needs: [deterministic, browser]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every quality gate
+        env:
+          DETERMINISTIC_RESULT: ${{ needs.deterministic.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          test "$DETERMINISTIC_RESULT" = success
+          test "$BROWSER_RESULT" = success
