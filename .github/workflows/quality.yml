@@ -71,24 +71,42 @@ jobs:
     name: Deterministic (${{ matrix.name }})
     needs: install
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     strategy:
       fail-fast: false
-      max-parallel: 9
+      max-parallel: 18
       matrix:
         include:
-          - name: core
-            patterns: tests/account-*.test.ts tests/analysis-*.test.ts tests/browser-*.test.ts tests/case-*.test.ts tests/checklist-*.test.ts tests/consistency-*.test.ts
+          - name: account-analysis
+            patterns: tests/account-*.test.ts tests/analysis-*.test.ts
+          - name: browser-wiring
+            patterns: tests/browser-*.test.ts
+          - name: case
+            patterns: tests/case-*.test.ts
+          - name: checklist-consistency
+            patterns: tests/checklist-*.test.ts tests/consistency-*.test.ts
           - name: extraction
             patterns: tests/extraction-*.test.ts tests/extraction.test.ts
           - name: transitions
             patterns: tests/fact-*.test.ts tests/file-*.test.ts
-          - name: image-intake
-            patterns: tests/image-*.test.ts tests/intake-*.test.ts tests/mixed-*.test.ts
+          - name: image
+            patterns: tests/image-*.test.ts
+          - name: intake-mixed
+            patterns: tests/intake-*.test.ts tests/mixed-*.test.ts
           - name: identity
             patterns: tests/oidc-*.test.ts tests/original-*.test.ts
-          - name: pdf
-            patterns: tests/pdf*.test.ts
+          - name: pdf-basic
+            patterns: tests/pdf-document-*.test.ts tests/pdf-failure-*.test.ts tests/pdf-inspection.test.ts
+          - name: pdf-mixed-ocr
+            patterns: tests/pdf-mixed-*.test.ts tests/pdf-ocr-*.test.ts
+          - name: pdf-page
+            patterns: tests/pdf-page-*.test.ts
+          - name: pdf-processing
+            patterns: tests/pdf-processing-*.test.ts
+          - name: pdf-retry-signature
+            patterns: tests/pdf-scanned-*.test.ts tests/pdf-signature-*.test.ts
+          - name: pdfjs
+            patterns: tests/pdfjs-*.test.ts
           - name: processing
             patterns: tests/processing-*.test.ts tests/processing.test.ts
           - name: reports
