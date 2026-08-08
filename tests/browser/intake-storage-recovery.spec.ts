@@ -6,20 +6,25 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
   await page.locator("#amount").fill("12500");
   await page.locator("#summary").fill("The agreed work was delivered and the remaining payment has not been received.");
   await page.locator("#continue-button").click();
-  await page.locator('input[name="goal"][value="request"]').check();
+  await expect(page.locator("#step-label")).toHaveText("Step 2 of 3");
+  const goal = page.locator('input[name="goal"][value="request"]');
+  await expect(goal).toBeVisible();
+  await goal.check();
   await page.locator("#continue-button").click();
-  await page.locator("#local-storage-ack").check();
+  await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
+  const acknowledgement = page.locator("#local-storage-ack");
+  await expect(acknowledgement).toBeVisible();
+  await acknowledgement.check();
 }
 
 async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Page) {
-  await page.evaluate(async () => {
+  await page.evaluate(() => {
     (globalThis as typeof globalThis & { __casefindIntakeBlocker: IDBDatabase }).__casefindIntakeBlocker.close();
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open("casefind-preview", 6);
-      request.onsuccess = () => { request.result.close(); resolve(); };
-      request.onerror = () => reject(request.error);
-    });
   });
+  await expect.poll(() => page.evaluate(async () => {
+    const database = (await indexedDB.databases()).find(({ name }) => name === "casefind-preview");
+    return database?.version ?? 0;
+  })).toBe(6);
 }
 
 test("keeps intake entries through a blocked upgrade and retries one draft", async ({ context, page }) => {

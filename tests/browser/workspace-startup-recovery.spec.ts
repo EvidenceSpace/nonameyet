@@ -1,14 +1,13 @@
 import { expect, test } from "playwright/test";
 
 async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Page) {
-  await page.evaluate(async () => {
+  await page.evaluate(() => {
     (globalThis as typeof globalThis & { __casefindWorkspaceBlocker: IDBDatabase }).__casefindWorkspaceBlocker.close();
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open("casefind-preview", 6);
-      request.onsuccess = () => { request.result.close(); resolve(); };
-      request.onerror = () => reject(request.error);
-    });
   });
+  await expect.poll(() => page.evaluate(async () => {
+    const database = (await indexedDB.databases()).find(({ name }) => name === "casefind-preview");
+    return database?.version ?? 0;
+  })).toBe(6);
 }
 
 test("separates a missing local case from a storage failure", async ({ page }) => {

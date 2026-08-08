@@ -36,6 +36,7 @@ test("blocks derived text whose hash does not match the original", async ({ page
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible();
   await page.locator("#file-input").setInputFiles({ name: "source.png", mimeType: "image/png", buffer: imageBytes });
 
   await page.evaluate(async () => {

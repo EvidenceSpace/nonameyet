@@ -14,6 +14,7 @@ test("persists and displays review-oriented OCR confidence", async ({ page }) =>
   await page.goto("/cases-new.html");
   await page.locator("#case-title").fill("OCR confidence review"); await page.locator("#client").fill("Example client"); await page.locator("#amount").fill("5000"); await page.locator("#summary").fill("Verify confidence stays review-oriented.");
   await page.locator("#continue-button").click(); await page.locator("#continue-button").click(); await page.locator("#local-storage-ack").check(); await page.locator("#continue-button").click(); await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible();
   await page.locator("#file-input").setInputFiles({ name: "confidence.png", mimeType: "image/png", buffer: imageBytes });
   const row = page.locator(".file-row", { hasText: "confidence.png" }); await row.locator(".process-file").click();
   await expect(row.locator(".processing-status")).toHaveText("Text ready"); await row.locator(".view-extracted-text").click();
