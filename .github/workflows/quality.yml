@@ -68,103 +68,10 @@ jobs:
         run: git diff --exit-code -- web/vendor/pdfjs
 
   tests:
-    name: Deterministic (${{ matrix.name }})
+    name: Deterministic full suite
     needs: install
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    strategy:
-      fail-fast: false
-      max-parallel: 20
-      matrix:
-        include:
-          - name: account-analysis
-            patterns: tests/account-*.test.ts tests/analysis-*.test.ts
-          - name: browser-image-ocr
-            patterns: tests/browser-image-ocr.test.ts
-          - name: browser-mixed-pdf-transparency
-            patterns: tests/browser-mixed-pdf-transparency.test.ts
-          - name: browser-readiness
-            patterns: tests/browser-readiness.test.ts
-          - name: browser-suggestion-handoff
-            patterns: tests/browser-suggestion-handoff.test.ts
-          - name: case
-            patterns: tests/case-*.test.ts
-          - name: checklist-consistency
-            patterns: tests/checklist-*.test.ts tests/consistency-*.test.ts
-          - name: extraction
-            patterns: tests/extraction-*.test.ts tests/extraction.test.ts
-          - name: transitions
-            patterns: tests/fact-*.test.ts tests/file-*.test.ts
-          - name: image-active-cleanup-wiring
-            patterns: tests/image-ocr-active-cleanup-wiring.test.ts
-          - name: image-active-cleanup
-            patterns: tests/image-ocr-active-cleanup.test.ts
-          - name: image-adapter
-            patterns: tests/image-ocr-adapter.test.ts
-          - name: image-failure-recovery
-            patterns: tests/image-ocr-failure-recovery.test.ts
-          - name: image-failure-wiring
-            patterns: tests/image-ocr-failure-wiring.test.ts
-          - name: image-output-limits-wiring
-            patterns: tests/image-ocr-output-limits-wiring.test.ts
-          - name: image-output-limits
-            patterns: tests/image-ocr-output-limits.test.ts
-          - name: image-processing-failure
-            patterns: tests/image-ocr-processing-failure.test.ts
-          - name: image-quality-wiring
-            patterns: tests/image-ocr-quality-wiring.test.ts
-          - name: image-quality
-            patterns: tests/image-ocr-quality.test.ts
-          - name: image-readiness-wiring
-            patterns: tests/image-ocr-readiness-wiring.test.ts
-          - name: image-readiness
-            patterns: tests/image-ocr-readiness.test.ts
-          - name: intake-mixed
-            patterns: tests/intake-*.test.ts tests/mixed-*.test.ts
-          - name: identity
-            patterns: tests/oidc-*.test.ts tests/original-*.test.ts
-          - name: pdf-document-ocr
-            patterns: tests/pdf-document-ocr.test.ts
-          - name: pdf-failure-recovery-wiring
-            patterns: tests/pdf-failure-recovery-wiring.test.ts
-          - name: pdf-failure-recovery
-            patterns: tests/pdf-failure-recovery.test.ts
-          - name: pdf-inspection
-            patterns: tests/pdf-inspection.test.ts
-          - name: pdf-mixed-ocr-integration
-            patterns: tests/pdf-mixed-ocr-integration.test.ts
-          - name: pdf-ocr-progress-ui-wiring
-            patterns: tests/pdf-ocr-progress-ui-wiring.test.ts
-          - name: pdf-ocr-progress-wiring
-            patterns: tests/pdf-ocr-progress-wiring.test.ts
-          - name: pdf-ocr-progress
-            patterns: tests/pdf-ocr-progress.test.ts
-          - name: pdf-page
-            patterns: tests/pdf-page-*.test.ts
-          - name: pdf-processing-cancellation-wiring
-            patterns: tests/pdf-processing-cancellation-wiring.test.ts
-          - name: pdf-processing-cancellation
-            patterns: tests/pdf-processing-cancellation.test.ts
-          - name: pdf-processing-failure
-            patterns: tests/pdf-processing-failure.test.ts
-          - name: pdf-processing-limits-wiring
-            patterns: tests/pdf-processing-limits-wiring.test.ts
-          - name: pdf-processing-limits
-            patterns: tests/pdf-processing-limits.test.ts
-          - name: pdf-scanned-retry-integration
-            patterns: tests/pdf-scanned-retry-integration.test.ts
-          - name: pdf-signature-preflight-wiring
-            patterns: tests/pdf-signature-preflight-wiring.test.ts
-          - name: pdf-signature-preflight
-            patterns: tests/pdf-signature-preflight.test.ts
-          - name: pdfjs
-            patterns: tests/pdfjs-*.test.ts
-          - name: processing
-            patterns: tests/processing-*.test.ts tests/processing.test.ts
-          - name: reports
-            patterns: tests/product-*.test.ts tests/provider-*.test.ts tests/raster-*.test.ts tests/readiness.test.ts tests/report-*.test.ts tests/review-*.test.ts
-          - name: source-storage
-            patterns: tests/scanned-*.test.ts tests/session-*.test.ts tests/source-*.test.ts tests/sqlite-*.test.ts tests/storage-*.test.ts tests/timeline-*.test.ts tests/workspace-*.test.ts
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -179,137 +86,65 @@ jobs:
       - name: Install pinned direct runtime and development dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
 
-      - name: Run deterministic test group
-        run: ./node_modules/.bin/tsx --test ${{ matrix.patterns }}
+      - name: Run every deterministic test
+        run: npm test
 
-  browser:
-    name: Chromium (${{ matrix.name }})
-    needs: [static, tests]
+  reports:
+    name: Deterministic reports diagnostic
+    needs: install
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned direct runtime and development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Recheck the previously unexplained report group
+        run: ./node_modules/.bin/tsx --test tests/product-*.test.ts tests/provider-*.test.ts tests/raster-*.test.ts tests/readiness.test.ts tests/report-*.test.ts tests/review-*.test.ts
+
+  browser_targets:
+    name: Chromium diagnostic (${{ matrix.name }})
+    needs: install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     strategy:
       fail-fast: false
-      max-parallel: 20
+      max-parallel: 3
       matrix:
         include:
-          - name: accessibility
-            file: tests/browser/accessibility.spec.ts
-          - name: analysis-input-validation
-            file: tests/browser/analysis-input-validation.spec.ts
-          - name: backup-deep-link
-            file: tests/browser/backup-deep-link.spec.ts
-          - name: backup-interrupted-processing-recovery
-            file: tests/browser/backup-interrupted-processing-recovery.spec.ts
-          - name: case-archive-failure
-            file: tests/browser/case-archive-failure.spec.ts
-          - name: case-deletion-failure
-            file: tests/browser/case-deletion-failure.spec.ts
-          - name: case-details-storage-failure
-            file: tests/browser/case-details-storage-failure.spec.ts
-          - name: case-history-empty-state
-            file: tests/browser/case-history-empty-state.spec.ts
-          - name: case-hub-archive-restore
-            file: tests/browser/case-hub-archive-restore.spec.ts
-          - name: case-hub-deletion
-            file: tests/browser/case-hub-deletion.spec.ts
-          - name: case-hub-next-action
-            file: tests/browser/case-hub-next-action.spec.ts
-          - name: case-lifecycle
-            file: tests/browser/case-lifecycle.spec.ts
-          - name: case-restore-failure
-            file: tests/browser/case-restore-failure.spec.ts
-          - name: checklist-storage-failure
-            file: tests/browser/checklist-storage-failure.spec.ts
-          - name: currency-neutral-amount
-            file: tests/browser/currency-neutral-amount.spec.ts
-          - name: duplicate-original-rejection
-            file: tests/browser/duplicate-original-rejection.spec.ts
-          - name: image-format-intake
-            file: tests/browser/image-format-intake.spec.ts
-          - name: image-mime-integrity-boundary
-            file: tests/browser/image-mime-integrity-boundary.spec.ts
-          - name: image-ocr-active-cleanup
-            file: tests/browser/image-ocr-active-cleanup.spec.ts
-          - name: image-ocr-cancellation
-            file: tests/browser/image-ocr-cancellation.spec.ts
-          - name: image-ocr-no-readable-text
-            file: tests/browser/image-ocr-no-readable-text.spec.ts
-          - name: image-ocr-output-limits
-            file: tests/browser/image-ocr-output-limits.spec.ts
-          - name: image-ocr-quality
-            file: tests/browser/image-ocr-quality.spec.ts
-          - name: image-ocr-success
-            file: tests/browser/image-ocr-success.spec.ts
-          - name: image-ocr-timeout
-            file: tests/browser/image-ocr-timeout.spec.ts
-          - name: image-ocr-unavailable
-            file: tests/browser/image-ocr-unavailable.spec.ts
           - name: intake-storage-recovery
             file: tests/browser/intake-storage-recovery.spec.ts
+            grep: ""
           - name: intake-storage-unavailable
             file: tests/browser/intake-storage-unavailable.spec.ts
-          - name: intake-diagnostic-unavailable-steps
-            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable navigation and steps settle$"'
-          - name: intake-diagnostic-unavailable-callback
-            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable callback and recovery state settle$"'
-          - name: intake-diagnostic-unavailable-assertions
-            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable recovery assertions and explicit close settle$"'
-          - name: intake-diagnostic-blocked-callback
-            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^blocked setup and recovery state settle$"'
-          - name: intake-diagnostic-blocked-retry
-            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^blocked retry and verification settle$"'
-          - name: intake-unsaved-exit
-            file: tests/browser/intake-unsaved-exit.spec.ts
-          - name: library-workspace-accessibility
-            file: tests/browser/library-workspace-accessibility.spec.ts
-          - name: linked-source-removal
-            file: tests/browser/linked-source-removal.spec.ts
-          - name: malformed-extraction-ui
-            file: tests/browser/malformed-extraction-ui.spec.ts
-          - name: malformed-pdf-processing-boundary
-            file: tests/browser/malformed-pdf-processing-boundary.spec.ts
-          - name: manual-fact-storage-failure
-            file: tests/browser/manual-fact-storage-failure.spec.ts
-          - name: ocr-quality-integrity
-            file: tests/browser/ocr-quality-integrity.spec.ts
-          - name: original-hash-preflight
-            file: tests/browser/original-hash-preflight.spec.ts
-          - name: original-source-preview
-            file: tests/browser/original-source-preview.spec.ts
-          - name: oversized-file-rejection
-            file: tests/browser/oversized-file-rejection.spec.ts
-          - name: pdf-processing-lifecycle
-            file: tests/browser/pdf-processing-lifecycle.spec.ts
-          - name: pdf-signature-preflight
-            file: tests/browser/pdf-signature-preflight.spec.ts
-          - name: processing-lease-recovery
-            file: tests/browser/processing-lease-recovery.spec.ts
-          - name: processing-storage-cas
-            file: tests/browser/processing-storage-cas.spec.ts
-          - name: scanned-pdf-ocr-boundary
-            file: tests/browser/scanned-pdf-ocr-boundary.spec.ts
-          - name: source-consistency-resolution
-            file: tests/browser/source-consistency-resolution.spec.ts
-          - name: source-linked-write-after-removal
-            file: tests/browser/source-linked-write-after-removal.spec.ts
-          - name: source-removal-concurrency
-            file: tests/browser/source-removal-concurrency.spec.ts
-          - name: source-upload-case-deletion
-            file: tests/browser/source-upload-case-deletion.spec.ts
-          - name: stale-consistency-resolution
-            file: tests/browser/stale-consistency-resolution.spec.ts
-          - name: stale-extraction-provenance
-            file: tests/browser/stale-extraction-provenance.spec.ts
-          - name: storage-protection-lifecycle
-            file: tests/browser/storage-protection-lifecycle.spec.ts
-          - name: storage-recovery-ui
-            file: tests/browser/storage-recovery-ui.spec.ts
-          - name: storage-schema-migration
-            file: tests/browser/storage-schema-migration.spec.ts
-          - name: timeline-storage-failure
-            file: tests/browser/timeline-storage-failure.spec.ts
-          - name: workspace-startup-recovery
-            file: tests/browser/workspace-startup-recovery.spec.ts
+            grep: ""
+          - name: image-ocr-output-limits
+            file: tests/browser/image-ocr-output-limits.spec.ts
+            grep: ""
+          - name: intake-unavailable-steps
+            file: tests/browser/intake-storage-phase-diagnostic.spec.ts
+            grep: ^unavailable navigation and steps settle$
+          - name: intake-unavailable-callback
+            file: tests/browser/intake-storage-phase-diagnostic.spec.ts
+            grep: ^unavailable callback and recovery state settle$
+          - name: intake-unavailable-assertions
+            file: tests/browser/intake-storage-phase-diagnostic.spec.ts
+            grep: ^unavailable recovery assertions and explicit close settle$
+          - name: intake-blocked-callback
+            file: tests/browser/intake-storage-phase-diagnostic.spec.ts
+            grep: ^blocked setup and recovery state settle$
+          - name: intake-blocked-retry
+            file: tests/browser/intake-storage-phase-diagnostic.spec.ts
+            grep: ^blocked retry and verification settle$
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -330,13 +165,49 @@ jobs:
       - name: Install pinned Chromium for lifecycle testing
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run private-case browser lifecycle file
-        run: ./node_modules/.bin/playwright test ${{ matrix.file }}
+      - name: Run focused recovery diagnostic
+        env:
+          TEST_FILE: ${{ matrix.file }}
+          TEST_GREP: ${{ matrix.grep }}
+        run: |
+          if [ -n "$TEST_GREP" ]; then
+            ./node_modules/.bin/playwright test "$TEST_FILE" --grep "$TEST_GREP"
+          else
+            ./node_modules/.bin/playwright test "$TEST_FILE"
+          fi
+
+  browser:
+    name: Chromium full suite
+    needs: install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned direct runtime and development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+
+      - name: Install pinned Chromium for lifecycle testing
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run every private-case browser lifecycle test
+        run: npm run test:browser
 
   quality:
     name: Typecheck, tests, assets, and browser lifecycle
     if: ${{ always() }}
-    needs: [install, static, tests, browser]
+    needs: [install, static, tests, reports, browser_targets, browser]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -345,9 +216,13 @@ jobs:
           INSTALL_RESULT: ${{ needs.install.result }}
           STATIC_RESULT: ${{ needs.static.result }}
           TEST_RESULT: ${{ needs.tests.result }}
+          REPORT_RESULT: ${{ needs.reports.result }}
+          TARGET_RESULT: ${{ needs.browser_targets.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           test "$INSTALL_RESULT" = success
           test "$STATIC_RESULT" = success
           test "$TEST_RESULT" = success
+          test "$REPORT_RESULT" = success
+          test "$TARGET_RESULT" = success
           test "$BROWSER_RESULT" = success
