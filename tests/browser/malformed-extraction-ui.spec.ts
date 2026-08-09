@@ -36,7 +36,11 @@ test("blocks an inconsistent artifact even when its pages alone are valid", asyn
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible();
   await page.locator("#file-input").setInputFiles({ name: "source.png", mimeType: "image/png", buffer: imageBytes });
+  const uploaded = page.locator(".file-row", { hasText: "source.png" });
+  await expect(uploaded).toBeVisible();
+  await expect(uploaded).toContainText("Stored locally");
 
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
@@ -59,8 +63,10 @@ test("blocks an inconsistent artifact even when its pages alone are valid", asyn
     });
   });
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible();
 
   const row = page.locator(".file-row", { hasText: "source.png" });
+  await expect(row).toBeVisible();
   await expect(row.locator(".processing-status")).toHaveText("Failed");
   await expect(row.locator(".processing-note")).toHaveText(invalidMessage);
   await expect(row.locator(".process-file")).toHaveText("Retry");
@@ -68,13 +74,17 @@ test("blocks an inconsistent artifact even when its pages alone are valid", asyn
   await expect(row.locator(".analyze-record")).toHaveCount(0);
   await expect(page.locator(".fact-record")).toHaveCount(0);
 
+  await expect(row.locator(".preview-file")).toBeEnabled();
   await row.locator(".preview-file").click();
   await expect(page.locator("#preview-dialog")).toBeVisible();
   await expect(page.locator("#preview-hash")).toHaveText(/^[a-f0-9]{64}$/);
   await page.locator("#close-preview").click();
+  await expect(page.locator("#preview-dialog")).toBeHidden();
 
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible();
   const persisted = page.locator(".file-row", { hasText: "source.png" });
+  await expect(persisted).toBeVisible();
   await expect(persisted.locator(".processing-status")).toHaveText("Failed");
   await expect(persisted.locator(".processing-note")).toHaveText(invalidMessage);
   await expect(persisted.locator(".view-extracted-text")).toHaveCount(0);

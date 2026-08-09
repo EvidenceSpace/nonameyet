@@ -21,56 +21,60 @@ async function submitIntake(page: import("playwright/test").Page) {
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.requestSubmit());
 }
 
-async function clearDraft(page: import("playwright/test").Page) {
-  if (page.isClosed()) return;
-  await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
-}
-
 test("keeps the complete form open when local storage is unavailable", async ({ page }) => {
   await page.addInitScript(() => {
-    Object.defineProperty(globalThis, "indexedDB", {
+    const nativeOpen = IDBFactory.prototype.open;
+    let unavailableOpenCount = 0;
+    Object.defineProperty(IDBFactory.prototype, "open", {
       configurable: true,
-      value: {
-        open() {
-          throw new DOMException("Storage unavailable", "UnknownError");
-        },
+      writable: true,
+      value(this: IDBFactory, name: string, version?: number) {
+        if (name !== "casefind-preview") return nativeOpen.call(this, name, version);
+        unavailableOpenCount += 1;
+        const request: Record<string, unknown> = {
+          error: new DOMException("Storage unavailable", "UnknownError"),
+        };
+        queueMicrotask(() => (request.onerror as ((event: Event) => void) | undefined)?.(new Event("error")));
+        return request;
       },
+    });
+    Object.defineProperty(globalThis, "__casefindUnavailableOpenCount", {
+      configurable: true,
+      get: () => unavailableOpenCount,
     });
   });
   const pageErrors: string[] = [];
+  const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  try {
-    await page.goto("/cases-new.html");
-    const injectedFailure = await page.evaluate(() => {
-      try {
-        indexedDB.open("casefind-storage-probe");
-        return null;
-      } catch (cause) {
-        return cause instanceof DOMException
-          ? { name: cause.name, message: cause.message }
-          : { name: "UnexpectedError", message: String(cause) };
-      }
-    });
-    expect(injectedFailure).toEqual({ name: "UnknownError", message: "Storage unavailable" });
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
+  });
 
-    await completeIntake(page, "Unavailable storage draft");
-    const submit = page.locator("#continue-button");
-    await expect(submit).toBeEnabled();
-    await submitIntake(page);
-    const recovery = page.locator("#creation-error");
-    await expect(recovery).toHaveAttribute("data-state", "unavailable");
-    await expect(recovery).toContainText("Your entries are still here");
-    await expect(recovery).toContainText("Nothing was changed or deleted");
-    await expect(recovery).toContainText("Do not clear site data");
-    await expect(page.locator("#created-state")).toBeHidden();
-    await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
-    await expect(page.locator("#case-title")).toHaveValue("Unavailable storage draft");
-    await expect(page.locator("#summary")).toHaveValue("The agreed work was delivered and the remaining payment has not been received.");
-    await expect(submit).toHaveAttribute("aria-describedby", "creation-error");
-    await expect(submit).toBeEnabled();
-    await expect(page.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
-    expect(pageErrors).toEqual([]);
-  } finally {
-    await clearDraft(page).catch(() => undefined);
-  }
+  await page.goto("/cases-new.html");
+  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindUnavailableOpenCount: number }).__casefindUnavailableOpenCount)).toBe(0);
+  await completeIntake(page, "Unavailable storage draft");
+  const submit = page.locator("#continue-button");
+  await expect(submit).toBeEnabled();
+  await submitIntake(page);
+
+  const recovery = page.locator("#creation-error");
+  await expect(recovery).toHaveAttribute("data-state", "unavailable");
+  await expect(recovery).toContainText("Your entries are still here");
+  await expect(recovery).toContainText("Nothing was changed or deleted");
+  await expect(recovery).toContainText("Do not clear site data");
+  await expect(page.locator("#created-state")).toBeHidden();
+  await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
+  await expect(page.locator("#case-title")).toHaveValue("Unavailable storage draft");
+  await expect(page.locator("#summary")).toHaveValue("The agreed work was delivered and the remaining payment has not been received.");
+  await expect(page.locator('input[name="goal"][value="request"]')).toBeChecked();
+  await expect(page.locator("#local-storage-ack")).toBeChecked();
+  await expect(submit).toHaveAttribute("aria-describedby", "creation-error");
+  await expect(submit).toBeEnabled();
+  await expect(page.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
+  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindUnavailableOpenCount: number }).__casefindUnavailableOpenCount)).toBe(1);
+  expect(externalRequests).toEqual([]);
+  expect(pageErrors).toEqual([]);
+
+  await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
 });
