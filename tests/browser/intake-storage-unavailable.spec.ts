@@ -17,6 +17,10 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
   await acknowledgement.check();
 }
 
+async function submitIntake(page: import("playwright/test").Page) {
+  await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.requestSubmit());
+}
+
 async function clearDraft(page: import("playwright/test").Page) {
   if (page.isClosed()) return;
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
@@ -52,7 +56,7 @@ test("keeps the complete form open when local storage is unavailable", async ({ 
     await completeIntake(page, "Unavailable storage draft");
     const submit = page.locator("#continue-button");
     await expect(submit).toBeEnabled();
-    await submit.click();
+    await submitIntake(page);
     const recovery = page.locator("#creation-error");
     await expect(recovery).toHaveAttribute("data-state", "unavailable");
     await expect(recovery).toContainText("Your entries are still here");

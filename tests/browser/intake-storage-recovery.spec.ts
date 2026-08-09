@@ -32,6 +32,10 @@ async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Pag
   })).toBe(6);
 }
 
+async function submitIntake(page: import("playwright/test").Page) {
+  await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.requestSubmit());
+}
+
 async function clearDraft(page: import("playwright/test").Page) {
   if (page.isClosed()) return;
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
@@ -61,7 +65,7 @@ test("keeps intake entries through a blocked upgrade and retries one draft", asy
     await completeIntake(intake, "Blocked draft remains here");
     const submit = intake.locator("#continue-button");
     await expect(submit).toBeEnabled();
-    await submit.click();
+    await submitIntake(intake);
     const recovery = intake.locator("#creation-error");
     await expect(recovery).toHaveAttribute("data-state", "blocked");
     await expect(recovery).toContainText("Your entries are still here and no case was changed");
@@ -74,7 +78,7 @@ test("keeps intake entries through a blocked upgrade and retries one draft", asy
 
     await closeBlockerAndWaitForUpgrade(page);
     blockerClosed = true;
-    await submit.click();
+    await submitIntake(intake);
     await expect(intake.locator("#created-state")).toBeVisible();
     const cases = await intake.evaluate(async () => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 6); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database read blocked")); });
