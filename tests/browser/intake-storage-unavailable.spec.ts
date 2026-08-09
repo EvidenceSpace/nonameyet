@@ -18,28 +18,55 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
 }
 
 async function clearDraft(page: import("playwright/test").Page) {
+  if (page.isClosed()) return;
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
 }
 
 test("keeps the complete form open when local storage is unavailable", async ({ page }) => {
   await page.addInitScript(() => {
-    Object.defineProperty(indexedDB, "open", { configurable: true, value() { throw new DOMException("Storage unavailable", "UnknownError"); } });
+    Object.defineProperty(globalThis, "indexedDB", {
+      configurable: true,
+      value: {
+        open() {
+          throw new DOMException("Storage unavailable", "UnknownError");
+        },
+      },
+    });
   });
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  await page.goto("/cases-new.html");
-  await completeIntake(page, "Unavailable storage draft");
-  await page.locator("#continue-button").click();
-  const recovery = page.locator("#creation-error");
-  await expect(recovery).toHaveAttribute("data-state", "unavailable");
-  await expect(recovery).toContainText("Your entries are still here");
-  await expect(recovery).toContainText("Nothing was changed or deleted");
-  await expect(recovery).toContainText("Do not clear site data");
-  await expect(page.locator("#created-state")).toBeHidden();
-  await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
-  await expect(page.locator("#case-title")).toHaveValue("Unavailable storage draft");
-  await expect(page.locator("#summary")).toHaveValue("The agreed work was delivered and the remaining payment has not been received.");
-  await expect(page.locator("#continue-button")).toHaveAttribute("aria-describedby", "creation-error");
-  expect(pageErrors).toEqual([]);
-  await clearDraft(page);
+  try {
+    await page.goto("/cases-new.html");
+    const injectedFailure = await page.evaluate(() => {
+      try {
+        indexedDB.open("casefind-storage-probe");
+        return null;
+      } catch (cause) {
+        return cause instanceof DOMException
+          ? { name: cause.name, message: cause.message }
+          : { name: "UnexpectedError", message: String(cause) };
+      }
+    });
+    expect(injectedFailure).toEqual({ name: "UnknownError", message: "Storage unavailable" });
+
+    await completeIntake(page, "Unavailable storage draft");
+    const submit = page.locator("#continue-button");
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    const recovery = page.locator("#creation-error");
+    await expect(recovery).toHaveAttribute("data-state", "unavailable");
+    await expect(recovery).toContainText("Your entries are still here");
+    await expect(recovery).toContainText("Nothing was changed or deleted");
+    await expect(recovery).toContainText("Do not clear site data");
+    await expect(page.locator("#created-state")).toBeHidden();
+    await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
+    await expect(page.locator("#case-title")).toHaveValue("Unavailable storage draft");
+    await expect(page.locator("#summary")).toHaveValue("The agreed work was delivered and the remaining payment has not been received.");
+    await expect(submit).toHaveAttribute("aria-describedby", "creation-error");
+    await expect(submit).toBeEnabled();
+    await expect(page.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await clearDraft(page).catch(() => undefined);
+  }
 });

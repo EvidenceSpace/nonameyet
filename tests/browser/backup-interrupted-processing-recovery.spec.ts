@@ -42,6 +42,7 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
     mimeType: "image/png",
     buffer: imageBytes,
   });
+  await expect(page.locator(".file-row", { hasText: "interrupted-source.png" })).toBeVisible();
   await page.evaluate(async (message) => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -61,8 +62,10 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
     await storage.saveProcessing(recovered);
   }, interruptedMessage);
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible();
 
   const row = page.locator(".file-row", { hasText: "interrupted-source.png" });
+  await expect(row).toBeVisible();
   await expect(row.locator(".processing-status")).toHaveText("Failed");
   await expect(row.locator(".processing-note")).toHaveText(interruptedMessage);
   await expect(row.locator(".process-file")).toHaveText("Retry");
@@ -83,7 +86,9 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
   expect(stored.nextRetryAt).toBeUndefined();
 
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible();
   const persisted = page.locator(".file-row", { hasText: "interrupted-source.png" });
+  await expect(persisted).toBeVisible();
   await expect(persisted.locator(".processing-status")).toHaveText("Failed");
   await expect(persisted.locator(".processing-note")).toHaveText(interruptedMessage);
   await expect(persisted.locator(".process-file")).toHaveText("Retry");
