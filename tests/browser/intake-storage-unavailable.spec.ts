@@ -77,4 +77,5 @@ test("keeps the complete form open when local storage is unavailable", async ({ 
   expect(pageErrors).toEqual([]);
 
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
+  await page.close({ runBeforeUnload: false });
 });

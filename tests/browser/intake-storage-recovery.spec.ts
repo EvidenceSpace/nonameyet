@@ -104,4 +104,5 @@ test("keeps intake entries through a blocked storage open and retries one draft"
   expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindBlockedOpenCount: number }).__casefindBlockedOpenCount)).toBe(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
+  await page.close({ runBeforeUnload: false });
 });
