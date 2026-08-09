@@ -246,6 +246,8 @@ jobs:
             file: tests/browser/image-ocr-unavailable.spec.ts
           - name: intake-storage-recovery
             file: tests/browser/intake-storage-recovery.spec.ts
+          - name: intake-storage-unavailable
+            file: tests/browser/intake-storage-unavailable.spec.ts
           - name: intake-unsaved-exit
             file: tests/browser/intake-unsaved-exit.spec.ts
           - name: library-workspace-accessibility

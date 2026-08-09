@@ -42,8 +42,12 @@ test("reopens a resolved comparison when participating facts change", async ({ p
   ]);
   const proposal = page.locator(".file-row", { hasText: "proposal.png" });
   const invoice = page.locator(".file-row", { hasText: "invoice.png" });
+  await expect(proposal).toBeVisible();
+  await expect(invoice).toBeVisible();
   await addPriceFact(page, proposal, "5,000");
+  await expect(page.locator(".fact-record")).toHaveCount(1);
   await addPriceFact(page, invoice, "6,000");
+  await expect(page.locator(".fact-record")).toHaveCount(2);
 
   const card = page.locator(".consistency-item");
   await expect(card).toHaveClass(/unresolved/);
@@ -53,12 +57,16 @@ test("reopens a resolved comparison when participating facts change", async ({ p
   await dialog.locator("#consistency-note").fill("The values may reflect different project phases.");
   await dialog.locator("button[type='submit']").click();
   await expect(dialog).toBeHidden();
+  await expect(page.locator(".consistency-status")).toHaveText(
+    "Consistency review saved locally. Verified facts and sources were not changed.",
+  );
   await expect(card).toHaveClass(/resolved/);
   await expect(card).toContainText("Reviewed as contextual");
   await expect(card).toContainText("The values may reflect different project phases.");
   await expect(page.locator("#nav-conflict-count")).toHaveText("0");
 
   await addPriceFact(page, invoice, "7,000");
+  await expect(page.locator(".fact-record")).toHaveCount(3);
   await expect(card).toHaveClass(/unresolved/);
   await expect(card).toContainText("Needs comparison");
   await expect(card).toContainText("5,000");
@@ -66,10 +74,11 @@ test("reopens a resolved comparison when participating facts change", async ({ p
   await expect(card).toContainText("7,000");
   await expect(card).not.toContainText("The values may reflect different project phases.");
   await expect(page.locator("#nav-conflict-count")).toHaveText("1");
-  await expect(page.locator(".fact-record")).toHaveCount(3);
   await expect(page.locator(".file-row")).toHaveCount(2);
 
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible();
+  await expect(page.locator("#consistency")).toBeVisible();
   const reopened = page.locator(".consistency-item.unresolved");
   await expect(reopened).toHaveCount(1);
   await expect(reopened).toContainText("Needs comparison");

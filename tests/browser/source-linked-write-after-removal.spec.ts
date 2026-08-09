@@ -26,6 +26,7 @@ test("deleted sources cannot be recreated as orphaned linked records", async ({ 
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible();
   await page.locator("#file-input").setInputFiles({
     name: "source.png",
     mimeType: "image/png",
