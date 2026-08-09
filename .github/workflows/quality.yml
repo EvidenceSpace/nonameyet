@@ -248,6 +248,16 @@ jobs:
             file: tests/browser/intake-storage-recovery.spec.ts
           - name: intake-storage-unavailable
             file: tests/browser/intake-storage-unavailable.spec.ts
+          - name: intake-diagnostic-unavailable-steps
+            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable navigation and steps settle$"'
+          - name: intake-diagnostic-unavailable-callback
+            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable callback and recovery state settle$"'
+          - name: intake-diagnostic-unavailable-assertions
+            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^unavailable recovery assertions and explicit close settle$"'
+          - name: intake-diagnostic-blocked-callback
+            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^blocked setup and recovery state settle$"'
+          - name: intake-diagnostic-blocked-retry
+            file: 'tests/browser/intake-storage-phase-diagnostic.spec.ts --grep "^blocked retry and verification settle$"'
           - name: intake-unsaved-exit
             file: tests/browser/intake-unsaved-exit.spec.ts
           - name: library-workspace-accessibility
