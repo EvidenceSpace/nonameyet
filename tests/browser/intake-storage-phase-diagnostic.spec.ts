@@ -23,7 +23,7 @@ async function submitIntake(page: import("playwright/test").Page) {
 async function closeDiagnosticPage(page: import("playwright/test").Page) {
   if (page.isClosed()) return;
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset()).catch(() => undefined);
-  await page.close({ runBeforeUnload: false }).catch(() => undefined);
+  await page.close({ runBeforeUnload: false });
 }
 
 async function installUnavailableOpen(page: import("playwright/test").Page) {
