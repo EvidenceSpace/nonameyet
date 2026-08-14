@@ -87,7 +87,10 @@ class FakeTransaction {
       return action();
     });
     return {
-      get: (key: string) => this.request(() => structuredClone(values.get(key))),
+      get: (key: string) => this.request(() => {
+        this.db.reads.push(`${name}.get:${key}`);
+        return structuredClone(values.get(key));
+      }),
       add: (value: any) => mutate(`${name}.add`, () => {
         if (values.has(value.id)) {
           const failure = new Error("Key already exists");
@@ -157,6 +160,7 @@ class FakeDatabase {
   closed = false;
   transactions: Array<{ stores: StoreName[]; mode: string }> = [];
   operations: string[] = [];
+  reads: string[] = [];
 
   constructor(state = initialState(), public failOperation?: string) {
     this.state = cloneState(state);
@@ -373,4 +377,117 @@ test("storage-open failures are structured and do not pretend a transaction ran"
       && failure.code === "write_failed"
       && failure.cause === cause,
   );
+});
+
+test("rejects non-canonical snapshots and compares canonical fields independent of key order", async () => {
+  const api = await storage();
+  const expected = event();
+  const reordered = {
+    updatedAt: expected.updatedAt,
+    createdAt: expected.createdAt,
+    revision: expected.revision,
+    origin: expected.origin,
+    sourceReference: {
+      locator: { quote: "Files attached.", page: 2, kind: "pdf_page" },
+      sha256: hashA,
+      fileId: "file-1",
+    },
+    sourceFileId: expected.sourceFileId,
+    description: expected.description,
+    title: expected.title,
+    eventDate: expected.eventDate,
+    caseId: expected.caseId,
+    id: expected.id,
+  };
+  assert.equal(api.eventValuesMatch(expected, reordered), true);
+  assert.equal(api.validEventLocator({ kind: "whole_file", extra: true }), false);
+  assert.equal(api.validEventLocator({ kind: "pdf_page", page: 2, extra: true }), false);
+  assert.equal(api.validEventSnapshot(event({ createdAt: "not-a-timestamp" })), false);
+  assert.equal(api.validEventSnapshot(event({ updatedAt: "2026-08-07T01:00:00Z" })), false);
+  assert.equal(api.validEventSnapshot(event({ reviewedAt: "later" })), false);
+  assert.equal(api.validEventSnapshot(event({
+    sourceReference: { ...expected.sourceReference, extra: true },
+  })), false);
+});
+
+test("creation accepts only the first revision before storage opens", async () => {
+  const api = await storage();
+  let opened = false;
+  await assert.rejects(
+    api.createEvent(event({ revision: 2 }), {
+      openDatabaseImpl: async () => { opened = true; throw new Error("should not open"); },
+    }),
+    /Invalid timeline event transition/,
+  );
+  assert.equal(opened, false);
+});
+
+test("replacement validates the rendered source before binding a different source", async () => {
+  const api = await storage();
+  const expected = event();
+  const next = replacement(expected, {
+    sourceFileId: "file-2",
+    sourceReference: { fileId: "file-2", sha256: hashB, locator: { kind: "whole_file" } },
+  });
+  for (const [oldFile, code] of [
+    [undefined, "source_missing"],
+    [{ ...sourceFile, sha256: "c".repeat(64) }, "source_changed"],
+  ] as const) {
+    const state = initialState(expected);
+    state.files.clear();
+    if (oldFile) state.files.set("file-1", oldFile);
+    state.files.set("file-2", { id: "file-2", caseId: "case-1", sha256: hashB, name: "reply.png" });
+    const db = new FakeDatabase(state);
+    const before = serialise(db.state);
+    await rejectsCode(api.saveEventIfCurrent(expected, next, options(db)), code);
+    assert.deepEqual(serialise(db.state), before);
+    assert.equal(db.reads.includes("files.get:file-2"), false);
+  }
+});
+
+test("same-source replacement reuses one validated source read while source changes read both", async () => {
+  const api = await storage();
+  const expected = event();
+  const sameSourceDb = new FakeDatabase(initialState(expected));
+  await api.saveEventIfCurrent(expected, replacement(expected), options(sameSourceDb));
+  assert.deepEqual(sameSourceDb.reads.filter((entry) => entry.startsWith("files.get:")), ["files.get:file-1"]);
+
+  const state = initialState(expected);
+  state.files.set("file-2", { id: "file-2", caseId: "case-1", sha256: hashB, name: "reply.png" });
+  const changedSourceDb = new FakeDatabase(state);
+  await api.saveEventIfCurrent(expected, replacement(expected, {
+    sourceFileId: "file-2",
+    sourceReference: { fileId: "file-2", sha256: hashB, locator: { kind: "whole_file" } },
+  }), options(changedSourceDb));
+  assert.deepEqual(changedSourceDb.reads.filter((entry) => entry.startsWith("files.get:")), [
+    "files.get:file-1",
+    "files.get:file-2",
+  ]);
+});
+
+test("transaction setup failures and malformed activity timestamps are structured and atomic", async () => {
+  const api = await storage();
+  const setupFailure = new Error("Transaction unavailable");
+  let closed = false;
+  await assert.rejects(
+    api.createEvent(event(), {
+      openDatabaseImpl: async () => ({
+        transaction() { throw setupFailure; },
+        close() { closed = true; },
+      }),
+    }),
+    (failure: any) => failure?.name === "EventTransitionError"
+      && failure.code === "write_failed"
+      && failure.cause === setupFailure,
+  );
+  assert.equal(closed, true);
+
+  const expected = event();
+  const db = new FakeDatabase(initialState(expected));
+  const before = serialise(db.state);
+  await rejectsCode(
+    api.saveEventIfCurrent(expected, replacement(expected), options(db, () => "not-a-timestamp")),
+    "write_failed",
+  );
+  assert.deepEqual(serialise(db.state), before);
 });
