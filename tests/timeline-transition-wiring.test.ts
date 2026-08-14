@@ -60,3 +60,44 @@ test("timeline recovery copy is specific and preserves drafts", () => {
   assert.match(timelineSource, /const token = \+\+editorOpenToken/);
   assert.match(timelineSource, /if \(token !== editorOpenToken\) return/);
 });
+
+test("malformed stored events are filtered before sorting and rendering", () => {
+  assert.match(timelineSource, /const validStoredEvents = storedEvents\.filter\(isValidEvent\)/);
+  assert.match(timelineSource, /let events = sortTimelineEvents\(validStoredEvents\)/);
+  assert.ok(
+    timelineSource.indexOf("storedEvents.filter(isValidEvent)")
+      < timelineSource.indexOf("sortTimelineEvents(validStoredEvents)"),
+  );
+  assert.match(timelineSource, /malformedEventCount/);
+  assert.match(timelineSource, /class="timeline-integrity" role="status"/);
+  assert.match(timelineSource, /stored event or provenance is malformed/);
+});
+
+test("missing or changed source provenance disables editing but preserves removal", () => {
+  assert.match(timelineSource, /const editUnavailable = !sourceState\.ok/);
+  assert.match(timelineSource, /disabled aria-disabled="true"/);
+  assert.match(timelineSource, /<button class="timeline-remove" type="button">Remove<\/button>/);
+  assert.match(timelineSource, /function markEditUnavailable\(card, sourceState\)/);
+  assert.match(timelineSource, /editButton\.disabled = true/);
+  assert.match(timelineSource, /You can still remove the event/);
+});
+
+test("asynchronous editor opening revalidates provenance and restores intentional disabled states", () => {
+  assert.match(timelineSource, /const rowDisabledStates = new WeakMap\(\)/);
+  assert.match(timelineSource, /new Map\(buttons\.map\(\(button\) => \[button, button\.disabled\]\)\)/);
+  assert.match(timelineSource, /disabledStates\.forEach\(\(disabled, button\) => \{ button\.disabled = disabled; \}\)/);
+  assert.match(timelineSource, /const sourceState = timelineSourceStatus\(snapshot, currentFiles\)/);
+  assert.match(timelineSource, /if \(!sourceState\.ok\)/);
+  assert.match(timelineSource, /if \(unavailableSourceState\) markEditUnavailable\(card, unavailableSourceState\)/);
+});
+
+test("timeline accessibility keeps errors local, targets large, text readable, and motion optional", () => {
+  assert.doesNotMatch(timelineSource, /setStatus\(removalFailureText\(failure\), "error"\)/);
+  assert.match(timelineSource, /class="timeline-event-status" role="alert" aria-live="assertive"/);
+  assert.match(timelineStyles, /\.timeline-event-actions button,[\s\S]+min-height: 44px/);
+  assert.match(timelineStyles, /font-size: 14px/);
+  assert.match(timelineStyles, /:focus-visible/);
+  assert.match(timelineStyles, /@media \(max-width: 600px\)/);
+  assert.match(timelineStyles, /overflow-wrap: anywhere/);
+  assert.match(timelineStyles, /@media \(prefers-reduced-motion: reduce\)/);
+});
