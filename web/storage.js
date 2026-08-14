@@ -551,13 +551,29 @@ function validCalendarDate(value) {
     && date.getUTCDate() === day;
 }
 
+function validTimestamp(value) {
+  if (!nonEmptyString(value)) return false;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
+}
+
+function hasOnlyKeys(value, requiredKeys, optionalKeys = []) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  return requiredKeys.every((key) => Object.hasOwn(value, key))
+    && keys.every((key) => requiredKeys.includes(key) || optionalKeys.includes(key));
+}
+
 export function validEventLocator(locator) {
-  if (!locator || typeof locator !== "object") return false;
+  if (!hasOnlyKeys(locator, ["kind"], ["page", "quote"])) return false;
   const validQuote = locator.quote === undefined
     || (typeof locator.quote === "string" && locator.quote.length <= 500);
   if (!validQuote) return false;
-  if (locator.kind === "whole_file") return locator.page === undefined;
+  if (locator.kind === "whole_file") {
+    return !Object.hasOwn(locator, "page");
+  }
   return locator.kind === "pdf_page"
+    && Object.hasOwn(locator, "page")
     && Number.isInteger(locator.page)
     && locator.page >= 1
     && locator.page <= 10000;
@@ -565,7 +581,14 @@ export function validEventLocator(locator) {
 
 export function validEventSnapshot(value) {
   return Boolean(
-    value
+    hasOnlyKeys(
+      value,
+      [
+        "id", "caseId", "eventDate", "title", "sourceFileId", "sourceReference",
+        "origin", "revision", "createdAt", "updatedAt",
+      ],
+      ["description"],
+    )
     && nonEmptyString(value.id)
     && nonEmptyString(value.caseId)
     && validCalendarDate(value.eventDate)
@@ -576,21 +599,39 @@ export function validEventSnapshot(value) {
     && (value.description === undefined
       || (typeof value.description === "string" && value.description.length <= 1000))
     && nonEmptyString(value.sourceFileId)
+    && hasOnlyKeys(value.sourceReference, ["fileId", "sha256", "locator"])
     && value.sourceReference?.fileId === value.sourceFileId
     && /^[a-f0-9]{64}$/.test(value.sourceReference?.sha256 || "")
     && validEventLocator(value.sourceReference?.locator)
     && value.origin === "user_entered"
     && Number.isSafeInteger(value.revision)
     && value.revision >= 1
-    && nonEmptyString(value.createdAt)
-    && nonEmptyString(value.updatedAt)
+    && validTimestamp(value.createdAt)
+    && validTimestamp(value.updatedAt)
   );
 }
 
 export function eventValuesMatch(current, expected) {
   if (!validEventSnapshot(current) || !validEventSnapshot(expected)) return false;
   try {
-    return JSON.stringify(current) === JSON.stringify(expected);
+    const comparable = (value) => [
+      value.id,
+      value.caseId,
+      value.eventDate,
+      value.title,
+      value.description,
+      value.sourceFileId,
+      value.sourceReference.fileId,
+      value.sourceReference.sha256,
+      value.sourceReference.locator.kind,
+      value.sourceReference.locator.page,
+      value.sourceReference.locator.quote,
+      value.origin,
+      value.revision,
+      value.createdAt,
+      value.updatedAt,
+    ];
+    return JSON.stringify(comparable(current)) === JSON.stringify(comparable(expected));
   } catch {
     return false;
   }
@@ -607,7 +648,7 @@ export function validEventReplacement(expected, replacement) {
 }
 
 function eventTransitionKind(expected, replacement) {
-  if (expected === null && validEventSnapshot(replacement)) return "create";
+  if (expected === null && validEventSnapshot(replacement) && replacement.revision === 1) return "create";
   if (validEventReplacement(expected, replacement)) return "replace";
   if (validEventSnapshot(expected) && replacement === null) return "remove";
   return null;
@@ -622,6 +663,7 @@ export async function commitEventTransition(expected, replacement, {
   const event = kind === "remove" ? expected : replacement;
   const storeNames = kind === "remove" ? ["events", "cases"] : ["events", "files", "cases"];
   let db;
+
   try {
     db = await openDatabaseImpl();
   } catch (cause) {
@@ -635,7 +677,8 @@ export async function commitEventTransition(expected, replacement, {
     const files = kind === "remove" ? null : tx.objectStore("files");
     let transitionError;
     let currentRequest;
-    let fileRequest;
+    let expectedFileRequest;
+    let replacementFileRequest;
     let caseRequest;
     let eventRequest;
     let caseWriteRequest;
@@ -648,7 +691,8 @@ export async function commitEventTransition(expected, replacement, {
         || eventRequest?.error
         || caseWriteRequest?.error
         || caseRequest?.error
-        || fileRequest?.error
+        || replacementFileRequest?.error
+        || expectedFileRequest?.error
         || currentRequest?.error,
     );
     const completion = new Promise((resolve, reject) => {
@@ -677,42 +721,75 @@ export async function commitEventTransition(expected, replacement, {
       }
     };
     const commitAfterCaseCheck = () => {
-      caseRequest = cases.get(event.caseId);
-      caseRequest.onsuccess = () => {
-        if (!caseRequest.result) {
-          abortWith(new EventTransitionError("case_missing"));
-          return;
-        }
-        try {
-          const updatedAt = now();
-          if (!nonEmptyString(updatedAt)) throw new TypeError("Invalid activity timestamp.");
-          if (kind === "create") eventRequest = events.add(event);
-          else if (kind === "replace") eventRequest = events.put(event);
-          else eventRequest = events.delete(event.id);
-          caseWriteRequest = cases.put({ ...caseRequest.result, updatedAt });
-        } catch (cause) {
-          abortWith(new EventTransitionError("write_failed", cause));
-        }
-      };
+      try {
+        caseRequest = cases.get(event.caseId);
+        caseRequest.onsuccess = () => {
+          if (!caseRequest.result) {
+            abortWith(new EventTransitionError("case_missing"));
+            return;
+          }
+          try {
+            const updatedAt = now();
+            if (!validTimestamp(updatedAt)) throw new TypeError("Invalid activity timestamp.");
+            if (kind === "create") eventRequest = events.add(event);
+            else if (kind === "replace") eventRequest = events.put(event);
+            else eventRequest = events.delete(event.id);
+            caseWriteRequest = cases.put({ ...caseRequest.result, updatedAt });
+          } catch (cause) {
+            abortWith(new EventTransitionError("write_failed", cause));
+          }
+        };
+      } catch (cause) {
+        abortWith(new EventTransitionError("write_failed", cause));
+      }
     };
-    const checkSource = () => {
-      const identity = sourceIdentity("events", event);
-      fileRequest = files.get(identity.fileId);
-      fileRequest.onsuccess = () => {
-        if (!fileRequest.result) {
-          abortWith(new EventTransitionError("source_missing"));
-          return;
-        }
-        if (!sourceMatches(fileRequest.result, identity)) {
+    const readAndValidateSource = (identity, assignRequest, onValid) => {
+      try {
+        const request = files.get(identity.fileId);
+        assignRequest(request);
+        request.onsuccess = () => {
+          if (!request.result) {
+            abortWith(new EventTransitionError("source_missing"));
+            return;
+          }
+          if (!sourceMatches(request.result, identity)) {
+            abortWith(new EventTransitionError("source_changed"));
+            return;
+          }
+          try { onValid(request.result); }
+          catch (cause) { abortWith(new EventTransitionError("write_failed", cause)); }
+        };
+      } catch (cause) {
+        abortWith(new EventTransitionError("write_failed", cause));
+      }
+    };
+    const checkReplacementSource = (validatedExpectedFile = null) => {
+      const identity = sourceIdentity("events", replacement);
+      if (validatedExpectedFile?.id === identity.fileId) {
+        if (!sourceMatches(validatedExpectedFile, identity)) {
           abortWith(new EventTransitionError("source_changed"));
           return;
         }
         commitAfterCaseCheck();
-      };
+        return;
+      }
+      readAndValidateSource(
+        identity,
+        (request) => { replacementFileRequest = request; },
+        commitAfterCaseCheck,
+      );
+    };
+    const checkExpectedAndReplacementSources = () => {
+      const identity = sourceIdentity("events", expected);
+      readAndValidateSource(
+        identity,
+        (request) => { expectedFileRequest = request; },
+        checkReplacementSource,
+      );
     };
 
     try {
-      if (kind === "create") checkSource();
+      if (kind === "create") checkReplacementSource();
       else {
         currentRequest = events.get(expected.id);
         currentRequest.onsuccess = () => {
@@ -720,7 +797,7 @@ export async function commitEventTransition(expected, replacement, {
             abortWith(new EventTransitionError("stale_event"));
             return;
           }
-          if (kind === "replace") checkSource();
+          if (kind === "replace") checkExpectedAndReplacementSources();
           else commitAfterCaseCheck();
         };
       }
@@ -730,6 +807,9 @@ export async function commitEventTransition(expected, replacement, {
 
     await completion;
     return kind === "remove" ? true : eventRequest?.result;
+  } catch (failure) {
+    if (failure instanceof EventTransitionError) throw failure;
+    throw new EventTransitionError("write_failed", failure);
   } finally { db.close(); }
 }
 
