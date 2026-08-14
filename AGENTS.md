@@ -20,3 +20,23 @@ CaseFind organizes user-provided material. It does not provide legal advice, aut
 - Add tests for domain behavior and AI contract validation.
 - Keep product decisions in `docs/` and update them with implementation changes.
 - Do not introduce phone-wide access, background monitoring, or mailbox connections in V1.
+
+## Working standards
+
+Process rules — how a task is framed, planned, verified and reported — live in
+`docs/build-os/`. Start at `docs/build-os/README.md`, which states the precedence
+order and points to the right file.
+
+- `docs/build-os/operating-rules.md` — the build loop, task sizing, decide-vs-ask,
+  when to stop and report.
+- `docs/build-os/quality-bar.md` — definition of done. Defers to
+  `docs/continuous-quality.md` and `docs/browser-quality-gate.md` for CI and the
+  browser gate.
+- `docs/build-os/design-baseline.md` — portable UI, motion and accessibility
+  rules. Styles themselves live in the existing `web/` CSS layers.
+- `docs/build-os/stack-defaults.md` — **new projects only.** Read its warning
+  before applying anything from it here.
+- `docs/build-os/lessons-learned.md` — mistakes already made, as rules.
+
+This file outranks everything in `docs/build-os/`. The product boundary and the
+non-negotiable rules above win any conflict.
