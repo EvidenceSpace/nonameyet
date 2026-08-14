@@ -6,10 +6,12 @@ const staleRemove = "This event changed in another tab. Nothing was removed. Rel
 const missingSource = "The selected source record was removed in another tab. Nothing was saved. Your draft is still open. Choose another source or cancel and reload.";
 const changedSource = "The selected source record changed in another tab. Nothing was saved. Your draft is still open. Cancel and reload before choosing the current record.";
 const missingCase = "This case was removed in another tab. Nothing was saved. Your draft is still open. Copy any notes you need, then return to your local cases.";
+const unavailableSource = "Editing is unavailable because this event's source record no longer matches its reviewed SHA-256 snapshot. Nothing was changed. Reload to review the current record. You can still remove the event.";
+const removeFailure = "The timeline event could not be removed. Nothing was changed. Try again.";
 
-async function setupTimeline(page: import("playwright/test").Page, seedEvent = false) {
+async function setupTimeline(page: import("playwright/test").Page, seedEvent = false, seedMalformed = false) {
   await page.goto("/index.html?id=case-concurrency");
-  return page.evaluate(async ({ sourceHash, withEvent }) => {
+  return page.evaluate(async ({ sourceHash, withEvent, withMalformed }) => {
     await new Promise<void>((resolve, reject) => {
       const request = indexedDB.deleteDatabase("casefind-preview");
       request.onsuccess = () => resolve();
@@ -31,9 +33,21 @@ async function setupTimeline(page: import("playwright/test").Page, seedEvent = f
       createdAt: "2026-08-03T00:00:00.000Z", updatedAt: "2026-08-03T00:00:00.000Z",
     };
     if (withEvent) await storage.createEvent(event, { now: () => "2026-08-07T00:03:00.000Z" });
+    if (withMalformed) {
+      const db = await storage.openDatabase();
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const tx = db.transaction("events", "readwrite");
+          tx.objectStore("events").add({ ...event, id: "event-malformed", eventDate: "not-a-date" });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error || new Error("Malformed seed aborted"));
+        });
+      } finally { db.close(); }
+    }
     await import(`/timeline-ui.js?test=${crypto.randomUUID()}`);
     return { event, file, updatedAt: (await storage.getCase(caseId)).updatedAt };
-  }, { sourceHash: hash, withEvent: seedEvent });
+  }, { sourceHash: hash, withEvent: seedEvent, withMalformed: seedMalformed });
 }
 
 async function fillEventDialog(page: import("playwright/test").Page, title = "Final files delivered") {
@@ -252,4 +266,55 @@ test("saving disables the dialog, suppresses duplicate submit, and ignores cance
   expect(state.events).toHaveLength(1);
   expect(state.events[0].title).toBe("Single committed event");
   expect(state.transitions).toBe(1);
+});
+
+test("malformed events stay hidden and provenance changes disable editing through busy failures", async ({ page }) => {
+  await setupTimeline(page, true, true);
+  await expect(page.locator(".timeline-event")).toHaveCount(1);
+  await expect(page.locator(".timeline-integrity")).toHaveText(
+    "1 saved timeline event was not shown because the stored event or provenance is malformed. Nothing was changed.",
+  );
+
+  await page.evaluate(async () => {
+    const storage = await import("/storage.js");
+    const [file] = await storage.getFilesForCase("case-concurrency");
+    const db = await storage.openDatabase();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction("files", "readwrite");
+        tx.objectStore("files").put({ ...file, sha256: "b".repeat(64) });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error("Source mutation aborted"));
+      });
+    } finally { db.close(); }
+  });
+
+  const card = page.locator('.timeline-event[data-id="event-concurrency"]');
+  await card.locator(".timeline-edit").click();
+  await expect(page.locator(".timeline-dialog")).not.toBeVisible();
+  await expect(card.locator(".timeline-event-status")).toHaveText(unavailableSource);
+  await expect(card.locator(".timeline-edit")).toBeDisabled();
+  await expect(card.locator(".timeline-remove")).toBeEnabled();
+
+  await page.evaluate(() => {
+    const prototype = IDBObjectStore.prototype as IDBObjectStore & Record<string, (...args: unknown[]) => IDBRequest>;
+    const original = prototype.delete;
+    let injected = false;
+    prototype.delete = function (...args: unknown[]) {
+      const request = original.apply(this, args);
+      if (!injected && this.name === "events") {
+        injected = true;
+        this.transaction.abort();
+      }
+      return request;
+    };
+  });
+  await card.locator(".timeline-remove").click();
+  await card.locator(".timeline-remove").click();
+  await expect(card.locator(".timeline-event-status")).toHaveText(removeFailure);
+  await expect(card).not.toHaveAttribute("aria-busy", "true");
+  await expect(card.locator(".timeline-edit")).toBeDisabled();
+  await expect(card.locator(".timeline-remove")).toBeEnabled();
+  await expect(page.locator(".timeline-status")).toHaveText("");
 });
