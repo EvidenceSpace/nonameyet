@@ -22,7 +22,7 @@ if (caseId && checklist) {
   const section = document.createElement("section");
   section.className = "workspace-card";
   section.id = "timeline";
-  section.innerHTML = '<div class="card-heading"><div><span class="section-label">SOURCE-LINKED TIMELINE</span><h3>Events you entered from original records</h3><p>Dates are not inferred or authenticated. Every event stays linked to the exact record hash and optional location you choose.</p><p class="timeline-status" role="status" aria-live="polite"></p></div><button class="button-secondary" id="add-timeline-event" type="button">Add event</button></div><div class="timeline-list" id="timeline-list"></div>';
+  section.innerHTML = '<div class="card-heading"><div><span class="section-label">SOURCE-LINKED TIMELINE</span><h3>Events you entered from original records</h3><p>Dates are not inferred or authenticated. Every event stays linked to the exact record hash and optional location you choose.</p><p class="timeline-status" role="status" aria-live="polite"></p><p class="timeline-integrity" role="status" aria-live="polite" hidden></p></div><button class="button-secondary" id="add-timeline-event" type="button">Add event</button></div><div class="timeline-list" id="timeline-list"></div>';
   checklist.before(section);
 
   const nav = document.querySelector(".workspace-nav");
@@ -41,6 +41,7 @@ if (caseId && checklist) {
 
   const root = section.querySelector("#timeline-list");
   const status = section.querySelector(".timeline-status");
+  const integrity = section.querySelector(".timeline-integrity");
   const addButton = section.querySelector("#add-timeline-event");
   const form = dialog.querySelector("form");
   const date = dialog.querySelector("#timeline-date");
@@ -52,7 +53,10 @@ if (caseId && checklist) {
   const error = dialog.querySelector(".timeline-error");
   const submit = dialog.querySelector('button[type="submit"]');
   const dialogTitle = dialog.querySelector("#timeline-dialog-title");
-  let events = sortTimelineEvents(await getEventsForCase(caseId));
+  const storedEvents = await getEventsForCase(caseId);
+  const validStoredEvents = storedEvents.filter(isValidEvent);
+  let malformedEventCount = storedEvents.length - validStoredEvents.length;
+  let events = sortTimelineEvents(validStoredEvents);
   let files = await getFilesForCase(caseId);
   let editing = null;
   let editorOpening = false;
@@ -61,6 +65,12 @@ if (caseId && checklist) {
   const renderedEventSnapshots = new Map();
   const activeRemovals = new Set();
   const removalTimers = new Map();
+  const rowDisabledStates = new WeakMap();
+
+  function isValidEvent(value) {
+    try { return validEventSnapshot(value); }
+    catch { return false; }
+  }
 
   function escape(value = "") {
     const node = document.createElement("span");
@@ -96,7 +106,7 @@ if (caseId && checklist) {
   function syncRenderedEventSnapshots(currentEvents = []) {
     renderedEventSnapshots.clear();
     for (const event of currentEvents) {
-      if (!validEventSnapshot(event)) continue;
+      if (!isValidEvent(event)) continue;
       try { renderedEventSnapshots.set(event.id, immutableSnapshot(event)); }
       catch { /* A malformed event must never become actionable. */ }
     }
@@ -104,15 +114,26 @@ if (caseId && checklist) {
 
   function requireRenderedEvent(eventId) {
     const event = renderedEventSnapshots.get(eventId);
-    if (!event || !validEventSnapshot(event)) throw new EventTransitionError("stale_event");
+    if (!event || !isValidEvent(event)) throw new EventTransitionError("stale_event");
     return immutableSnapshot(event);
   }
 
   function setRowBusy(card, busy) {
     if (!card) return;
-    if (busy) card.setAttribute("aria-busy", "true");
-    else card.removeAttribute("aria-busy");
-    card.querySelectorAll("button").forEach((button) => { button.disabled = busy; });
+    const buttons = [...card.querySelectorAll("button")];
+    if (busy) {
+      if (!rowDisabledStates.has(card)) {
+        rowDisabledStates.set(card, new Map(buttons.map((button) => [button, button.disabled])));
+      }
+      card.setAttribute("aria-busy", "true");
+      buttons.forEach((button) => { button.disabled = true; });
+      return;
+    }
+    card.removeAttribute("aria-busy");
+    const disabledStates = rowDisabledStates.get(card);
+    if (!disabledStates) return;
+    disabledStates.forEach((disabled, button) => { button.disabled = disabled; });
+    rowDisabledStates.delete(card);
   }
 
   function setDialogBusy(busy) {
@@ -131,29 +152,44 @@ if (caseId && checklist) {
   }
 
   function saveFailureText(failure) {
-    if (failure?.code === "stale_event") {
-      return "This event changed in another tab. Nothing was saved. Your draft is still open. Reload to review the latest event before applying your changes again.";
-    }
-    if (failure?.code === "source_missing") {
-      return "The selected source record was removed in another tab. Nothing was saved. Your draft is still open. Choose another source or cancel and reload.";
-    }
-    if (failure?.code === "source_changed") {
-      return "The selected source record changed in another tab. Nothing was saved. Your draft is still open. Cancel and reload before choosing the current record.";
-    }
-    if (failure?.code === "case_missing") {
-      return "This case was removed in another tab. Nothing was saved. Your draft is still open. Copy any notes you need, then return to your local cases.";
-    }
+    if (failure?.code === "stale_event") return "This event changed in another tab. Nothing was saved. Your draft is still open. Reload to review the latest event before applying your changes again.";
+    if (failure?.code === "source_missing") return "The selected source record was removed in another tab. Nothing was saved. Your draft is still open. Choose another source or cancel and reload.";
+    if (failure?.code === "source_changed") return "The selected source record changed in another tab. Nothing was saved. Your draft is still open. Cancel and reload before choosing the current record.";
+    if (failure?.code === "case_missing") return "This case was removed in another tab. Nothing was saved. Your draft is still open. Copy any notes you need, then return to your local cases.";
     return "The timeline event could not be saved in this browser. Nothing was changed. Your draft is still open. Try again.";
   }
 
   function removalFailureText(failure) {
-    if (failure?.code === "stale_event") {
-      return "This event changed in another tab. Nothing was removed. Reload and review the latest version.";
-    }
-    if (failure?.code === "case_missing") {
-      return "This case was removed in another tab. Nothing was removed. Return to your local cases or reload.";
-    }
+    if (failure?.code === "stale_event") return "This event changed in another tab. Nothing was removed. Reload and review the latest version.";
+    if (failure?.code === "case_missing") return "This case was removed in another tab. Nothing was removed. Return to your local cases or reload.";
     return "The timeline event could not be removed. Nothing was changed. Try again.";
+  }
+
+  function sourceUnavailableText(sourceState) {
+    if (sourceState?.reason === "missing_source") {
+      return "Editing is unavailable because this event's source record is missing. Nothing was changed. You can still remove the event.";
+    }
+    return "Editing is unavailable because this event's source record no longer matches its reviewed SHA-256 snapshot. Nothing was changed. Reload to review the current record. You can still remove the event.";
+  }
+
+  function markEditUnavailable(card, sourceState) {
+    if (!card) return;
+    card.querySelector(".timeline-open")?.remove();
+    const badge = card.querySelector(".timeline-source-state");
+    if (badge) {
+      badge.classList.add("invalid");
+      badge.textContent = sourceState.label;
+    }
+    const editButton = card.querySelector(".timeline-edit");
+    if (editButton) {
+      editButton.disabled = true;
+      editButton.setAttribute("aria-disabled", "true");
+    }
+    const note = card.querySelector(".timeline-edit-note");
+    if (note) {
+      note.hidden = false;
+      note.textContent = sourceUnavailableText(sourceState);
+    }
   }
 
   function openSource(item, sourceState) {
@@ -176,7 +212,14 @@ if (caseId && checklist) {
   }
 
   function render() {
+    const renderableEvents = events.filter(isValidEvent);
+    malformedEventCount += events.length - renderableEvents.length;
+    events = sortTimelineEvents(renderableEvents);
     syncRenderedEventSnapshots(events);
+    integrity.hidden = malformedEventCount === 0;
+    integrity.textContent = malformedEventCount
+      ? `${malformedEventCount} saved timeline ${malformedEventCount === 1 ? "event was" : "events were"} not shown because the stored event or provenance is malformed. Nothing was changed.`
+      : "";
     document.querySelector("#nav-event-count")?.replaceChildren(String(events.length));
     if (!events.length) {
       root.innerHTML = '<div class="timeline-empty">No timeline events yet. Add events manually from records you have reviewed.</div>';
@@ -188,20 +231,20 @@ if (caseId && checklist) {
       const sourceName = sourceState.file?.name || "Missing record";
       const sourceClass = sourceState.ok ? "" : " invalid";
       const excerpt = event.sourceReference?.locator?.quote;
-      return `<article class="timeline-event" data-id="${escape(event.id)}"><time class="timeline-date" datetime="${escape(event.eventDate)}">${escape(dateLabel(event.eventDate))}</time><span class="timeline-marker"></span><div class="timeline-copy"><strong>${escape(event.title)}</strong>${event.description ? `<p>${escape(event.description)}</p>` : ""}<small>User-entered · Source: ${escape(sourceName)} · ${escape(locator)} <span class="timeline-source-state${sourceClass}">${escape(sourceState.label)}</span></small>${excerpt ? `<blockquote class="source-quote">${escape(excerpt)}</blockquote>` : ""}<details class="timeline-provenance"><summary>Source provenance</summary><p>${escape(sourceName)} · ${escape(locator)}</p><code>SHA-256 ${escape(event.sourceReference?.sha256 || "Unavailable")}</code></details><div class="timeline-event-actions">${sourceState.ok ? '<button class="timeline-open" type="button">Open source</button>' : ""}<button class="timeline-edit" type="button">Edit</button><button class="timeline-remove" type="button">Remove</button></div><p class="timeline-event-status" role="alert" aria-live="assertive"></p></div></article>`;
+      const editUnavailable = !sourceState.ok;
+      return `<article class="timeline-event" data-id="${escape(event.id)}"><time class="timeline-date" datetime="${escape(event.eventDate)}">${escape(dateLabel(event.eventDate))}</time><span class="timeline-marker"></span><div class="timeline-copy"><strong>${escape(event.title)}</strong>${event.description ? `<p>${escape(event.description)}</p>` : ""}<small>User-entered · Source: ${escape(sourceName)} · ${escape(locator)} <span class="timeline-source-state${sourceClass}">${escape(sourceState.label)}</span></small>${excerpt ? `<blockquote class="source-quote">${escape(excerpt)}</blockquote>` : ""}<details class="timeline-provenance"><summary>Source provenance</summary><p>${escape(sourceName)} · ${escape(locator)}</p><code>SHA-256 ${escape(event.sourceReference?.sha256 || "Unavailable")}</code></details><div class="timeline-event-actions">${sourceState.ok ? '<button class="timeline-open" type="button">Open source</button>' : ""}<button class="timeline-edit" type="button"${editUnavailable ? ' disabled aria-disabled="true"' : ""}>Edit</button><button class="timeline-remove" type="button">Remove</button></div><p class="timeline-edit-note"${editUnavailable ? "" : " hidden"}>${editUnavailable ? escape(sourceUnavailableText(sourceState)) : ""}</p><p class="timeline-event-status" role="alert" aria-live="assertive"></p></div></article>`;
     }).join("");
 
     root.querySelectorAll(".timeline-event").forEach((card) => {
       const rendered = renderedEventSnapshots.get(card.dataset.id);
       const sourceState = timelineSourceStatus(rendered, files);
       card.querySelector(".timeline-open")?.addEventListener("click", () => openSource(rendered, sourceState));
-      card.querySelector(".timeline-edit").addEventListener("click", () => {
-        void openEditor(card.dataset.id, card);
-      });
+      const editButton = card.querySelector(".timeline-edit");
+      if (!editButton.disabled) {
+        editButton.addEventListener("click", () => { void openEditor(card.dataset.id, card); });
+      }
       const removeButton = card.querySelector(".timeline-remove");
-      removeButton.addEventListener("click", () => {
-        void removeRenderedEvent(card.dataset.id, card, removeButton);
-      });
+      removeButton.addEventListener("click", () => { void removeRenderedEvent(card.dataset.id, card, removeButton); });
     });
   }
 
@@ -235,6 +278,7 @@ if (caseId && checklist) {
 
     activeRemovals.add(eventId);
     eventStatus(card);
+    setStatus();
     setRowBusy(card, true);
     removeButton.textContent = "Removing locally…";
     try {
@@ -244,7 +288,6 @@ if (caseId && checklist) {
       render();
     } catch (failure) {
       eventStatus(card, removalFailureText(failure));
-      setStatus(removalFailureText(failure), "error");
       removeButton.classList.remove("armed");
       removeButton.textContent = "Remove";
       setRowBusy(card, false);
@@ -264,6 +307,7 @@ if (caseId && checklist) {
     }
 
     editorOpening = true;
+    let unavailableSourceState = null;
     const token = ++editorOpenToken;
     addButton.disabled = true;
     setRowBusy(card, true);
@@ -272,6 +316,14 @@ if (caseId && checklist) {
       const currentFiles = await getFilesForCase(caseId);
       if (token !== editorOpenToken) return;
       files = currentFiles;
+      if (snapshot) {
+        const sourceState = timelineSourceStatus(snapshot, currentFiles);
+        if (!sourceState.ok) {
+          unavailableSourceState = sourceState;
+          eventStatus(card, sourceUnavailableText(sourceState));
+          return;
+        }
+      }
       editing = snapshot;
       form.reset();
       error.textContent = "";
@@ -287,9 +339,7 @@ if (caseId && checklist) {
         title.value = snapshot.title;
         description.value = snapshot.description || "";
         source.value = snapshot.sourceFileId;
-        page.value = snapshot.sourceReference?.locator?.kind === "pdf_page"
-          ? snapshot.sourceReference.locator.page
-          : "";
+        page.value = snapshot.sourceReference?.locator?.kind === "pdf_page" ? snapshot.sourceReference.locator.page : "";
         quote.value = snapshot.sourceReference?.locator?.quote || "";
       }
       dialog.showModal();
@@ -304,6 +354,7 @@ if (caseId && checklist) {
       if (token === editorOpenToken) editorOpening = false;
       addButton.disabled = false;
       setRowBusy(card, false);
+      if (unavailableSourceState) markEditUnavailable(card, unavailableSourceState);
     }
   }
 
@@ -324,9 +375,7 @@ if (caseId && checklist) {
     if (saving) { event.preventDefault(); return; }
     closeEditor();
   });
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) closeEditor();
-  });
+  dialog.addEventListener("click", (event) => { if (event.target === dialog) closeEditor(); });
   window.addEventListener("pagehide", () => { editorOpenToken += 1; });
 
   form.addEventListener("submit", async (submitEvent) => {
@@ -334,21 +383,9 @@ if (caseId && checklist) {
     if (saving) return;
     const current = editing ? immutableSnapshot(editing) : null;
     const file = files.find((item) => item.id === source.value);
-    const input = {
-      eventDate: date.value,
-      title: title.value,
-      description: description.value,
-      sourceFileId: source.value,
-      sourcePage: page.value,
-      sourceQuote: quote.value,
-    };
-    const result = current
-      ? updateTimelineEvent(current, input, file)
-      : createTimelineEvent(caseId, input, file);
-    if (!result.ok) {
-      error.textContent = result.error;
-      return;
-    }
+    const input = { eventDate: date.value, title: title.value, description: description.value, sourceFileId: source.value, sourcePage: page.value, sourceQuote: quote.value };
+    const result = current ? updateTimelineEvent(current, input, file) : createTimelineEvent(caseId, input, file);
+    if (!result.ok) { error.textContent = result.error; return; }
 
     error.textContent = "";
     setDialogBusy(true);
