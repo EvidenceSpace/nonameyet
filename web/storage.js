@@ -663,7 +663,6 @@ export async function commitEventTransition(expected, replacement, {
   const event = kind === "remove" ? expected : replacement;
   const storeNames = kind === "remove" ? ["events", "cases"] : ["events", "files", "cases"];
   let db;
-
   try {
     db = await openDatabaseImpl();
   } catch (cause) {
