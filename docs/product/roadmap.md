@@ -79,6 +79,7 @@ Every displayed source-backed object resolves to an authorized original or archi
 ### Add
 
 - performant canvas, frames, sticky notes, text, shapes, photo frames, markers, groups, stacks, labeled connectors, comments, timeline element, tasks, minimap, history, focus mode, and structured outline;
+- licensed/source-aware online images, video, animation, attachments, and saved Web Research assets with explicit visual/research/evidence classification;
 - AI ghost previews and approved layout actions;
 - deterministic serialization, conflict handling, and realtime-ready operation model.
 
@@ -144,6 +145,22 @@ A premium user can find, compare, book, pay, selectively share, and review a ver
 ## Milestone 9 — Release hardening
 
 - signed builds, secure auto-update, crash recovery, backup/restore, observability, incident response, support operations, abuse prevention, payment reconciliation, data export/deletion, accessibility audit, penetration test, AI red-team, disaster recovery, legal review, and staged rollout.
+
+## Deferred launch surface — promotional website
+
+The website follows a stable, demonstrable application slice; it does not replace or delay core product delivery.
+
+When its readiness gate is met, add:
+
+- immersive but accessible product storytelling;
+- truthful feature, AI, trust, marketplace, pricing, and availability pages;
+- verified Windows/macOS downloads and release notes;
+- product education, support, feedback, privacy, security, accessibility, and legal routes;
+- reduced-motion and no-WebGL equivalents;
+- privacy-safe analytics and a claims ledger; and
+- performance, accessibility, security, content, browser, launch, and rollback gates.
+
+See `docs/product/marketing-site-later.md`. Website visuals may use richer three-dimensional storytelling; this does not change the 2D application V1 decision.
 
 ## Explicit V1 exclusions
 

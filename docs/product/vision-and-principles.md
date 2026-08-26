@@ -72,6 +72,14 @@ Every legal analysis displays governing jurisdiction, source date, source type, 
 
 The AI is a case copilot, not a licensed lawyer. Lawyer profiles represent real professionals only after verification. Consultation, engagement, and representation are distinct states.
 
+## Explicit product boundaries
+
+EvidenceSpace is a case-organization and source-backed assistance product. It is not a coding competition, tournament, fighting game, duo/squad experience, or generic gamified canvas; earlier references to those concepts were mistakes and must not influence the product.
+
+It also does not predict an outcome, certify authenticity or admissibility, determine guilt or liability, replace a licensed lawyer, surveil a user’s device, or autonomously file, message, book, pay, delete, or mutate evidence.
+
+Target V1 is the online Windows/macOS application. The promotional website is a deferred launch surface described in `docs/product/marketing-site-later.md`; it must be built after a stable application slice and must describe only observed functionality truthfully.
+
 ## Required AI answer shape
 
 For serious case analysis, the default response structure is:

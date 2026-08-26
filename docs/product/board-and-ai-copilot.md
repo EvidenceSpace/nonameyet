@@ -111,6 +111,18 @@ Every semantic connector has a relationship type and optional note. V1 types inc
 
 A line without a label is visual-only and is not interpreted as a case relationship.
 
+## Elements, online media, and Web Research boundary
+
+The Elements drawer may offer user-provided or licensed icons, images, short video, animation, and decorative assets. Web Research may discover webpages, downloadable attachments, images, and video relevant to the case.
+
+These sources require explicit classification:
+
+- **Visual-only element:** used for layout or explanation, carries origin/license metadata where applicable, and is never displayed as evidence.
+- **Saved research source:** stores canonical URL, publisher, accessed date, excerpt or selected frame/time range, content/version fingerprint where practical, and archival status.
+- **Evidence candidate:** requires an explicit user capture/import step, original preservation, case scope, provenance, and review before it can enter the evidence library.
+
+Remote media never executes active content inside the case workspace. Previews are sandboxed, bounded, permission-checked, and replaceable with metadata-only fallbacks. Saving a link does not prove the media’s authenticity, ownership, accuracy, or admissibility. Copyright, license, privacy, consent, and platform terms remain visible where relevant.
+
 ## Interactions that make 2D engaging
 
 - **Focus lens:** selecting an item highlights connected paths and dims unrelated material.

@@ -2,6 +2,12 @@
 
 This directory contains both the **current CaseFind prototype record** and the **accepted EvidenceSpace target blueprint**. Keeping both is intentional: contributors need an honest account of what exists and a clear description of what is being built.
 
+## Continuity handoff
+
+Root [`HANDOFF.md`](../HANDOFF.md) preserves the approved product-conversation decisions, current repository snapshot, pull-request/CI context, unresolved choices, implementation order, merge preference, and takeover protocol for a new human or advanced AI maintainer.
+
+Read it at the start of a new development handoff. It is a status and routing document—not permission to override a canonical product, engineering, design, or ADR contract. Update it when a material decision, implementation milestone, blocker, or next-work sequence changes; do not duplicate every minor code edit.
+
 ## Status language
 
 Every material product or architecture document should use these labels consistently:
@@ -23,7 +29,8 @@ When documents disagree:
 3. Target product contracts in `docs/product/` define the destination.
 4. Target engineering contracts in `docs/engineering/` define how the destination should be reached.
 5. Existing top-level slice documents describe the current prototype behavior until the affected code is migrated.
-6. Code and tests are the evidence for current behavior. A document cannot make an unimplemented feature real.
+6. Root `HANDOFF.md` reports continuity and current status but cannot make an unimplemented feature real or overrule a canonical contract.
+7. Code and tests are the evidence for current behavior. A document cannot make an unimplemented feature real.
 
 Resolve contradictions in the same pull request that changes behavior. Do not quietly choose the most convenient document.
 
@@ -35,6 +42,7 @@ Resolve contradictions in the same pull request that changes behavior. Do not qu
 - [`product/board-and-ai-copilot.md`](product/board-and-ai-copilot.md) — board layout, object types, evidence provenance, AI modes, memory, research, and approvals.
 - [`product/collaboration-and-lawyer-marketplace.md`](product/collaboration-and-lawyer-marketplace.md) — room, roles, shared/private conversations, lawyer profiles, booking, and reviews.
 - [`product/roadmap.md`](product/roadmap.md) — build sequence, V1 boundaries, later releases, and exit criteria.
+- [`product/marketing-site-later.md`](product/marketing-site-later.md) — deferred website goals, information architecture, creative direction, trust rules, and readiness gate.
 
 ## Target engineering blueprint
 
