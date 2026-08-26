@@ -13,13 +13,16 @@ Optimize for clarity, trust, saved effort, recovery, and informed control. Do no
 Start with:
 
 1. `README.md` — current repository reality and target summary.
-2. `docs/README.md` — documentation map, status language, and precedence.
-3. `docs/decisions/0001-evidencespace-target-product.md` — accepted product transition.
-4. The relevant file in `docs/product/`.
-5. The relevant contract in `docs/engineering/` or `docs/design/`.
-6. Current code, callers, schemas, tests, open pull requests, and CI for the slice.
+2. `HANDOFF.md` — approved conversation decisions, current repository/PR/CI status, unresolved choices, takeover protocol, and next work.
+3. `docs/README.md` — documentation map, status language, and precedence.
+4. `docs/decisions/0001-evidencespace-target-product.md` — accepted product transition.
+5. The relevant file in `docs/product/`.
+6. The relevant contract in `docs/engineering/` or `docs/design/`.
+7. Current code, callers, schemas, tests, open pull requests, and CI for the slice.
 
 The current `main` branch is a local-first CaseFind browser prototype. The EvidenceSpace desktop/cloud product is a target. Never describe target behavior as implemented or delete proven prototype behavior without a migration plan.
+
+`HANDOFF.md` is a living continuity report. Refresh repository facts before relying on its commit, pull-request, CI, or next-work status. Canonical product/engineering contracts and observed code/tests remain authoritative for behavior.
 
 ## Canonical product rules
 
@@ -28,6 +31,8 @@ The current `main` branch is a local-first CaseFind browser prototype. The Evide
 - Case progress measures organization work—processed evidence, reviews, questions, tasks, deadlines, and research freshness—not winning, guilt, liability, authenticity, or legal strength.
 - The AI is a source-backed case copilot, not a licensed lawyer and not a hidden decision-maker.
 - Consultation, engagement, and formal representation are separate states.
+- EvidenceSpace has no coding-competition, tournament, fight, duo/squad, or game mode; prior references to those concepts were erroneous and must not be reintroduced.
+- Build the application before the promotional website. The deferred site brief is `docs/product/marketing-site-later.md`.
 - Native calls, broad private connectors, 3D mode, sound design, mobile apps, and autonomous external actions are outside V1 unless an approved scope decision changes the roadmap.
 
 ## Non-negotiable data and provenance invariants
@@ -108,7 +113,7 @@ Follow `docs/design/ux-quality-bar.md`.
 ### 1. Reconcile
 
 - Verify repository, branch, current commit, open pull requests, concurrent work, and available tools.
-- Read nearest instructions, product contracts, architecture, domain objects, callers, tests, CI, and migration state.
+- Read nearest instructions, product contracts, architecture, domain objects, callers, tests, CI, migration state, and `HANDOFF.md` status.
 - Identify what is Current, Partial, Target V1, Future, or Decision required.
 
 ### 2. Frame one vertical slice
@@ -133,7 +138,7 @@ Check empty, malformed, huge, duplicate, stale, concurrent, interrupted, retried
 
 ### 7. Publish safely
 
-Use a focused branch and pull request. Reverify base/head and concurrent work. Inspect the committed diff and remote files. Do not merge with required checks failing or unobserved gates reported as passed.
+Use a focused branch and pull request. Reverify base/head and concurrent work. Inspect the committed diff and remote files. Routine branch, pull-request, and merge operations are authorized without asking the repository owner each time. Merge coherent completed work to `main` after applicable gates are observed; do not treat that authorization as permission to fabricate checks, bypass platform protections, expose secrets, or merge known unsafe/temporary/unrelated work.
 
 ### 8. Report honestly
 
@@ -164,12 +169,13 @@ As the target app is introduced, add standardized format, lint, type, unit, inte
 - Keep collaboration/marketplace behavior in `docs/product/collaboration-and-lawyer-marketplace.md`.
 - Keep entities/invariants in `docs/engineering/domain-model.md`.
 - Keep lasting choices in numbered ADRs.
+- Keep `HANDOFF.md` current when accepted decisions, implementation status, active blockers, open-PR disposition, or next-work sequence materially changes.
 - Update docs in the same pull request as behavior.
 - Link canonical rules instead of creating competing copies.
 - Preserve current implementation records or mark them superseded; do not rewrite history as if target features always existed.
 
 ## Definition of done
 
-A slice is done only when the user outcome works end to end on supported scope; permissions and provenance fail safely; AI remains source-backed and approval-gated; retries/concurrency/rollback are deterministic; drafts recover; accessibility and relevant visual states are inspected; tests/evaluations actually ran; privacy-safe operations exist; documentation matches observed behavior; migration and rollback are clear; and the remote commit and required CI are verified.
+A slice is done only when the user outcome works end to end on supported scope; permissions and provenance fail safely; AI remains source-backed and approval-gated; retries/concurrency/rollback are deterministic; drafts recover; accessibility and relevant visual states are inspected; tests/evaluations actually ran; privacy-safe operations exist; documentation and handoff status match observed behavior; migration and rollback are clear; and the remote commit and required CI are verified.
 
 Do not commit secrets, private case data, production exports, debug dumps, screenshots/traces with sensitive content, generated harness debris, conflict markers, or machine-specific sandbox paths.

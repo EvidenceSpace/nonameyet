@@ -24,6 +24,7 @@ Do not describe a target capability as implemented. The transition is recorded i
 
 ## Start here
 
+- [`HANDOFF.md`](HANDOFF.md) — complete product-conversation continuity, repository status, active blockers, next work, and takeover protocol for a new human or AI maintainer.
 - [`AGENTS.md`](AGENTS.md) — repository-wide instructions for coding agents and contributors.
 - [`docs/README.md`](docs/README.md) — canonical documentation map and precedence rules.
 - [`docs/product/vision-and-principles.md`](docs/product/vision-and-principles.md) — product promise, audience adaptation, and trust principles.
@@ -32,6 +33,7 @@ Do not describe a target capability as implemented. The transition is recorded i
 - [`docs/product/board-and-ai-copilot.md`](docs/product/board-and-ai-copilot.md) — board, evidence library, research, and AI interaction contract.
 - [`docs/product/collaboration-and-lawyer-marketplace.md`](docs/product/collaboration-and-lawyer-marketplace.md) — collaboration and premium lawyer marketplace.
 - [`docs/product/roadmap.md`](docs/product/roadmap.md) — sequenced V1 delivery and future plans.
+- [`docs/product/marketing-site-later.md`](docs/product/marketing-site-later.md) — deferred promotional website brief, creative quality bar, and readiness gate.
 - [`docs/engineering/target-architecture.md`](docs/engineering/target-architecture.md) — proposed production boundaries and architecture decisions still requiring spikes.
 - [`docs/engineering/quality-standard.md`](docs/engineering/quality-standard.md) — quality pass and release gates.
 
