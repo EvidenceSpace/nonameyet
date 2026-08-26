@@ -44,6 +44,18 @@ Resolve contradictions in the same pull request that changes behavior. Do not qu
 - [`product/roadmap.md`](product/roadmap.md) — build sequence, V1 boundaries, later releases, and exit criteria.
 - [`product/marketing-site-later.md`](product/marketing-site-later.md) — deferred website goals, information architecture, creative direction, trust rules, and readiness gate.
 
+## Application experience design foundation
+
+These files define the design phase before broad production UI work:
+
+- [`design/app-experience-blueprint.md`](design/app-experience-blueprint.md) — information hierarchy, exact feature placement, desktop shell geometry, page composition, solo/team behavior, and validation sequence.
+- [`design/design-system-foundation.md`](design/design-system-foundation.md) — Case Room / Living Map identity, semantic visual system, component families, AI/collaboration language, and accessibility foundation.
+- [`design/motion-and-engagement.md`](design/motion-and-engagement.md) — ethical engagement loops, attention hierarchy, motion choreography, reduced motion, and no-sound V1 rule.
+- [`design/ux-quality-bar.md`](design/ux-quality-bar.md) — interaction, accessibility, visual, content, board, and performance standards.
+- [`../design-prototypes/README.md`](../design-prototypes/README.md) — review controls and boundaries for the self-contained interactive core-experience concept.
+
+The prototype is synthetic and demonstrates design hypotheses only. It does not establish implemented application behavior.
+
 ## Target engineering blueprint
 
 - [`engineering/target-architecture.md`](engineering/target-architecture.md) — desktop, cloud, realtime, files, workers, AI, search, payments, and observability boundaries.
@@ -51,7 +63,6 @@ Resolve contradictions in the same pull request that changes behavior. Do not qu
 - [`engineering/security-ai-governance.md`](engineering/security-ai-governance.md) — authorization, privacy, prompt-injection defense, legal-source governance, and lawyer sharing.
 - [`engineering/delivery-plan.md`](engineering/delivery-plan.md) — vertical implementation slices and dependency order.
 - [`engineering/quality-standard.md`](engineering/quality-standard.md) — required quality pass, AI evaluations, cross-platform checks, and release gates.
-- [`design/ux-quality-bar.md`](design/ux-quality-bar.md) — interaction, accessibility, visual, content, board, and performance standards.
 
 ## Decisions
 

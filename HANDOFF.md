@@ -28,7 +28,7 @@ Do not ask the user to repeat decisions already recorded here. Ask only when a m
 
 The product repository is `EvidenceSpace/nonameyet`.
 
-The blueprint preceding this handoff was merged to `main` in commit `b4527a5a89fe75ed4afed988010d0ca90f4bd8e0` through PR #93. Always refresh the current head because this snapshot becomes historical as work continues.
+The product blueprint and continuity handoff were merged to `main` through PRs #93 and #94. Always refresh the current head because this snapshot becomes historical as work continues.
 
 `main` is not an empty starter. It contains a substantial browser prototype named **CaseFind**. The prototype is local-first and focused on unpaid freelance payment disputes. It includes valuable engineering foundations, but it is not the accepted EvidenceSpace V1 product.
 
@@ -48,6 +48,20 @@ Current prototype foundations worth preserving or migrating deliberately include
 - broad deterministic and Playwright coverage.
 
 Never present target desktop, cloud, realtime, collaboration, marketplace, or full copilot behavior as implemented merely because it is specified.
+
+## Current phase: application experience design
+
+Do not rush into broad production implementation. The current foundation defines where functions live, how information is prioritized, how AI proposals remain controlled, how Board and Context Lens behave, and how solo/team use stays valuable without gamification or social pressure.
+
+Read these before implementing production UI:
+
+- `docs/design/app-experience-blueprint.md`;
+- `docs/design/design-system-foundation.md`;
+- `docs/design/motion-and-engagement.md`;
+- `docs/design/ux-quality-bar.md`; and
+- `design-prototypes/evidencespace-core-experience.html` with `design-prototypes/README.md`.
+
+The working identity is **Case Room / Living Map** with four signature patterns: Case Spine, Provenance Rail, Context Lens, and Ghost Proposal. The interactive artifact uses synthetic data and is a review concept—not implemented product functionality. Production engineering begins with a trustworthy CI signal and measured architecture spikes after the design foundation is coherent and merged.
 
 ## Product definition
 
@@ -97,9 +111,9 @@ Major technology decisions—including Electron versus Tauri, renderer framework
 
 ### Product sequencing
 
-Build the application before the promotional website. Do not let a visually impressive landing page substitute for a trustworthy working product.
+Build the application before the promotional website. Complete and review the application experience design foundation before broad production UI implementation. Do not let a visually impressive landing page or prototype substitute for a trustworthy working product.
 
-The immediate product foundation is the desktop shell, case model, evidence pipeline, Case Home, and 2D board. The marketing website is deferred and specified in `docs/product/marketing-site-later.md` so it is not forgotten.
+The immediate product foundation after design review is a trustworthy CI signal, measured architecture spikes, the desktop shell, case model, evidence pipeline, Case Home, and 2D board. The marketing website is deferred and specified in `docs/product/marketing-site-later.md` so it is not forgotten.
 
 ### Explicitly rejected or corrected scope
 
@@ -342,18 +356,19 @@ Do not attempt a broad rewrite. Build vertical slices with domain, storage, API,
 
 Recommended sequence:
 
-0. Restore a trustworthy CI signal and inspect the exact failing job/log.
-1. Complete measured desktop-shell, renderer, canvas-engine, and collaboration-operation spikes; write ADRs.
-2. Establish design tokens and accessible desktop shell.
-3. Implement identity, onboarding, secure sessions, encrypted recovery cache, and workspace switching.
-4. Implement cases and Case Home.
-5. Migrate evidence/provenance foundations into cloud-backed storage and processing.
-6. Implement the 2D board and structured outline.
-7. Add source-backed AI, research, proposals, audit, and memory boundaries.
-8. Add Room collaboration and realtime recovery.
-9. Add reports and selective professional-review packages.
-10. Add Premium Find a Lawyer only after identity, permissions, billing, verification, conflict, and operational systems are ready.
-11. Harden release, accessibility, security, disaster recovery, legal review, and staged rollout.
+0. Complete, review, and merge the application experience design foundation before broad production UI implementation.
+1. Restore a trustworthy CI signal and inspect the exact failing job/log.
+2. Complete measured desktop-shell, renderer, canvas-engine, and collaboration-operation spikes; write ADRs.
+3. Implement the design tokens and accessible desktop shell against the reviewed foundation.
+4. Implement identity, onboarding, secure sessions, encrypted recovery cache, and workspace switching.
+5. Implement cases and Case Home.
+6. Migrate evidence/provenance foundations into cloud-backed storage and processing.
+7. Implement the 2D board and structured outline.
+8. Add source-backed AI, research, proposals, audit, and memory boundaries.
+9. Add Room collaboration and realtime recovery.
+10. Add reports and selective professional-review packages.
+11. Add Premium Find a Lawyer only after identity, permissions, billing, verification, conflict, and operational systems are ready.
+12. Harden release, accessibility, security, disaster recovery, legal review, and staged rollout.
 
 The full milestone and engineering-track details live in `docs/product/roadmap.md` and `docs/engineering/delivery-plan.md`.
 
