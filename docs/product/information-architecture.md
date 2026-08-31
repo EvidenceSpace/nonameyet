@@ -1,126 +1,149 @@
-# Information architecture
+# EvidenceSpace information architecture
 
-## Goals
+**Status:** Target V1; application design approved 30 August 2026.
 
-The navigation must keep a complex product understandable. Users should always know:
+## Structural principle
 
-- which workspace and case they are in;
-- whether they are looking at global or case-specific content;
-- what the AI can currently see;
-- what is shared, private, suggested, or confirmed; and
-- how to return to the board or next recommended action.
+EvidenceSpace is broad, not crowded. Each surface has one dominant purpose; canonical objects, backlinks, contextual peeks, and a stable shell connect the experience. Do not solve complexity by placing every feature on one page.
 
-## Desktop app shell
+## Global shell
 
-### Global rail
+### Floating rail
 
-Persistent at normal desktop widths; collapsible at narrow widths.
+At normal desktop widths:
 
-1. **Home** — cross-case overview and recent work.
-2. **Cases** — searchable case library.
-3. **Find a Lawyer** — Premium marketplace and bookings.
-4. **Notifications** — mentions, assignments, deadlines, approvals, bookings, and system alerts.
-5. **Help** — product guidance, support, feedback, and status.
-6. **Profile / workspace switcher** — identity, plan, preferences, organizations, and sign out.
+1. Global Home
+2. Cases
+3. New Case
+4. Find a Lawyer
+5. Notifications / global Bell
+6. contextual spacer
+7. security/privacy status when actionable
+8. Settings
+9. account avatar
 
-A prominent **New case** action remains available without competing with in-case actions.
+Unread counts appear only on the global Bell. Settings → Notifications is configuration and has no unread badge.
 
-### App title bar
+### Context-aware top bar
 
-- workspace name and switcher;
-- current page or case breadcrumb;
-- global search / command menu;
-- synchronization and connection state;
-- notifications;
-- member avatars where relevant; and
-- native window controls supplied by the desktop shell.
+Global pages show workspace and page context. Case pages show the active case and the seven case lenses. Overlay drawers preserve the originating page; dedicated routes own their own contextual top bar. Native window controls remain the desktop shell’s responsibility.
+
+### Main frame
+
+Normal reference geometry:
+
+- rail: left/top/bottom 22px, width 68px, radius 25px;
+- top bar: left 108px, right/top 22px, height 68px, radius 24px;
+- main frame: left 108px, right 22px, top 106px, bottom 22px, radius 30px.
+
+These values are design references, not hard-coded accessibility limits. The shell must reflow, preserve focus, and remain operable at constrained widths and high DPI.
+
+## Access and first run
+
+1. Welcome
+2. Create account / sign in
+3. Recovery and security paths
+4. Profile
+5. Legal context
+6. Guidance preferences
+7. Accessibility preferences
+8. First-case readiness
+9. Global Home
+
+Account creation comes before nationality/jurisdiction. Progress represents separate pages. The first story is entered in New Case, not in Settings.
+
+## Global destinations
+
+### Global Home
+
+Cross-case progress, urgency, recent work, synchronized state, recommended next actions, and quick starts. It is not a second Case Brief.
+
+### Cases
+
+Searchable/filterable case index with active, archived, invitation, safe deletion, and create-case paths.
+
+### New Case — Story Field
+
+A narrative work surface with user-owned draft, structured AI extraction, high-value questions, manual fallback, jurisdiction/classification review, and create-case approval. It is intentionally not a generic permanent chat box.
+
+### Find a Lawyer
+
+Premium discovery with Discover, Saved, and Bookings. Profile, booking, payment, and sharing remain distinct states.
+
+### Notifications
+
+Bell → focused-app toast or privacy-safe OS notification → origin-preserving drawer → View All route → exact object → backlink.
+
+### Settings
+
+Account:
+- Profile & identity
+- Legal & regional defaults
+- Personalization: appearance and accessibility
+- AI & guidance
+
+Attention and privacy:
+- Notifications
+- Privacy & sharing
+- Security
+
+Workspace:
+- Workspace & members
+- Connections
+- Workspace history
+
+Plan and support:
+- Billing
+- Help & support
 
 ## Case shell
 
-Inside a case, the local navigation is:
+Every case uses these first-class lenses in this exact order:
 
-1. **Home** — overall situation, progress dimensions, next step, deadlines, recent activity, and AI briefing.
-2. **Board** — primary visual workspace and evidence organization surface.
-3. **Room** — team chat, decisions, shared AI, tasks, and presence.
-4. **Reports** — reviewed summaries, timelines, evidence index, research, and exports.
-5. **Case settings** — members, roles, jurisdiction, retention, integrations, billing context, archive, and deletion.
+1. **Brief** — reviewed understanding, overall situation, organization progress, next step, deadlines, unknowns, activity.
+2. **Space** — 2D board, source-backed objects, semantic connectors, timeline, tasks, comments, history, AI ghost proposals.
+3. **Evidence** — originals, derivatives, metadata, source locators, integrity, review, permissions, backlinks.
+4. **Research** — official-source-first legal/factual research, saved excerpts, authority/freshness, research ledger.
+5. **Work** — tasks, requested information, status, priority, assignee, deadline, instructions, source context.
+6. **Room** — human-first messages, threads, decisions, pins, presence, deep links, shared Case AI.
+7. **Reports** — reviewed, versioned, source-linked outputs, redaction, export, professional package.
 
-The AI copilot is a persistent right-side panel available from Home, Board, Room, and Reports. It is not a separate destination that loses the user’s location.
+Evidence and Research are separate. Work is not hidden inside Room. The AI is contextual; it does not become an eighth case destination.
 
-## Board layout
+## Canonical object continuity
 
-- **Top toolbar:** case title, board/view switcher, search, share, member presence, history, presentation, and contact-a-lawyer shortcut.
-- **Left tool rail:** Select, Uploads, Evidence, Elements, Web Research, Timeline, Tasks, Text, Draw, Connect, and Frames.
-- **Library drawer:** opens from the selected left tool and is resizable/collapsible.
-- **Center canvas:** infinite 2D board with frames, nodes, edges, groups, and viewport history.
-- **Right panel:** AI, Properties, Comments, and Activity tabs.
-- **Bottom controls:** zoom, minimap, fit selection, focus mode, outline/list view, and help shortcuts.
+A case, evidence item, research source, board relation, task, thread, report, notification, lawyer, and booking each have a permission-checked durable identity. Opening from another lens preserves:
 
-The left drawer and right panel cannot both force the canvas below its usable minimum width. At constrained widths, one overlays and focus returns predictably when closed.
+- workspace and case;
+- exact object and relevant sublocation;
+- source/relationship context;
+- origin/backlink where useful;
+- visibility and approval state;
+- safe request-access path without leaking restricted titles/content.
 
-## Route and deep-link model
+Synthetic design fixture continuity uses C-03, E-04, R-02, F-03, W-01, Thread 15, RP-01, and B-07. These identifiers are examples, not production constants.
 
-Exact route syntax is an implementation decision, but every durable object needs a shareable, permission-checked deep link:
+## Appearance
 
-- workspace;
-- case;
-- board and viewport/frame;
-- evidence item and source locator;
-- entity, event, issue track, task, message, report, research source;
-- lawyer profile and booking.
+- System + OS Light → Light, automatic switching on.
+- System + OS Dark → Dark, automatic switching on.
+- Light → Light, automatic switching off.
+- Dark → Dark, automatic switching off.
 
-Opening a deep link never bypasses membership or field-level access. If access is missing, show the object type and a safe request-access path without leaking title or content.
-
-## Page inventory
-
-| Surface | Target V1 | Later |
-| --- | --- | --- |
-| Welcome, sign in, account recovery | Yes | Enterprise SSO administration |
-| Adaptive onboarding and profile | Yes | Organization policy templates |
-| Global Home | Yes | Portfolio analytics |
-| Cases library | Yes | Advanced saved searches |
-| AI-guided case creation | Yes | Community/template marketplace |
-| Case Home | Yes | Configurable dashboard layouts |
-| 2D Board | Yes | Optional 3D mode and spatial audio cues |
-| Evidence and source viewer | Yes | Advanced forensic adapters |
-| Web Research | Yes | Private connectors and monitoring |
-| Room and comments | Yes | Native voice/video calls |
-| Reports and exports | Yes | Filing/portal integrations where permitted |
-| Find a Lawyer, profiles, booking | Yes, staged | In-app calls and formal engagement workflows |
-| Notifications | Yes | Cross-channel notification connectors |
-| Settings, privacy, billing, support | Yes | Enterprise administration |
-
-## Global search and command menu
-
-Search must respect permissions and distinguish objects by case and type. Commands may navigate or propose actions, but destructive commands still require the normal confirmation flow.
-
-Example results:
-
-- case;
-- evidence filename or extracted text hit;
-- person/entity;
-- event;
-- task;
-- message;
-- research source;
-- report; and
-- lawyer profile.
-
-## Naming rules
-
-- Use **Web Research**, not “Discover,” inside a case; “discovery” has a formal legal meaning in many jurisdictions.
-- Use **Find a Lawyer** for the marketplace.
-- Use **Room** for the collaborative case space.
-- Use **AI finding** or **suggestion**, not “fact,” until accepted by a user.
-- Use case-specific terms for charges, claims, remedies, complaints, and educational theories.
-
-## Empty-state navigation
-
-Every page offers one clear first action:
+## Empty-state primary actions
 
 - Home with no cases → Create first case.
-- Empty case → Continue AI intake or add evidence.
-- Empty board → Choose a starter layout, upload evidence, or begin blank.
-- Empty Room → Invite a member or start a shared thread.
-- Empty Reports → Review prerequisites and create a draft.
-- No lawyer results → adjust filters, request matching support, or show verified external resources where permitted.
+- Cases empty → Create or accept invitation.
+- New Case → Start the Story Field manually or with guided prompts.
+- Brief without evidence → Add evidence or record an open question.
+- Space empty → starter frame, upload, or blank board.
+- Evidence empty → add original, URL, or text source.
+- Research empty → begin sourced research.
+- Work empty → create task or review an AI proposal.
+- Room empty → invite authorized member or start thread.
+- Reports empty → inspect prerequisites and create draft.
+- No lawyer results → adjust filters or show permitted external resources.
+
+## Responsive rule
+
+Never shrink the canvas below a useful minimum to keep both side panels open. At constrained widths, one panel overlays; closure restores focus. The board always has an equivalent structured outline.

@@ -1,85 +1,86 @@
 # EvidenceSpace documentation map
 
-This directory contains both the **current CaseFind prototype record** and the **accepted EvidenceSpace target blueprint**. Keeping both is intentional: contributors need an honest account of what exists and a clear description of what is being built.
+This repository intentionally contains both the **current CaseFind prototype record** and the **approved EvidenceSpace target**. Code and tests prove current behavior; product/design/engineering contracts define the destination.
 
-## Continuity handoff
+## Start and continuity
 
-Root [`HANDOFF.md`](../HANDOFF.md) preserves the approved product-conversation decisions, current repository snapshot, pull-request/CI context, unresolved choices, implementation order, merge preference, and takeover protocol for a new human or advanced AI maintainer.
+1. [`../AGENTS.md`](../AGENTS.md)
+2. [`../AGENT.md`](../AGENT.md)
+3. [`../handoff/00-START-HERE.md`](../handoff/00-START-HERE.md)
+4. [`../HANDOFF.md`](../HANDOFF.md)
+5. the relevant canonical contract below
+6. current implementation, tests, open work, and CI
 
-Read it at the start of a new development handoff. It is a status and routing document—not permission to override a canonical product, engineering, design, or ADR contract. Update it when a material decision, implementation milestone, blocker, or next-work sequence changes; do not duplicate every minor code edit.
+The complete handoff archive is indexed at [`../handoff/README.md`](../handoff/README.md).
 
 ## Status language
 
-Every material product or architecture document should use these labels consistently:
-
-- **Current** — implemented on the referenced branch and covered by the stated checks.
-- **Partial** — a real workflow exists, but coverage or production readiness is incomplete.
-- **Target V1** — accepted product behavior that is not necessarily implemented.
-- **Future** — intentionally postponed beyond V1.
-- **Decision required** — no implementation may assume an answer until an ADR or approved product decision exists.
-
-Never use “supported,” “secure,” “verified,” “realtime,” “professional,” or “production-ready” without naming the implementation and evidence behind the claim.
+- **Current** — implemented on the referenced branch and verified by named evidence.
+- **Partial** — real behavior exists but target coverage is incomplete.
+- **Target V1** — accepted behavior, not necessarily implemented.
+- **Future** — deliberately postponed.
+- **Decision required** — implementation must wait for an ADR or explicit product decision.
 
 ## Precedence
 
-When documents disagree:
+1. Explicit user-approved decisions and newer accepted ADRs.
+2. Root `AGENTS.md` trust and operating rules.
+3. `docs/product/` target behavior.
+4. `docs/design/approved-application-system.md` for approved placement and interaction.
+5. `docs/engineering/` implementation constraints.
+6. older design explorations and current CaseFind slice records.
+7. `HANDOFF.md` for status and routing only.
+8. code/tests as evidence of what currently exists.
 
-1. The user-approved product decision or newer accepted ADR wins.
-2. Root [`AGENTS.md`](../AGENTS.md) defines repository-wide operating and trust rules.
-3. Target product contracts in `docs/product/` define the destination.
-4. Target engineering contracts in `docs/engineering/` define how the destination should be reached.
-5. Existing top-level slice documents describe the current prototype behavior until the affected code is migrated.
-6. Root `HANDOFF.md` reports continuity and current status but cannot make an unimplemented feature real or overrule a canonical contract.
-7. Code and tests are the evidence for current behavior. A document cannot make an unimplemented feature real.
+When documents conflict, resolve the conflict in the same PR. A design artifact never overrides authorization, provenance, accessibility, or safety.
 
-Resolve contradictions in the same pull request that changes behavior. Do not quietly choose the most convenient document.
+## Product
 
-## Target product blueprint
+- [`product/vision-and-principles.md`](product/vision-and-principles.md)
+- [`product/information-architecture.md`](product/information-architecture.md)
+- [`product/page-specifications.md`](product/page-specifications.md)
+- [`product/page-and-feature-matrix.md`](product/page-and-feature-matrix.md) — approved page placement, states, data, AI, V1/future, and implementation notes.
+- [`product/board-and-ai-copilot.md`](product/board-and-ai-copilot.md)
+- [`product/collaboration-and-lawyer-marketplace.md`](product/collaboration-and-lawyer-marketplace.md)
+- [`product/roadmap.md`](product/roadmap.md)
+- [`product/marketing-site-later.md`](product/marketing-site-later.md)
 
-- [`product/vision-and-principles.md`](product/vision-and-principles.md) — mission, audiences, trust model, and product outcomes.
-- [`product/information-architecture.md`](product/information-architecture.md) — app shell, navigation, screen hierarchy, and routes.
-- [`product/page-specifications.md`](product/page-specifications.md) — page-by-page content, actions, states, AI behavior, and acceptance criteria.
-- [`product/board-and-ai-copilot.md`](product/board-and-ai-copilot.md) — board layout, object types, evidence provenance, AI modes, memory, research, and approvals.
-- [`product/collaboration-and-lawyer-marketplace.md`](product/collaboration-and-lawyer-marketplace.md) — room, roles, shared/private conversations, lawyer profiles, booking, and reviews.
-- [`product/roadmap.md`](product/roadmap.md) — build sequence, V1 boundaries, later releases, and exit criteria.
-- [`product/marketing-site-later.md`](product/marketing-site-later.md) — deferred website goals, information architecture, creative direction, trust rules, and readiness gate.
+## Approved design
 
-## Application experience design foundation
+- [`design/approved-application-system.md`](design/approved-application-system.md) — design approval record and exact connected system.
+- [`design/app-experience-blueprint.md`](design/app-experience-blueprint.md) — broader rationale and earlier composition detail.
+- [`design/design-system-foundation.md`](design/design-system-foundation.md)
+- [`design/motion-and-engagement.md`](design/motion-and-engagement.md)
+- [`design/ux-quality-bar.md`](design/ux-quality-bar.md)
+- [`../design-prototypes/README.md`](../design-prototypes/README.md)
 
-These files define the design phase before broad production UI work:
+The application design direction was approved on 30 August 2026. Small bar/tab/route defects are tracked as implementation design debt; they do not reopen the overall structure.
 
-- [`design/app-experience-blueprint.md`](design/app-experience-blueprint.md) — information hierarchy, exact feature placement, desktop shell geometry, page composition, solo/team behavior, and validation sequence.
-- [`design/design-system-foundation.md`](design/design-system-foundation.md) — Case Room / Living Map identity, semantic visual system, component families, AI/collaboration language, and accessibility foundation.
-- [`design/motion-and-engagement.md`](design/motion-and-engagement.md) — ethical engagement loops, attention hierarchy, motion choreography, reduced motion, and no-sound V1 rule.
-- [`design/ux-quality-bar.md`](design/ux-quality-bar.md) — interaction, accessibility, visual, content, board, and performance standards.
-- [`../design-prototypes/README.md`](../design-prototypes/README.md) — review controls and boundaries for the self-contained interactive core-experience concept.
+## Engineering
 
-The prototype is synthetic and demonstrates design hypotheses only. It does not establish implemented application behavior.
-
-## Target engineering blueprint
-
-- [`engineering/target-architecture.md`](engineering/target-architecture.md) — desktop, cloud, realtime, files, workers, AI, search, payments, and observability boundaries.
-- [`engineering/domain-model.md`](engineering/domain-model.md) — canonical entities, states, relationships, and invariants.
-- [`engineering/security-ai-governance.md`](engineering/security-ai-governance.md) — authorization, privacy, prompt-injection defense, legal-source governance, and lawyer sharing.
-- [`engineering/delivery-plan.md`](engineering/delivery-plan.md) — vertical implementation slices and dependency order.
-- [`engineering/quality-standard.md`](engineering/quality-standard.md) — required quality pass, AI evaluations, cross-platform checks, and release gates.
+- [`engineering/target-architecture.md`](engineering/target-architecture.md)
+- [`engineering/domain-model.md`](engineering/domain-model.md)
+- [`engineering/security-ai-governance.md`](engineering/security-ai-governance.md)
+- [`engineering/delivery-plan.md`](engineering/delivery-plan.md)
+- [`engineering/next-phase-readiness.md`](engineering/next-phase-readiness.md)
+- [`engineering/quality-standard.md`](engineering/quality-standard.md)
+- [`engineering/quality-pass-checklist.md`](engineering/quality-pass-checklist.md)
 
 ## Decisions
 
-- [`decisions/0001-evidencespace-target-product.md`](decisions/0001-evidencespace-target-product.md) — transition from the CaseFind prototype to the EvidenceSpace target.
+- [`decisions/0001-evidencespace-target-product.md`](decisions/0001-evidencespace-target-product.md)
+- [`decisions/0002-application-design-foundation-approved.md`](decisions/0002-application-design-foundation-approved.md)
 
-New lasting decisions belong in `docs/decisions/NNNN-short-title.md` and must include context, decision, alternatives, consequences, migration, and rollback.
+## Current prototype records
 
-## Current prototype record
+Top-level files in `docs/` remain the implementation record for narrow CaseFind behavior: local storage, extraction, OCR, source-linked facts/timeline, review states, conflict handling, backup/restore, deletion, reports, accounts, and browser quality. Preserve them until a target vertical slice migrates or explicitly supersedes the behavior.
 
-The existing top-level files in `docs/` describe narrow, implemented or partially implemented CaseFind slices such as:
+## Documentation verification
 
-- local case creation and library behavior;
-- file ingestion, PDF extraction, image OCR, and processing recovery;
-- AI extraction contracts and source grounding;
-- source-linked facts, timeline events, and consistency review;
-- encrypted backup, restore, archive, deletion, and report generation;
-- account/session boundaries and current local-only storage;
-- browser, dependency, workflow, and continuous quality gates.
+Run:
 
-These files remain useful engineering evidence. They must not be deleted merely because the product direction changed. Migration work should either update the canonical target contract and relevant slice document together or mark the old slice as superseded with a link to its replacement.
+```bash
+npm run check:docs
+```
+
+This checks the canonical handoff/design routes and rejects machine-local paths or unresolved placeholders. It does not prove application behavior.
