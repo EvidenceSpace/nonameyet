@@ -1,194 +1,94 @@
 # EvidenceSpace roadmap
 
-This roadmap expresses dependency order and product intent, not calendar promises. A milestone ships only after its exit criteria are observed on supported Windows and macOS environments.
+This roadmap expresses dependency order, not calendar promises.
 
-## Current foundation: CaseFind prototype
+## Phase status
 
-Preserve and generalize:
+| Phase | Status | Evidence |
+| --- | --- | --- |
+| Product blueprint | Complete | PR #93 |
+| Durable handoff | Complete | PR #94 and `handoff/` |
+| Application design system | Approved | PR #95 plus 30 August connected review |
+| Repository readiness | This handoff | canonical docs, agent entry, quality checklist, visual snapshots |
+| Production engineering | Next | CI repair, ADR spikes, first vertical slice |
+| Marketing website | Deferred | `marketing-site-later.md` |
 
-- original-file integrity and hashing;
-- source locators and provenance;
-- extraction pipeline and structured AI contracts;
-- suggested/confirmed/corrected/uncertain states;
-- conflict visibility;
-- encrypted backup, deletion, and recovery concepts;
-- report provenance; and
-- deterministic and Playwright quality coverage.
+Small shell/tab defects remain implementation design debt; the core design direction is closed unless usability, accessibility, security, or implementation evidence requires a scoped revision.
 
-Do not market this foundation as the EvidenceSpace V1 experience.
+## Foundation to preserve
 
-## Milestone 0 — Product and architecture foundation
+From CaseFind: immutable original identity, hashes and locators, typed extraction, review states, conflict visibility, processing recovery, backup/restore, report provenance, account/session concepts, and deterministic/browser tests.
 
-### Add
+## Milestone 0A — CI truth
 
-- accepted page, board, AI, collaboration, marketplace, domain, security, and quality contracts;
-- desktop-shell, UI-framework, canvas-engine, backend, realtime, and deployment spikes;
-- migration plan for current local cases;
-- design tokens and accessible component baseline;
-- privacy-safe product analytics plan; and
-- representative synthetic evaluation fixtures.
+- Obtain the exact failing Actions log or reproduce the job equivalently.
+- Fix the smallest proven cause.
+- Keep dependencies exact and Actions SHA-pinned.
+- Do not merge PR #87 as a bundle.
 
-### Exit
+**Exit:** dependency policy, workflow policy, install, generated assets, typecheck, deterministic tests, and browser tests report trustworthy independent results.
 
-- ADRs resolve the major stack decisions;
-- threat model covers case access, files, AI tools, realtime, and lawyer sharing;
-- one vertical prototype runs on Windows and macOS; and
-- product language clearly separates current, target, and future behavior.
+## Milestone 0B — Architecture decisions
 
-## Milestone 1 — Identity, onboarding, and desktop shell
+Measured spikes and ADRs for:
 
-### Add
+- Electron vs Tauri;
+- renderer/application framework;
+- 2D canvas and operation/serialization model;
+- encrypted account-bound local cache and deep links;
+- modular-monolith API, Postgres, object storage, worker/outbox;
+- realtime replay/convergence and permission revocation;
+- AI/legal research provider boundaries;
+- payment/marketplace provider boundaries later.
 
-- signed desktop builds for Windows and macOS;
-- account creation, sign-in, recovery, secure session handling, and updates;
-- profile, role/use selection, country/state, language, accessibility, and notification preferences;
-- workspace creation and switching;
-- online/connecting/error states and encrypted local cache shell.
+**Exit:** runnable Windows/macOS evidence, security review, performance measurements, migration and rollback.
 
-### Exit
+## Milestone 1 — Design tokens and desktop shell
 
-A new user can install, sign in, complete adaptive onboarding, reopen the app, and recover safely from interrupted connectivity without seeing a blank or contradictory state.
+Implement tokens, floating rail, context-aware top bar, main frame, focus/keyboard model, System/Light/Dark, accessibility preferences, route ownership, loading/error/reconnect states, and privacy-safe notifications skeleton.
 
-## Milestone 2 — Cases and Case Home
+## Milestone 2 — Identity and five-step onboarding
 
-### Add
+Account creation, sign-in, recovery, secure session, Profile, Legal context, Guidance, Accessibility, First case, workspace creation/switching, persisted progress, draft recovery, reconnect.
 
-- cases library, search, archive, retention, and deletion;
-- AI-guided case intake;
-- jurisdiction and case-type confirmation;
-- Case Home with organization progress, next step, deadlines, open questions, tasks, member activity, and source-backed AI briefing.
+## Milestone 3 — Cases and Brief
 
-### Exit
+Cases library; Story Field with manual fallback; case type/jurisdiction confirmation; lifecycle; Brief with overall situation, organization progress, contrary material, unknowns, deadlines, tasks, activity, and one justified next step.
 
-A user can create, reopen, understand, archive, and permanently delete a case with complete authorization and audit coverage.
+## Milestone 4 — Evidence foundation
 
-## Milestone 3 — Evidence foundation
+Authorized upload/capture, immutable original, version/hash, malware/type/size preflight, derivatives, OCR/transcription, retries/cancellation, Evidence library/viewer, search, permissions, retention and deletion. Add CaseFind import with report and unchanged-source backup.
 
-### Add
+## Milestone 5 — Space
 
-- explicit file picker, drag/drop, clipboard capture, URL capture, and text entry;
-- cloud object storage with immutable original version, hash, malware/content-type checks, derivatives, OCR/transcription states, retries, cancellation, and deletion;
-- evidence library, metadata, tags, source viewer, structured list, search, duplicate handling, and permission checks.
+Board domain and structured outline; pan/zoom/select/move; evidence/research cards; text, notes, frames, photo frames, shapes, markers, stacks and groups; labeled semantic connectors; timeline; tasks; minimap/history/focus; recovery; AI ghost proposals. Add realtime only after the operation model and authorization are proven.
 
-### Exit
+## Milestone 6 — AI copilot and Research
 
-Every displayed source-backed object resolves to an authorized original or archived research source, and failed or interrupted processing has a recoverable user path.
+Ask, Analyze, Plan, Research, Act; context/visibility; case and legal citations; jurisdiction/freshness; contrary material; proposals, approval, audit, undo; private and shared memory boundaries; official-source-first research ledger and evaluations.
 
-## Milestone 4 — Interactive 2D board
+## Milestone 7 — Work, Room, and Notifications
 
-### Add
+Task/document-request workflow; authorized invitations and roles; messages, threads, mentions, decisions, pins, presence, deep links, conversions and shared AI; notification lifecycle, preferences, grouping, reconnect and revocation.
 
-- performant canvas, frames, sticky notes, text, shapes, photo frames, markers, groups, stacks, labeled connectors, comments, timeline element, tasks, minimap, history, focus mode, and structured outline;
-- licensed/source-aware online images, video, animation, attachments, and saved Web Research assets with explicit visual/research/evidence classification;
-- AI ghost previews and approved layout actions;
-- deterministic serialization, conflict handling, and realtime-ready operation model.
+## Milestone 8 — Reports and professional package
 
-### Exit
+Versioned source-linked reports, inclusion controls, review states, contrary/stale/private handling, redaction derivatives, accessible export, selective consultation package, recipient/expiry/download preview and audit.
 
-Users can build, navigate, share, restore, and audit a meaningful board with keyboard-accessible alternatives and no loss under retry or concurrent edits.
+## Milestone 9 — Premium Find a Lawyer
 
-## Milestone 5 — Source-backed AI copilot and research
+Entitlements; verified profiles; jurisdiction/practice/language/availability/pricing; ranking disclosure; conflict screening; consultation request; atomic slot hold; payment/webhooks/reconciliation/refunds; secure messaging; verified reviews and moderation.
 
-### Add
+## Milestone 10 — Release hardening
 
-- Ask, Analyze, Plan, Research, and Act modes;
-- explicit context indicator and scope controls;
-- evidence and legal-source citations;
-- contrary material, unknowns, jurisdiction, and “current as of” disclosure;
-- task, timeline, board, report, and document-request proposals;
-- preview, approval, rejection, audit, and undo;
-- shared Case AI and private AI threads;
-- official-source-first web/legal research and saved research ledger.
+Signed Windows/macOS builds, secure update/rollback, accessibility audit, security review and independent penetration test, AI red-team, backup/restore and disaster recovery, privacy/export/deletion operations, marketplace/support runbooks, legal review, beta migration and staged rollout.
 
-### Exit
+## V1 exclusions
 
-AI evaluations meet approved grounding, citation, injection-resistance, refusal, action-safety, latency, and cost thresholds. No model output can bypass authorization or directly overwrite accepted case material.
+Native voice/video, broad private connectors, background collection, 3D, required sound, mobile, autonomous external/destructive actions, outcome prediction, and unqualified worldwide coverage.
 
-## Milestone 6 — Collaboration Room
+## V2+ candidates
 
-### Add
+Selected connectors; native consultation calls; optional 3D/spatial organization; opt-in sound; mobile capture; advanced jurisdiction packs; richer temporal/entity analysis; enterprise SSO/policy/retention/legal hold; permitted filing integrations.
 
-- owner, admin, editor, reviewer, and guest roles;
-- invitations, member management, presence, threads, mentions, reactions, pins, file previews, deep links, decisions, shared AI, unread summaries, and message-to-task/evidence/note actions;
-- notifications and conflict-safe realtime updates.
-
-### Exit
-
-Two or more members can collaborate on the same case, recover from reconnects, and understand who changed what without cross-case leakage.
-
-## Milestone 7 — Reports and professional review package
-
-### Add
-
-- case overview, chronology, evidence index, people/relationship summary, issue matrix, contrary material, open questions, task/decision history, and research ledger;
-- review states, inclusion controls, redaction, previews, versioning, and PDF/document export;
-- selective professional-review package.
-
-### Exit
-
-Exports are accurate, source-linked, permission-checked, accessible, and explicit about AI-derived, disputed, omitted, and stale content.
-
-## Milestone 8 — Premium Find a Lawyer
-
-### Add
-
-- subscription entitlement;
-- verified lawyer onboarding and license/jurisdiction records;
-- profiles, filters, availability, pricing, languages, practice areas, remote/in-person mode, and verified reviews;
-- consultation request, conflict-screening intake, selective case sharing, booking, payment, cancellation, refund, messaging, and status;
-- marketplace moderation and operational administration.
-
-### Exit
-
-A premium user can find, compare, book, pay, selectively share, and review a verified professional with clear distinction between marketplace use, consultation, engagement, and formal representation.
-
-## Milestone 9 — Release hardening
-
-- signed builds, secure auto-update, crash recovery, backup/restore, observability, incident response, support operations, abuse prevention, payment reconciliation, data export/deletion, accessibility audit, penetration test, AI red-team, disaster recovery, legal review, and staged rollout.
-
-## Deferred launch surface — promotional website
-
-The website follows a stable, demonstrable application slice; it does not replace or delay core product delivery.
-
-When its readiness gate is met, add:
-
-- immersive but accessible product storytelling;
-- truthful feature, AI, trust, marketplace, pricing, and availability pages;
-- verified Windows/macOS downloads and release notes;
-- product education, support, feedback, privacy, security, accessibility, and legal routes;
-- reduced-motion and no-WebGL equivalents;
-- privacy-safe analytics and a claims ledger; and
-- performance, accessibility, security, content, browser, launch, and rollback gates.
-
-See `docs/product/marketing-site-later.md`. Website visuals may use richer three-dimensional storytelling; this does not change the 2D application V1 decision.
-
-## Explicit V1 exclusions
-
-- native voice/video calls;
-- WhatsApp, Discord, social-media, mailbox, call-log, or full-device connectors;
-- background surveillance or automatic collection;
-- 3D case environments;
-- required sound effects;
-- mobile applications;
-- autonomous filing, messaging, booking, payment, deletion, or evidence mutation;
-- unqualified worldwide legal-coverage claims; and
-- outcome, guilt, liability, authenticity, or “win probability” predictions.
-
-## Future candidates
-
-Prioritize only after V1 usage and trust research:
-
-- optional 3D board and spatial organization;
-- restrained opt-in sound design;
-- native audio/video consultation;
-- selected cloud drive, email, messaging export, and evidence connectors;
-- mobile companion and secure capture;
-- advanced jurisdiction packs and licensed legal content;
-- specialist multi-agent workflows behind one coherent user-facing copilot;
-- richer entity/relationship and temporal analysis;
-- enterprise policy, retention, SSO, and legal-hold controls; and
-- professional filing or court integrations where legally and operationally justified.
-
-## Roadmap rule
-
-A future feature enters V1 only through an explicit scope decision that identifies the displaced work, new privacy/security obligations, user evidence, and revised exit criteria. “Competitive parity” alone is not sufficient justification.
+A future feature enters V1 only through an explicit scope decision naming displaced work and new privacy, security, legal, operational, accessibility, and quality obligations.
