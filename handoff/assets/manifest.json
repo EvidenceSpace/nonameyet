@@ -1,0 +1,15 @@
+{
+  "syntheticOnly": true,
+  "status": "approved design summaries",
+  "generatedOn": "2026-08-30",
+  "assets": [
+    {"path": "handoff/assets/application-map.svg", "status": "approved summary"},
+    {"path": "handoff/assets/shell-and-lenses.svg", "status": "approved summary"},
+    {"path": "handoff/assets/space-board.svg", "status": "approved summary"},
+    {"path": "handoff/assets/onboarding-flow.svg", "status": "approved summary"},
+    {"path": "handoff/assets/notification-lifecycle.svg", "status": "approved summary"},
+    {"path": "handoff/assets/settings-system.svg", "status": "approved summary"},
+    {"path": "handoff/assets/marketplace-booking.svg", "status": "approved summary"},
+    {"path": "handoff/assets/MOTION-STATUS.md", "status": "motion contract; no approved video"}
+  ]
+}

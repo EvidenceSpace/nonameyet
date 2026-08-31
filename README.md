@@ -2,55 +2,71 @@
 
 [![Quality](https://github.com/EvidenceSpace/nonameyet/actions/workflows/quality.yml/badge.svg)](https://github.com/EvidenceSpace/nonameyet/actions/workflows/quality.yml)
 
-EvidenceSpace is being designed as an online desktop workspace for organizing a case, connecting evidence on a visual board, collaborating with invited members, receiving source-backed AI assistance, producing reviewed reports, and finding a verified lawyer when professional help is needed.
+EvidenceSpace is an online Windows and macOS case workspace for preserving evidence, connecting material on a controlled 2D board, collaborating with authorized members, receiving truthful source-backed AI assistance, producing reviewed reports, and—on Premium—finding and booking a verified lawyer.
 
-## Repository status
+## Status: design foundation approved; engineering foundation next
 
-This repository is **not yet the complete EvidenceSpace application**. `main` contains a substantial local-first browser prototype currently named **CaseFind**, focused on unpaid freelance payment disputes. That prototype already demonstrates valuable foundations: immutable original files, SHA-256 provenance, local PDF/image processing, source-linked facts and timeline events, review-only AI suggestions, deterministic conflict handling, encrypted backups, reports, and extensive browser lifecycle tests.
+The application design direction was approved on **30 August 2026**. Minor alignment and route-state defects observed in review—especially some top-bar, active-tab, and cross-screen shell inconsistencies—are recorded as implementation design debt, not reasons to reopen the overall information architecture.
 
-The accepted target product is broader and materially different:
+The approved case navigation is:
 
-| Area | Current implementation on `main` | EvidenceSpace target |
-| --- | --- | --- |
-| Client | Responsive browser prototype | Online Windows and macOS desktop application |
-| Storage | Browser-local IndexedDB | Permissioned cloud workspace with encrypted local cache |
-| Cases | Unpaid freelance payment disputes | Adaptive case workspace for individuals, professionals, investigators, and education |
-| Core UI | Forms and document-oriented workspace | Case Home plus an interactive 2D evidence board |
-| AI | File extraction suggestions | Persistent, source-backed case copilot with approval-gated actions |
-| Collaboration | Not implemented | Realtime room, comments, presence, tasks, and shared case AI |
-| Professional help | Not implemented | Premium verified lawyer discovery and booking |
+**Brief → Space → Evidence → Research → Work → Room → Reports**
 
-Do not describe a target capability as implemented. The transition is recorded in [`docs/decisions/0001-evidencespace-target-product.md`](docs/decisions/0001-evidencespace-target-product.md).
+The connected review also fixes the account/onboarding flow, global navigation, notification lifecycle, Settings system, marketplace-to-booking flow, canonical object backlinks, AI proposal review, and selective-sharing boundaries.
+
+This repository is **not yet the complete EvidenceSpace application**. `main` still contains the substantial local-first browser prototype named **CaseFind**, focused on unpaid freelance payment disputes. Its immutable originals, hashing, provenance, local PDF/image processing, review states, conflict handling, backup/recovery, report logic, and deterministic/browser tests are migration assets—not proof that desktop, cloud, realtime, marketplace, or full-copilot behavior exists.
 
 ## Start here
 
-- [`HANDOFF.md`](HANDOFF.md) — complete product-conversation continuity, repository status, active blockers, next work, and takeover protocol for a new human or AI maintainer.
-- [`AGENTS.md`](AGENTS.md) — repository-wide instructions for coding agents and contributors.
-- [`docs/README.md`](docs/README.md) — canonical documentation map and precedence rules.
-- [`docs/product/vision-and-principles.md`](docs/product/vision-and-principles.md) — product promise, audience adaptation, and trust principles.
-- [`docs/product/information-architecture.md`](docs/product/information-architecture.md) — navigation and screen map.
-- [`docs/product/page-specifications.md`](docs/product/page-specifications.md) — required contents and behavior of each page.
-- [`docs/product/board-and-ai-copilot.md`](docs/product/board-and-ai-copilot.md) — board, evidence library, research, and AI interaction contract.
-- [`docs/product/collaboration-and-lawyer-marketplace.md`](docs/product/collaboration-and-lawyer-marketplace.md) — collaboration and premium lawyer marketplace.
-- [`docs/product/roadmap.md`](docs/product/roadmap.md) — sequenced V1 delivery and future plans.
-- [`docs/product/marketing-site-later.md`](docs/product/marketing-site-later.md) — deferred promotional website brief, creative quality bar, and readiness gate.
-- [`docs/engineering/target-architecture.md`](docs/engineering/target-architecture.md) — proposed production boundaries and architecture decisions still requiring spikes.
-- [`docs/engineering/quality-standard.md`](docs/engineering/quality-standard.md) — quality pass and release gates.
+- [`AGENTS.md`](AGENTS.md) — repository-wide operating and trust rules.
+- [`AGENT.md`](AGENT.md) — compatibility entry point for tools that look for the singular name.
+- [`handoff/00-START-HERE.md`](handoff/00-START-HERE.md) — exact takeover sequence.
+- [`HANDOFF.md`](HANDOFF.md) — current consolidated handoff report.
+- [`handoff/README.md`](handoff/README.md) — complete conversation, design, implementation, roadmap, and visual-snapshot index.
+- [`docs/design/approved-application-system.md`](docs/design/approved-application-system.md) — approved application shell and interaction system.
+- [`docs/product/page-and-feature-matrix.md`](docs/product/page-and-feature-matrix.md) — page-by-page V1 specification and future boundaries.
+- [`docs/engineering/next-phase-readiness.md`](docs/engineering/next-phase-readiness.md) — exact next-phase work and ADR queue.
+- [`docs/engineering/quality-pass-checklist.md`](docs/engineering/quality-pass-checklist.md) — practical quality gate.
+
+## Repository truth
+
+| Area | Current on `main` | Accepted target |
+| --- | --- | --- |
+| Client | CaseFind browser prototype | Online Windows/macOS desktop app |
+| Storage | Browser-local IndexedDB | Permissioned cloud workspace plus encrypted recovery cache |
+| Core workflow | Narrow payment-dispute organizer | Adaptive case workspace for real and educational matters |
+| Main interaction | Forms/document workspace | Brief plus seven connected case lenses centered on a 2D Space |
+| AI | Extraction/review suggestions | Source-backed copilot with approval-gated actions |
+| Collaboration | Not implemented | Room, comments, presence, tasks, shared Case AI |
+| Professional help | Not implemented | Premium lawyer discovery, booking, payment, selective sharing |
+
+Never describe a target capability as implemented. See [`docs/decisions/0001-evidencespace-target-product.md`](docs/decisions/0001-evidencespace-target-product.md) and [`docs/decisions/0002-application-design-foundation-approved.md`](docs/decisions/0002-application-design-foundation-approved.md).
+
+## Immediate next phase
+
+1. Diagnose the exact failing GitHub Actions install job and repair CI in a minimal PR; do not merge broad PR #87 wholesale.
+2. Run measured ADR spikes for desktop shell, renderer, canvas/operation model, local cache, and cloud/realtime boundaries.
+3. Build the accessible design-token and shell foundation.
+4. Implement identity, five-step onboarding, workspace switching, and failure recovery as the first vertical slice.
+5. Continue through Cases/Brief, evidence provenance, Space, AI/research, Room, reports, then Premium marketplace.
+
+The application comes before the promotional website.
 
 ## Existing prototype development
 
-Requirements: Node.js 22–24 and Python 3 for the static preview command.
+Requirements: Node.js 22–24 and Python 3 for static preview commands.
 
 ```bash
 npm install
 npm run sync:pdfjs
+npm run check:docs
 npm run check
 npm run test:browser
 npm run preview
 ```
 
-`npm run sync:pdfjs` copies the version-pinned PDF.js runtime into `web/vendor/pdfjs`. Pull requests and pushes to `main` run dependency policy, workflow policy, typechecking, deterministic tests, generated-asset drift checks, and Playwright browser journeys.
+The latest observed remote quality job is failing. Do not report these commands as passing until they actually run and their output is inspected.
 
 ## Product boundary
 
-EvidenceSpace is designed to organize case material and provide source-backed assistance. AI must not impersonate a licensed lawyer, fabricate authority, authenticate evidence, silently decide disputed facts, or promise an outcome. Jurisdiction, source quality, uncertainty, contrary material, and the limits of automated analysis must remain visible. Formal representation exists only between a user and a licensed professional after the required engagement process.
+EvidenceSpace organizes case material and provides source-backed assistance. It does not authenticate evidence, decide guilt or liability, promise an outcome, impersonate a licensed lawyer, or silently mutate a workspace. Jurisdiction, contrary material, uncertainty, sources, visibility, and approval state must remain visible.

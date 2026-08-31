@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "status": "design-review",
+  "globalDestinations": ["Home", "Cases", "New case", "Lawyers", "Notifications", "Settings"],
+  "entryFlow": ["Welcome", "Authentication", "Profile", "Legal context", "Guidance", "Accessibility", "First case", "Global Home"],
+  "caseLenses": ["Brief", "Space", "Evidence", "Research", "Work", "Room", "Reports"],
+  "canonicalObjects": {
+    "case": "C-03",
+    "evidence": "E-04",
+    "research": "R-02",
+    "spaceRelation": "F-03",
+    "task": "W-01",
+    "roomThread": "Thread 15",
+    "report": "RP-01",
+    "booking": "B-07"
+  },
+  "notificationFlow": ["Badge", "Compact toast", "Drawer", "View all", "Exact object"],
+  "marketplaceFlow": ["Discover", "Lawyer profile", "Booking", "Payment", "Selective sharing"],
+  "invariants": [
+    "Research is a first-class case lens",
+    "First story is not a Settings field",
+    "Unread counts appear only on the global Bell",
+    "Workspace membership does not grant case access",
+    "Payment does not grant case access",
+    "AI proposals remain unapplied until human approval",
+    "Contrary material remains visible",
+    "Every mutation creates a workspace-history receipt",
+    "Undo reverses effects without erasing history"
+  ]
+}
