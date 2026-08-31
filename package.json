@@ -2,11 +2,9 @@
   "name": "casefind",
   "version": "0.1.0",
   "private": true,
-  "description": "Source-linked case organization for unpaid freelance disputes.",
+  "description": "Current CaseFind prototype and approved EvidenceSpace target foundation.",
   "type": "module",
-  "engines": {
-    "node": ">=22 <25"
-  },
+  "engines": { "node": ">=22 <25" },
   "scripts": {
     "sync:pdfjs": "node scripts/sync-pdfjs.mjs",
     "preview": "npm run sync:pdfjs && node scripts/serve-static.mjs",
@@ -18,11 +16,10 @@
     "benchmark:compare": "tsx scripts/compare-extraction-benchmarks.ts",
     "check:dependencies": "node scripts/check-dependency-policy.mjs",
     "check:workflow-actions": "node scripts/check-workflow-action-pins.mjs",
-    "check": "npm run check:dependencies && npm run check:workflow-actions && npm run typecheck && npm test"
+    "check:docs": "node scripts/check-canonical-docs.mjs",
+    "check": "npm run check:dependencies && npm run check:workflow-actions && npm run check:docs && npm run typecheck && npm test"
   },
-  "dependencies": {
-    "pdfjs-dist": "4.10.38"
-  },
+  "dependencies": { "pdfjs-dist": "4.10.38" },
   "devDependencies": {
     "playwright": "1.54.1",
     "tsx": "4.20.0",
