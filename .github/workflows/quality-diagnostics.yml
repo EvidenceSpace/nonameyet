@@ -13,36 +13,42 @@ permissions:
   contents: read
 
 jobs:
-  node-test-groups:
-    name: Diagnostic Node - ${{ matrix.label }}
+  node-test-files:
+    name: Diagnostic Node File - ${{ matrix.label }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 4
     strategy:
       fail-fast: false
       matrix:
         include:
-          - label: account-analysis
-            pattern: tests/account*.test.ts tests/analysis*.test.ts
-          - label: browser-node
-            pattern: tests/browser*.test.ts
-          - label: case
-            pattern: tests/case*.test.ts
-          - label: checklist-consistency
-            pattern: tests/checklist*.test.ts tests/consistency*.test.ts
-          - label: image
-            pattern: tests/image*.test.ts
-          - label: intake
-            pattern: tests/intake*.test.ts
-          - label: mixed-oidc-original
-            pattern: tests/mixed*.test.ts tests/oidc*.test.ts tests/original*.test.ts
-          - label: pdf-a-m
-            pattern: tests/pdf-[a-m]*.test.ts tests/pdfjs*.test.ts
-          - label: pdf-n-z
-            pattern: tests/pdf-[n-z]*.test.ts
-          - label: processing
-            pattern: tests/processing*.test.ts
-          - label: product-review
-            pattern: tests/product*.test.ts tests/provider*.test.ts tests/raster*.test.ts tests/readiness*.test.ts tests/report*.test.ts tests/review*.test.ts
+          - label: browser-image-ocr
+            file: tests/browser-image-ocr.test.ts
+          - label: browser-mixed-pdf
+            file: tests/browser-mixed-pdf-transparency.test.ts
+          - label: browser-readiness
+            file: tests/browser-readiness.test.ts
+          - label: browser-suggestion
+            file: tests/browser-suggestion-handoff.test.ts
+          - label: image-active-cleanup
+            file: tests/image-ocr-active-cleanup.test.ts
+          - label: image-output-limits
+            file: tests/image-ocr-output-limits.test.ts
+          - label: pdf-document-ocr
+            file: tests/pdf-document-ocr.test.ts
+          - label: pdf-failure-wiring
+            file: tests/pdf-failure-recovery-wiring.test.ts
+          - label: pdf-mixed-ocr
+            file: tests/pdf-mixed-ocr-integration.test.ts
+          - label: pdf-cancellation-wiring
+            file: tests/pdf-processing-cancellation-wiring.test.ts
+          - label: pdf-limits
+            file: tests/pdf-processing-limits.test.ts
+          - label: pdf-scanned-retry
+            file: tests/pdf-scanned-retry-integration.test.ts
+          - label: pdf-signature-wiring
+            file: tests/pdf-signature-preflight-wiring.test.ts
+          - label: pdfjs-adapter
+            file: tests/pdfjs-adapter.test.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -57,27 +63,20 @@ jobs:
       - name: Install pinned dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
 
-      - name: Run focused Node tests
-        run: ./node_modules/.bin/tsx --test ${{ matrix.pattern }}
+      - name: Run one bounded Node test file
+        run: timeout 90s ./node_modules/.bin/tsx --test "${{ matrix.file }}"
 
-  browser-samples:
-    name: Diagnostic Browser - ${{ matrix.file }}
+  browser-test-files:
+    name: Diagnostic Browser File - ${{ matrix.file }}
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
         file:
-          - accessibility.spec.ts
-          - analysis-input-validation.spec.ts
-          - backup-deep-link.spec.ts
-          - case-hub-next-action.spec.ts
           - currency-neutral-amount.spec.ts
-          - hostile-text-boundary.spec.ts
           - image-ocr-active-cleanup.spec.ts
-          - original-hash-preflight.spec.ts
-          - report-private-notes.spec.ts
-          - storage-protection-lifecycle.spec.ts
+          - image-ocr-timeout.spec.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -96,4 +95,4 @@ jobs:
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run one browser specification
-        run: ./node_modules/.bin/playwright test tests/browser/${{ matrix.file }}
+        run: ./node_modules/.bin/playwright test "tests/browser/${{ matrix.file }}"
