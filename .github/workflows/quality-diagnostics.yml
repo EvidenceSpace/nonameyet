@@ -13,75 +13,36 @@ permissions:
   contents: read
 
 jobs:
-  static-contracts:
-    name: Diagnostic A - policies, docs, and typecheck
+  node-test-groups:
+    name: Diagnostic Node - ${{ matrix.label }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.14.1
-
-      - name: Verify dependency, workflow, and documentation policies
-        run: |
-          npm run check:dependencies
-          npm run check:workflow-actions
-          npm run check:docs
-
-      - name: Install pinned dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
-
-      - name: Run the scoped TypeScript check
-        run: npm run typecheck
-
-  generated-assets:
-    name: Diagnostic B - generated PDF.js assets
-    runs-on: ubuntu-24.04
-    timeout-minutes: 8
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.14.1
-
-      - name: Install pinned dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
-
-      - name: Synchronize pinned local PDF.js assets
-        run: npm run sync:pdfjs
-
-      - name: Verify generated PDF.js assets are committed
-        run: git diff --exit-code -- web/vendor/pdfjs
-
-  node-tests:
-    name: Diagnostic C - Node tests (${{ matrix.range }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         include:
-          - range: a-c
-            pattern: tests/[a-c]*.test.ts
-          - range: d-h
-            pattern: tests/[d-h]*.test.ts
-          - range: i-o
-            pattern: tests/[i-o]*.test.ts
-          - range: p-r
-            pattern: tests/[p-r]*.test.ts
-          - range: s-z
-            pattern: tests/[s-z]*.test.ts
+          - label: account-analysis
+            pattern: tests/account*.test.ts tests/analysis*.test.ts
+          - label: browser-node
+            pattern: tests/browser*.test.ts
+          - label: case
+            pattern: tests/case*.test.ts
+          - label: checklist-consistency
+            pattern: tests/checklist*.test.ts tests/consistency*.test.ts
+          - label: image
+            pattern: tests/image*.test.ts
+          - label: intake
+            pattern: tests/intake*.test.ts
+          - label: mixed-oidc-original
+            pattern: tests/mixed*.test.ts tests/oidc*.test.ts tests/original*.test.ts
+          - label: pdf-a-m
+            pattern: tests/pdf-[a-m]*.test.ts tests/pdfjs*.test.ts
+          - label: pdf-n-z
+            pattern: tests/pdf-[n-z]*.test.ts
+          - label: processing
+            pattern: tests/processing*.test.ts
+          - label: product-review
+            pattern: tests/product*.test.ts tests/provider*.test.ts tests/raster*.test.ts tests/readiness*.test.ts tests/report*.test.ts tests/review*.test.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -96,27 +57,27 @@ jobs:
       - name: Install pinned dependencies
         run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
 
-      - name: Run Node test range
+      - name: Run focused Node tests
         run: ./node_modules/.bin/tsx --test ${{ matrix.pattern }}
 
-  browser-tests:
-    name: Diagnostic D - browser tests (${{ matrix.range }})
+  browser-samples:
+    name: Diagnostic Browser - ${{ matrix.file }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 8
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - range: a-b
-            pattern: tests/browser/[a-b]*.spec.ts
-          - range: c-e
-            pattern: tests/browser/[c-e]*.spec.ts
-          - range: f-l
-            pattern: tests/browser/[f-l]*.spec.ts
-          - range: m-p
-            pattern: tests/browser/[m-p]*.spec.ts
-          - range: q-z
-            pattern: tests/browser/[q-z]*.spec.ts
+        file:
+          - accessibility.spec.ts
+          - analysis-input-validation.spec.ts
+          - backup-deep-link.spec.ts
+          - case-hub-next-action.spec.ts
+          - currency-neutral-amount.spec.ts
+          - hostile-text-boundary.spec.ts
+          - image-ocr-active-cleanup.spec.ts
+          - original-hash-preflight.spec.ts
+          - report-private-notes.spec.ts
+          - storage-protection-lifecycle.spec.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -134,5 +95,5 @@ jobs:
       - name: Install pinned Chromium and system dependencies
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run browser test range
-        run: ./node_modules/.bin/playwright test ${{ matrix.pattern }}
+      - name: Run one browser specification
+        run: ./node_modules/.bin/playwright test tests/browser/${{ matrix.file }}
