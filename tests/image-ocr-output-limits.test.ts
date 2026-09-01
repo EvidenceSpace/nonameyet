@@ -3,7 +3,7 @@ import test from "node:test";
 import { browserTextDetectorRuntime, MAX_IMAGE_OCR_BLOCKS, MAX_IMAGE_OCR_CHARACTERS, MAX_IMAGE_OCR_WARNINGS, MAX_IMAGE_OCR_WARNING_LENGTH, processImage } from "../web/image-ocr.js";
 
 const png = Uint8Array.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0,0,0,0]);
-const file = { id: "file-1", caseId: "case-1", sha256: "a".repeat(64), type: "image/png", size: png.length, original: { async arrayBuffer() { return png.buffer; } } };
+const file = { id: "file-1", caseId: "case-1", sha256: "1b56b50ac4e976f488f128cabdcdffb2fc9331d6974bb9968131a415d14ade24", type: "image/png", size: png.length, original: { async arrayBuffer() { return png.buffer; } } };
 const runtime = (result: unknown) => ({ id: "test", version: "1", async recognize() { return result; } });
 
 test("fails permanently before persisting oversized OCR text", async () => {
