@@ -1,4 +1,5 @@
 import { confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots } from "./review-transition.js";
+import { formatCaseAmount } from "./case-details-model.js";
 import {
   createId, deleteCase, deleteFile, deleteSuggestion, FileRemovalError, FileWriteError, getCase,
   getFactsForCase, getFilesForCase, getSuggestionsForCase, saveCase, saveFact,
@@ -254,7 +255,7 @@ async function init() {
   document.querySelector("#sidebar-title").textContent = record.title;
   document.querySelector("#workspace-title").textContent = record.title;
   document.querySelector("#workspace-summary").textContent = record.summary;
-  document.querySelector("#workspace-amount").textContent = record.amount ? `₹${record.amount}` : "Not entered";
+  document.querySelector("#workspace-amount").textContent = formatCaseAmount(record.amount);
   document.title = `${record.title} — CaseFind`;
   renderChecklist(); renderFiles(); renderSuggestions(); renderFacts(); workspace.hidden = false;
 }
