@@ -524,9 +524,302 @@ export async function saveProcessingIfCurrent(expected, replacement, {
 
 export const getProcessingForCase = (id) => transaction("processing", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
 export const deleteProcessing = (id) => deleteWithActivity("processing", id);
-export const saveEvent = (value, options) => saveSourceLinkedWithActivity("events", value, "put", options);
+
+export const EVENT_TRANSITION_MESSAGES = {
+  stale_event: "This timeline event changed in another tab. Nothing was changed. Reload and review the latest version.",
+  source_missing: "The selected source record no longer exists on this device. Nothing was saved.",
+  source_changed: "The selected source record changed before this timeline event could be saved. Nothing was saved.",
+  case_missing: "This case is no longer available on this device. Nothing was changed.",
+  write_failed: "The timeline event change could not be saved on this device. Nothing was changed.",
+};
+
+export class EventTransitionError extends Error {
+  constructor(code, cause) {
+    super(EVENT_TRANSITION_MESSAGES[code] || EVENT_TRANSITION_MESSAGES.write_failed);
+    this.name = "EventTransitionError";
+    this.code = code;
+    this.cause = cause;
+  }
+}
+
+function validCalendarDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
+function validTimestamp(value) {
+  if (!nonEmptyString(value)) return false;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
+}
+
+function hasOnlyKeys(value, requiredKeys, optionalKeys = []) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  return requiredKeys.every((key) => Object.hasOwn(value, key))
+    && keys.every((key) => requiredKeys.includes(key) || optionalKeys.includes(key));
+}
+
+export function validEventLocator(locator) {
+  if (!hasOnlyKeys(locator, ["kind"], ["page", "quote"])) return false;
+  const validQuote = locator.quote === undefined
+    || (typeof locator.quote === "string" && locator.quote.length <= 500);
+  if (!validQuote) return false;
+  if (locator.kind === "whole_file") {
+    return !Object.hasOwn(locator, "page");
+  }
+  return locator.kind === "pdf_page"
+    && Object.hasOwn(locator, "page")
+    && Number.isInteger(locator.page)
+    && locator.page >= 1
+    && locator.page <= 10000;
+}
+
+export function validEventSnapshot(value) {
+  return Boolean(
+    hasOnlyKeys(
+      value,
+      [
+        "id", "caseId", "eventDate", "title", "sourceFileId", "sourceReference",
+        "origin", "revision", "createdAt", "updatedAt",
+      ],
+      ["description"],
+    )
+    && nonEmptyString(value.id)
+    && nonEmptyString(value.caseId)
+    && validCalendarDate(value.eventDate)
+    && typeof value.title === "string"
+    && value.title.trim() === value.title
+    && value.title.length >= 3
+    && value.title.length <= 120
+    && (value.description === undefined
+      || (typeof value.description === "string" && value.description.length <= 1000))
+    && nonEmptyString(value.sourceFileId)
+    && hasOnlyKeys(value.sourceReference, ["fileId", "sha256", "locator"])
+    && value.sourceReference?.fileId === value.sourceFileId
+    && /^[a-f0-9]{64}$/.test(value.sourceReference?.sha256 || "")
+    && validEventLocator(value.sourceReference?.locator)
+    && value.origin === "user_entered"
+    && Number.isSafeInteger(value.revision)
+    && value.revision >= 1
+    && validTimestamp(value.createdAt)
+    && validTimestamp(value.updatedAt)
+  );
+}
+
+export function eventValuesMatch(current, expected) {
+  if (!validEventSnapshot(current) || !validEventSnapshot(expected)) return false;
+  try {
+    const comparable = (value) => [
+      value.id,
+      value.caseId,
+      value.eventDate,
+      value.title,
+      value.description,
+      value.sourceFileId,
+      value.sourceReference.fileId,
+      value.sourceReference.sha256,
+      value.sourceReference.locator.kind,
+      value.sourceReference.locator.page,
+      value.sourceReference.locator.quote,
+      value.origin,
+      value.revision,
+      value.createdAt,
+      value.updatedAt,
+    ];
+    return JSON.stringify(comparable(current)) === JSON.stringify(comparable(expected));
+  } catch {
+    return false;
+  }
+}
+
+export function validEventReplacement(expected, replacement) {
+  return validEventSnapshot(expected)
+    && validEventSnapshot(replacement)
+    && replacement.id === expected.id
+    && replacement.caseId === expected.caseId
+    && replacement.createdAt === expected.createdAt
+    && replacement.origin === expected.origin
+    && replacement.revision === expected.revision + 1;
+}
+
+function eventTransitionKind(expected, replacement) {
+  if (expected === null && validEventSnapshot(replacement) && replacement.revision === 1) return "create";
+  if (validEventReplacement(expected, replacement)) return "replace";
+  if (validEventSnapshot(expected) && replacement === null) return "remove";
+  return null;
+}
+
+export async function commitEventTransition(expected, replacement, {
+  openDatabaseImpl = openDatabase,
+  now = () => new Date().toISOString(),
+} = {}) {
+  const kind = eventTransitionKind(expected, replacement);
+  if (!kind) throw new TypeError("Invalid timeline event transition.");
+  const event = kind === "remove" ? expected : replacement;
+  const storeNames = kind === "remove" ? ["events", "cases"] : ["events", "files", "cases"];
+  let db;
+  try {
+    db = await openDatabaseImpl();
+  } catch (cause) {
+    throw new EventTransitionError("write_failed", cause);
+  }
+
+  try {
+    const tx = db.transaction(storeNames, "readwrite");
+    const events = tx.objectStore("events");
+    const cases = tx.objectStore("cases");
+    const files = kind === "remove" ? null : tx.objectStore("files");
+    let transitionError;
+    let currentRequest;
+    let expectedFileRequest;
+    let replacementFileRequest;
+    let caseRequest;
+    let eventRequest;
+    let caseWriteRequest;
+    let settled = false;
+    let rejectCompletion;
+
+    const failure = () => transitionError || new EventTransitionError(
+      "write_failed",
+      tx.error
+        || eventRequest?.error
+        || caseWriteRequest?.error
+        || caseRequest?.error
+        || replacementFileRequest?.error
+        || expectedFileRequest?.error
+        || currentRequest?.error,
+    );
+    const completion = new Promise((resolve, reject) => {
+      rejectCompletion = reject;
+      const rejectOnce = () => {
+        if (settled) return;
+        settled = true;
+        reject(failure());
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        resolve(undefined);
+      };
+      tx.onerror = rejectOnce;
+      tx.onabort = rejectOnce;
+    });
+    const abortWith = (error) => {
+      if (transitionError) return;
+      transitionError = error;
+      try { tx.abort(); }
+      catch (cause) {
+        if (settled) return;
+        settled = true;
+        rejectCompletion(new EventTransitionError("write_failed", cause));
+      }
+    };
+    const commitAfterCaseCheck = () => {
+      try {
+        caseRequest = cases.get(event.caseId);
+        caseRequest.onsuccess = () => {
+          if (!caseRequest.result) {
+            abortWith(new EventTransitionError("case_missing"));
+            return;
+          }
+          try {
+            const updatedAt = now();
+            if (!validTimestamp(updatedAt)) throw new TypeError("Invalid activity timestamp.");
+            if (kind === "create") eventRequest = events.add(event);
+            else if (kind === "replace") eventRequest = events.put(event);
+            else eventRequest = events.delete(event.id);
+            caseWriteRequest = cases.put({ ...caseRequest.result, updatedAt });
+          } catch (cause) {
+            abortWith(new EventTransitionError("write_failed", cause));
+          }
+        };
+      } catch (cause) {
+        abortWith(new EventTransitionError("write_failed", cause));
+      }
+    };
+    const readAndValidateSource = (identity, assignRequest, onValid) => {
+      try {
+        const request = files.get(identity.fileId);
+        assignRequest(request);
+        request.onsuccess = () => {
+          if (!request.result) {
+            abortWith(new EventTransitionError("source_missing"));
+            return;
+          }
+          if (!sourceMatches(request.result, identity)) {
+            abortWith(new EventTransitionError("source_changed"));
+            return;
+          }
+          try { onValid(request.result); }
+          catch (cause) { abortWith(new EventTransitionError("write_failed", cause)); }
+        };
+      } catch (cause) {
+        abortWith(new EventTransitionError("write_failed", cause));
+      }
+    };
+    const checkReplacementSource = (validatedExpectedFile = null) => {
+      const identity = sourceIdentity("events", replacement);
+      if (validatedExpectedFile?.id === identity.fileId) {
+        if (!sourceMatches(validatedExpectedFile, identity)) {
+          abortWith(new EventTransitionError("source_changed"));
+          return;
+        }
+        commitAfterCaseCheck();
+        return;
+      }
+      readAndValidateSource(
+        identity,
+        (request) => { replacementFileRequest = request; },
+        commitAfterCaseCheck,
+      );
+    };
+    const checkExpectedAndReplacementSources = () => {
+      const identity = sourceIdentity("events", expected);
+      readAndValidateSource(
+        identity,
+        (request) => { expectedFileRequest = request; },
+        checkReplacementSource,
+      );
+    };
+
+    try {
+      if (kind === "create") checkReplacementSource();
+      else {
+        currentRequest = events.get(expected.id);
+        currentRequest.onsuccess = () => {
+          if (!eventValuesMatch(currentRequest.result, expected)) {
+            abortWith(new EventTransitionError("stale_event"));
+            return;
+          }
+          if (kind === "replace") checkExpectedAndReplacementSources();
+          else commitAfterCaseCheck();
+        };
+      }
+    } catch (cause) {
+      abortWith(new EventTransitionError("write_failed", cause));
+    }
+
+    await completion;
+    return kind === "remove" ? true : eventRequest?.result;
+  } catch (failure) {
+    if (failure instanceof EventTransitionError) throw failure;
+    throw new EventTransitionError("write_failed", failure);
+  } finally { db.close(); }
+}
+
+export const createEvent = (value, options) => commitEventTransition(null, value, options);
+export const saveEvent = createEvent;
+export const saveEventIfCurrent = (expected, replacement, options) => (
+  commitEventTransition(expected, replacement, options)
+);
 export const getEventsForCase = (id) => transaction("events", "readonly", (store) => requestResult(store.index("caseId").getAll(id)));
-export const deleteEvent = (id) => deleteWithActivity("events", id);
+export const deleteEvent = (expected, options) => commitEventTransition(expected, null, options);
+
 export async function markCaseBackedUp(caseId, at = new Date().toISOString()) {
   const record = await getCase(caseId);
   if (!record) throw new Error("Case not found.");
