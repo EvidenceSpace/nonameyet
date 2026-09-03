@@ -21,7 +21,9 @@ test("an interrupted not-sure decision preserves the original suggestion status"
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible();
   await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+  await expect(page.locator(".file-row", { hasText: "invoice.png" })).toBeVisible();
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
