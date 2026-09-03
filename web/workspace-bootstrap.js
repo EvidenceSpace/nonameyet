@@ -26,12 +26,7 @@ function showMissingCase() {
 function showStorageRecovery(error) {
   prepareErrorView();
   delete errorView.dataset.state;
-  renderStorageRecovery(errorView, error, {
-    scope: "workspace",
-    retry: () => location.reload(),
-    backHref: "cases.html",
-    backLabel: "Back to local cases",
-  });
+  renderStorageRecovery(errorView, error, { scope: "workspace", retry: () => location.reload(), backHref: "cases.html", backLabel: "Back to local cases" });
 }
 
 function waitForBaseWorkspace() {
@@ -54,6 +49,7 @@ async function boot() {
   try {
     const record = await getCase(caseId);
     if (!record) { showMissingCase(); return; }
+    await import("./case-workspace.js");
     const state = await waitForBaseWorkspace();
     if (state === "ready") {
       await recoverOrphanedProcessingRuns(caseId);

@@ -1,5 +1,15 @@
 import { expect, test } from "playwright/test";
 
+async function closeBlockerAndWaitForUpgrade(page: import("playwright/test").Page) {
+  await page.evaluate(() => {
+    (globalThis as typeof globalThis & { __casefindWorkspaceBlocker: IDBDatabase }).__casefindWorkspaceBlocker.close();
+  });
+  await expect.poll(() => page.evaluate(async () => {
+    const database = (await indexedDB.databases()).find(({ name }) => name === "casefind-preview");
+    return database?.version ?? 0;
+  })).toBe(6);
+}
+
 test("separates a missing local case from a storage failure", async ({ page }) => {
   await page.goto("/case.html?id=missing-local-case");
   const error = page.locator("#workspace-error");
@@ -15,8 +25,8 @@ test("separates a missing local case from a storage failure", async ({ page }) =
 test("blocks workspace feature modules until local storage opens safely", async ({ context, page }) => {
   await page.goto("/index.html");
   await page.evaluate(async () => {
-    await new Promise<void>((resolve, reject) => { const request = indexedDB.deleteDatabase("casefind-preview"); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); });
-    const blocker = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 5); request.onupgradeneeded = () => request.result.createObjectStore("cases", { keyPath: "id" }); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    await new Promise<void>((resolve, reject) => { const request = indexedDB.deleteDatabase("casefind-preview"); request.onsuccess = () => resolve(); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database deletion blocked")); });
+    const blocker = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("casefind-preview", 5); request.onupgradeneeded = () => request.result.createObjectStore("cases", { keyPath: "id" }); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); request.onblocked = () => reject(new Error("Database creation blocked")); });
     Object.defineProperty(globalThis, "__casefindWorkspaceBlocker", { configurable: true, value: blocker });
   });
   const workspacePage = await context.newPage();
@@ -31,7 +41,7 @@ test("blocks workspace feature modules until local storage opens safely", async 
   await expect(workspacePage.locator("#delete-case")).toBeHidden();
   await expect(workspacePage.locator(".case-details-trigger")).toHaveCount(0);
   await expect(workspacePage.locator(".timeline-section")).toHaveCount(0);
-  await page.evaluate(() => (globalThis as typeof globalThis & { __casefindWorkspaceBlocker: IDBDatabase }).__casefindWorkspaceBlocker.close());
+  await closeBlockerAndWaitForUpgrade(page);
   await recovery.locator(".storage-recovery-retry").click();
   await expect(workspacePage.locator("#workspace-error")).toHaveAttribute("data-state", "missing");
   await expect(workspacePage.locator(".storage-recovery")).toHaveCount(0);
