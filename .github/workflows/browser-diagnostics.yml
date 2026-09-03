@@ -17,11 +17,11 @@ jobs:
       matrix:
         include:
           - name: suggestion-commit-once
-            grep: ^confirmation and correction commit exact review decisions once$
+            grep: confirmation and correction commit exact review decisions once
           - name: suggestion-stale-confirm
-            grep: ^a stale rendered card cannot confirm a changed suggestion$
+            grep: a stale rendered card cannot confirm a changed suggestion
           - name: suggestion-stale-nonacceptance
-            grep: ^stale rendered cards cannot mark changed suggestions not-sure or dismissed$
+            grep: stale rendered cards cannot mark changed suggestions not-sure or dismissed
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
