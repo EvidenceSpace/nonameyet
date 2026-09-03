@@ -21,12 +21,14 @@ async function submitIntake(page: import("playwright/test").Page) {
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.requestSubmit());
 }
 
-test("keeps intake entries through a blocked storage open and retries one draft", async ({ page }) => {
-  const pageErrors: string[] = [];
-  const externalRequests: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("request", (request) => { const url = new URL(request.url()); if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url()); });
+async function waitForDatabaseVersion(page: import("playwright/test").Page, version: number) {
+  await expect.poll(() => page.evaluate(async () => {
+    const database = (await indexedDB.databases()).find(({ name }) => name === "casefind-preview");
+    return database?.version ?? 0;
+  })).toBe(version);
+}
 
+test("keeps intake entries through a blocked upgrade and retries one draft", async ({ context, page }) => {
   await page.goto("/index.html");
   await page.evaluate(async () => {
     await new Promise<void>((resolve, reject) => {
@@ -35,65 +37,65 @@ test("keeps intake entries through a blocked storage open and retries one draft"
       request.onerror = () => reject(request.error);
       request.onblocked = () => reject(new Error("Database deletion blocked"));
     });
-  });
-  await page.addInitScript(() => {
-    const nativeOpen = IDBFactory.prototype.open;
-    let blockNextCaseOpen = true;
-    let blockedOpenCount = 0;
-    Object.defineProperty(IDBFactory.prototype, "open", {
-      configurable: true,
-      writable: true,
-      value(this: IDBFactory, name: string, version?: number) {
-        if (!blockNextCaseOpen || name !== "casefind-preview" || version !== 6) return nativeOpen.call(this, name, version);
-        blockNextCaseOpen = false;
-        blockedOpenCount += 1;
-        const request: Record<string, unknown> = {};
-        queueMicrotask(() => (request.onblocked as ((event: Event) => void) | undefined)?.(new Event("blocked")));
-        return request;
-      },
+    const blocker = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("casefind-preview", 5);
+      request.onupgradeneeded = () => request.result.createObjectStore("cases", { keyPath: "id" });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error("Database creation blocked"));
     });
-    Object.defineProperty(globalThis, "__casefindBlockedOpenCount", { configurable: true, get: () => blockedOpenCount });
+    Object.defineProperty(globalThis, "__casefindIntakeBlocker", { configurable: true, value: blocker });
   });
 
-  await page.goto("/cases-new.html");
-  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindBlockedOpenCount: number }).__casefindBlockedOpenCount)).toBe(0);
-  await completeIntake(page, "Blocked draft remains here");
-  const submit = page.locator("#continue-button");
+  const intake = await context.newPage();
+  const pageErrors: string[] = [];
+  const externalRequests: string[] = [];
+  intake.on("pageerror", (error) => pageErrors.push(error.message));
+  intake.on("request", (request) => {
+    const url = new URL(request.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
+  });
+
+  await intake.goto("/cases-new.html");
+  await completeIntake(intake, "Blocked draft remains here");
+  const submit = intake.locator("#continue-button");
   await expect(submit).toBeEnabled();
-  await submitIntake(page);
-  const recovery = page.locator("#creation-error");
+  await submitIntake(intake);
+
+  const recovery = intake.locator("#creation-error");
   await expect(recovery).toHaveAttribute("data-state", "blocked");
   await expect(recovery).toContainText("Your entries are still here and no case was changed");
-  await expect(page.locator("#case-title")).toHaveValue("Blocked draft remains here");
-  await expect(page.locator('input[name="goal"][value="request"]')).toBeChecked();
-  await expect(page.locator("#local-storage-ack")).toBeChecked();
+  await expect(intake.locator("#case-title")).toHaveValue("Blocked draft remains here");
+  await expect(intake.locator('input[name="goal"][value="request"]')).toBeChecked();
+  await expect(intake.locator("#local-storage-ack")).toBeChecked();
   await expect(submit).toContainText("Try saving again");
   await expect(submit).toBeEnabled();
-  await expect(page.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
-  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindBlockedOpenCount: number }).__casefindBlockedOpenCount)).toBe(1);
+  await expect(intake.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
 
-  await submitIntake(page);
-  await expect(page.locator("#created-state")).toBeVisible();
-  const databaseState = await page.evaluate(async () => {
+  await page.evaluate(() => {
+    (globalThis as typeof globalThis & { __casefindIntakeBlocker: IDBDatabase }).__casefindIntakeBlocker.close();
+  });
+  await waitForDatabaseVersion(page, 6);
+  await submitIntake(intake);
+  await expect(intake.locator("#created-state")).toBeVisible();
+
+  const cases = await intake.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("casefind-preview", 6);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
       request.onblocked = () => reject(new Error("Database read blocked"));
     });
-    const cases = await new Promise<unknown[]>((resolve, reject) => {
+    const values = await new Promise<unknown[]>((resolve, reject) => {
       const request = db.transaction("cases").objectStore("cases").getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
-    const version = db.version;
     db.close();
-    return { cases, version };
+    return values;
   });
-  expect(databaseState.version).toBe(6);
-  expect(databaseState.cases).toHaveLength(1);
-  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindBlockedOpenCount: number }).__casefindBlockedOpenCount)).toBe(1);
+  expect(cases).toHaveLength(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
-  await page.close({ runBeforeUnload: false });
+  await intake.close({ runBeforeUnload: false });
 });

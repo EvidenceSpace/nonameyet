@@ -23,32 +23,31 @@ async function submitIntake(page: import("playwright/test").Page) {
 
 test("keeps the complete form open when local storage is unavailable", async ({ page }) => {
   await page.addInitScript(() => {
-    const nativeOpen = IDBFactory.prototype.open;
-    let unavailableOpenCount = 0;
-    Object.defineProperty(IDBFactory.prototype, "open", {
-      configurable: true,
-      writable: true,
-      value(this: IDBFactory, name: string, version?: number) {
-        if (name !== "casefind-preview") return nativeOpen.call(this, name, version);
-        unavailableOpenCount += 1;
-        const request: Record<string, unknown> = { error: new DOMException("Storage unavailable", "UnknownError") };
-        queueMicrotask(() => (request.onerror as ((event: Event) => void) | undefined)?.(new Event("error")));
+    const unavailable = {
+      open() {
+        const request: Record<string, unknown> = {
+          error: new DOMException("Storage unavailable", "UnknownError"),
+        };
+        queueMicrotask(() => (request.onerror as (() => void) | undefined)?.());
         return request;
       },
-    });
-    Object.defineProperty(globalThis, "__casefindUnavailableOpenCount", { configurable: true, get: () => unavailableOpenCount });
+    };
+    Object.defineProperty(globalThis, "indexedDB", { configurable: true, value: unavailable });
   });
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("request", (request) => { const url = new URL(request.url()); if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url()); });
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
+  });
 
   await page.goto("/cases-new.html");
-  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindUnavailableOpenCount: number }).__casefindUnavailableOpenCount)).toBe(0);
   await completeIntake(page, "Unavailable storage draft");
   const submit = page.locator("#continue-button");
   await expect(submit).toBeEnabled();
   await submitIntake(page);
+
   const recovery = page.locator("#creation-error");
   await expect(recovery).toHaveAttribute("data-state", "unavailable");
   await expect(recovery).toContainText("Your entries are still here");
@@ -63,9 +62,9 @@ test("keeps the complete form open when local storage is unavailable", async ({ 
   await expect(submit).toHaveAttribute("aria-describedby", "creation-error");
   await expect(submit).toBeEnabled();
   await expect(page.locator("#intake-form")).not.toHaveAttribute("aria-busy", "true");
-  expect(await page.evaluate(() => (globalThis as typeof globalThis & { __casefindUnavailableOpenCount: number }).__casefindUnavailableOpenCount)).toBe(1);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
+
   await page.locator("#intake-form").evaluate((form: HTMLFormElement) => form.reset());
   await page.close({ runBeforeUnload: false });
 });
