@@ -1,0 +1,68 @@
+name: Browser diagnostics
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-diagnostic:
+    name: Browser diagnostic — ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backup-interrupted
+            spec: tests/browser/backup-interrupted-processing-recovery.spec.ts
+          - name: case-deletion
+            spec: tests/browser/case-deletion-failure.spec.ts
+          - name: case-restore
+            spec: tests/browser/case-restore-failure.spec.ts
+          - name: currency-neutral
+            spec: tests/browser/currency-neutral-amount.spec.ts
+          - name: intake-blocked
+            spec: tests/browser/intake-storage-recovery.spec.ts
+          - name: intake-unavailable
+            spec: tests/browser/intake-storage-unavailable.spec.ts
+          - name: malformed-extraction
+            spec: tests/browser/malformed-extraction-ui.spec.ts
+          - name: processing-lease
+            spec: tests/browser/processing-lease-recovery.spec.ts
+          - name: processing-cas
+            spec: tests/browser/processing-storage-cas.spec.ts
+          - name: scanned-pdf
+            spec: tests/browser/scanned-pdf-ocr-boundary.spec.ts
+          - name: stale-provenance
+            spec: tests/browser/stale-extraction-provenance.spec.ts
+          - name: suggestion-uncertain
+            spec: tests/browser/suggestion-uncertain-failure.spec.ts
+          - name: timeline-storage
+            spec: tests/browser/timeline-storage-failure.spec.ts
+          - name: workspace-startup
+            spec: tests/browser/workspace-startup-recovery.spec.ts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned direct dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+
+      - name: Install pinned Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run isolated browser spec
+        run: ./node_modules/.bin/playwright test "${{ matrix.spec }}" --workers=1 --retries=0
