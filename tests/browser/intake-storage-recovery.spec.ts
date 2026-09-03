@@ -8,13 +8,13 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
   await page.locator("#continue-button").click();
   await expect(page.locator("#step-label")).toHaveText("Step 2 of 3");
   const goal = page.locator('input[name="goal"][value="request"]');
-  await expect(goal).toBeVisible();
-  await goal.check({ force: true });
+  await page.locator(".goal-card", { hasText: "Prepare a payment request" }).click();
+  await expect(goal).toBeChecked();
   await page.locator("#continue-button").click();
   await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
   const acknowledgement = page.locator("#local-storage-ack");
-  await expect(acknowledgement).toBeVisible();
-  await acknowledgement.check({ force: true });
+  await page.locator("label.local-data-ack").click();
+  await expect(acknowledgement).toBeChecked();
 }
 
 async function submitIntake(page: import("playwright/test").Page) {

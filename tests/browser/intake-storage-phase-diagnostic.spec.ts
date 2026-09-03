@@ -11,10 +11,14 @@ async function completeIntake(page: import("playwright/test").Page, title: strin
   await page.locator("#summary").fill("The agreed work was delivered and the remaining payment has not been received.");
   await page.locator("#continue-button").click();
   await expect(page.locator("#step-label")).toHaveText("Step 2 of 3");
-  await page.locator('input[name="goal"][value="request"]').check({ force: true });
+  const goal = page.locator('input[name="goal"][value="request"]');
+  await page.locator(".goal-card", { hasText: "Prepare a payment request" }).click();
+  await expect(goal).toBeChecked();
   await page.locator("#continue-button").click();
   await expect(page.locator("#step-label")).toHaveText("Step 3 of 3");
-  await page.locator("#local-storage-ack").check({ force: true });
+  const acknowledgement = page.locator("#local-storage-ack");
+  await page.locator("label.local-data-ack").click();
+  await expect(acknowledgement).toBeChecked();
 }
 
 async function submitIntake(page: import("playwright/test").Page) {
