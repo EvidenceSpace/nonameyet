@@ -36,6 +36,8 @@ async function openWorkspace(page: Page, title: string) {
     mimeType: "image/png",
     buffer: imageBytes,
   });
+  await expect(page.locator("#workspace")).toBeVisible();
+  await expect(page.locator(".file-row", { hasText: "invoice.png" })).toHaveCount(1);
 }
 
 async function seedLegacyFact(page: Page, value: string) {

@@ -22,6 +22,8 @@ test("an interrupted correction preserves the suggestion without creating a fact
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
   await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+  await expect(page.locator("#workspace")).toBeVisible();
+  await expect(page.locator(".file-row", { hasText: "invoice.png" })).toHaveCount(1);
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
