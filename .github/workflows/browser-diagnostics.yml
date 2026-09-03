@@ -16,42 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: duplicate-original
-            spec: tests/browser/duplicate-original-rejection.spec.ts
-          - name: encrypted-backup
-            spec: tests/browser/encrypted-backup-restore.spec.ts
-          - name: extraction-warning
-            spec: tests/browser/extraction-warning-review.spec.ts
-          - name: fact-removal
-            spec: tests/browser/fact-removal-failure.spec.ts
-          - name: file-deletion
-            spec: tests/browser/file-deletion-failure.spec.ts
-          - name: file-storage
-            spec: tests/browser/file-storage-failure.spec.ts
-          - name: hostile-text
-            spec: tests/browser/hostile-text-boundary.spec.ts
-          - name: pdf-processing
-            spec: tests/browser/pdf-processing-lifecycle.spec.ts
-          - name: pdf-signature
-            spec: tests/browser/pdf-signature-preflight.spec.ts
-          - name: processing-lease
-            spec: tests/browser/processing-lease-recovery.spec.ts
-          - name: processing-cas
-            spec: tests/browser/processing-storage-cas.spec.ts
-          - name: suggestion-atomic
-            spec: tests/browser/suggestion-atomic-transition.spec.ts
-          - name: suggestion-confirmation
-            spec: tests/browser/suggestion-confirmation-failure.spec.ts
-          - name: suggestion-correction
-            spec: tests/browser/suggestion-correction-failure.spec.ts
-          - name: suggestion-dismissal
-            spec: tests/browser/suggestion-dismissal-failure.spec.ts
-          - name: suggestion-uncertain
-            spec: tests/browser/suggestion-uncertain-failure.spec.ts
-          - name: timeline-storage
-            spec: tests/browser/timeline-storage-failure.spec.ts
-          - name: workspace-startup
-            spec: tests/browser/workspace-startup-recovery.spec.ts
+          - name: suggestion-commit-once
+            grep: ^confirmation and correction commit exact review decisions once$
+          - name: suggestion-stale-confirm
+            grep: ^a stale rendered card cannot confirm a changed suggestion$
+          - name: suggestion-stale-nonacceptance
+            grep: ^stale rendered cards cannot mark changed suggestions not-sure or dismissed$
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -72,5 +42,5 @@ jobs:
       - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run isolated browser spec
-        run: ./node_modules/.bin/playwright test "${{ matrix.spec }}" --workers=1 --retries=0
+      - name: Run isolated suggestion scenario
+        run: ./node_modules/.bin/playwright test tests/browser/suggestion-atomic-transition.spec.ts --grep "${{ matrix.grep }}" --workers=1 --retries=0
