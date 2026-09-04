@@ -16,12 +16,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: fact-removal-file
-            files: tests/browser/fact-removal-failure.spec.ts
-          - name: source-removal-file
-            files: tests/browser/source-removal-concurrency.spec.ts
-          - name: paired-removal-sequence
-            files: tests/browser/fact-removal-failure.spec.ts tests/browser/source-removal-concurrency.spec.ts
+          - name: fact-interrupted-20x
+            file: tests/browser/fact-removal-failure.spec.ts
+            grep: an interrupted fact removal preserves the confirmed fact and provenance
+            repeat: 20
+          - name: fact-stale-20x
+            file: tests/browser/fact-removal-failure.spec.ts
+            grep: a stale rendered fact cannot remove the newer stored fact
+            repeat: 20
+          - name: fact-file-10x
+            file: tests/browser/fact-removal-failure.spec.ts
+            grep: .
+            repeat: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -42,5 +48,5 @@ jobs:
       - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Repeat complete browser files
-        run: ./node_modules/.bin/playwright test ${{ matrix.files }} --workers=1 --retries=0 --repeat-each=5
+      - name: Repeat fact-removal browser scenarios
+        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --grep "${{ matrix.grep }}" --workers=1 --retries=0 --repeat-each=${{ matrix.repeat }}
