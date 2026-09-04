@@ -83,12 +83,11 @@ test("an interrupted fact removal preserves the confirmed fact and provenance", 
     const put = IDBObjectStore.prototype.put;
     let injected = false;
     IDBObjectStore.prototype.put = function (...args) {
-      const request = put.apply(this, args as [unknown]);
       if (!injected && this.name === "cases" && this.transaction.objectStoreNames.contains("facts")) {
         injected = true;
-        this.transaction.abort();
+        throw new DOMException("Injected fact-removal case write failure.", "QuotaExceededError");
       }
-      return request;
+      return put.apply(this, args as [unknown]);
     };
   });
   await row.locator(".delete-fact").click();
