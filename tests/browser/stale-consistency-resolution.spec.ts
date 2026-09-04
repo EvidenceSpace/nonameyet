@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -34,11 +35,10 @@ test("reopens a resolved comparison when participating facts change", async ({ p
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
 
-  await page.locator("#file-input").setInputFiles([
-    { name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
-    { name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
+  await seedWorkspaceFiles(page, [
+    { id: "file_stale_consistency_proposal", name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
+    { id: "file_stale_consistency_invoice", name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
   ]);
   const proposal = page.locator(".file-row", { hasText: "proposal.png" });
   const invoice = page.locator(".file-row", { hasText: "invoice.png" });
@@ -70,6 +70,7 @@ test("reopens a resolved comparison when participating facts change", async ({ p
   await expect(page.locator(".file-row")).toHaveCount(2);
 
   await page.reload();
+  await waitForWorkspace(page);
   const reopened = page.locator(".consistency-item.unresolved");
   await expect(reopened).toHaveCount(1);
   await expect(reopened).toContainText("Needs comparison");

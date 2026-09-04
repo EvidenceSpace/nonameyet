@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 const staleMessage = "Stored extraction does not match this original. Process the source again.";
@@ -22,8 +23,7 @@ test("blocks derived text whose hash does not match the original", async ({ page
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-  await page.locator("#file-input").setInputFiles({ name: "source.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [{ id: "file_stale_extraction", name: "source.png", mimeType: "image/png", buffer: imageBytes }]);
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -41,6 +41,7 @@ test("blocks derived text whose hash does not match the original", async ({ page
     } finally { db.close(); }
   });
   await page.reload();
+  await waitForWorkspace(page);
   const row = page.locator(".file-row", { hasText: "source.png" });
   await expect(row.locator(".processing-status")).toHaveText("Failed");
   await expect(row.locator(".processing-note")).toHaveText(staleMessage);
@@ -56,6 +57,7 @@ test("blocks derived text whose hash does not match the original", async ({ page
   await expect(preview.locator("#preview-hash")).not.toHaveText("b".repeat(64));
   await preview.locator("#close-preview").click();
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "source.png" });
   await expect(persisted.locator(".processing-status")).toHaveText("Failed");
   await expect(persisted.locator(".processing-note")).toHaveText(staleMessage);

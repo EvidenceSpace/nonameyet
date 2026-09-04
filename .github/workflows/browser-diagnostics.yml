@@ -16,42 +16,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: duplicate-original-20x
-            file: tests/browser/duplicate-original-rejection.spec.ts
+          - name: backup-interrupted-10x
+            file: tests/browser/backup-interrupted-processing-recovery.spec.ts
+            repeat: 10
+          - name: file-deletion-failure-10x
+            file: tests/browser/file-deletion-failure.spec.ts
+            repeat: 10
+          - name: image-mime-integrity-10x
+            file: tests/browser/image-mime-integrity-boundary.spec.ts
+            repeat: 10
+          - name: image-ocr-quality-10x
+            file: tests/browser/image-ocr-quality.spec.ts
+            repeat: 10
+          - name: original-source-preview-20x
+            file: tests/browser/original-source-preview.spec.ts
             repeat: 20
-          - name: extraction-warning-5x
-            file: tests/browser/extraction-warning-review.spec.ts
-            repeat: 5
-          - name: image-no-readable-text-5x
-            file: tests/browser/image-ocr-no-readable-text.spec.ts
-            repeat: 5
-          - name: malformed-pdf-5x
-            file: tests/browser/malformed-pdf-processing-boundary.spec.ts
-            repeat: 5
-          - name: manual-fact-failure-5x
-            file: tests/browser/manual-fact-storage-failure.spec.ts
-            repeat: 5
-          - name: ocr-quality-integrity-20x
-            file: tests/browser/ocr-quality-integrity.spec.ts
-            repeat: 20
-          - name: pdf-signature-5x
-            file: tests/browser/pdf-signature-preflight.spec.ts
-            repeat: 5
-          - name: report-consistency-5x
-            file: tests/browser/report-consistency-disclosure.spec.ts
-            repeat: 5
-          - name: source-linked-after-removal-20x
-            file: tests/browser/source-linked-write-after-removal.spec.ts
-            repeat: 20
-          - name: suggestion-atomic-5x
-            file: tests/browser/suggestion-atomic-transition.spec.ts
-            repeat: 5
-          - name: suggestion-confirmation-5x
-            file: tests/browser/suggestion-confirmation-failure.spec.ts
-            repeat: 5
-          - name: suggestion-correction-5x
-            file: tests/browser/suggestion-correction-failure.spec.ts
-            repeat: 5
+          - name: stale-consistency-10x
+            file: tests/browser/stale-consistency-resolution.spec.ts
+            repeat: 10
+          - name: stale-extraction-10x
+            file: tests/browser/stale-extraction-provenance.spec.ts
+            repeat: 10
+          - name: suggestion-dismissal-10x
+            file: tests/browser/suggestion-dismissal-failure.spec.ts
+            repeat: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

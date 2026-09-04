@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -26,9 +27,7 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-  await page.locator("#file-input").setInputFiles({ name: "interrupted-source.png", mimeType: "image/png", buffer: imageBytes });
-  await expect(page.locator(".file-row", { hasText: "interrupted-source.png" })).toBeVisible();
+  await seedWorkspaceFiles(page, [{ id: "file_interrupted_restore", name: "interrupted-source.png", mimeType: "image/png", buffer: imageBytes }]);
   await page.evaluate(async (message) => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -39,7 +38,7 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
     await storage.saveProcessing(recovered);
   }, interruptedMessage);
   await page.reload();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   const row = page.locator(".file-row", { hasText: "interrupted-source.png" });
   await expect(row).toBeVisible();
   await expect(row.locator(".processing-status")).toHaveText("Failed");
@@ -55,7 +54,7 @@ test("restored in-progress extraction becomes an explicit retryable failure", as
   expect(stored.artifact).toBeUndefined();
   expect(stored.nextRetryAt).toBeUndefined();
   await page.reload();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "interrupted-source.png" });
   await expect(persisted).toBeVisible();
   await expect(persisted.locator(".processing-status")).toHaveText("Failed");
