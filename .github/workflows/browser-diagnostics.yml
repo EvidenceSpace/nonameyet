@@ -16,29 +16,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: backup-interrupted-10x
-            file: tests/browser/backup-interrupted-processing-recovery.spec.ts
-            repeat: 10
-          - name: file-deletion-failure-10x
-            file: tests/browser/file-deletion-failure.spec.ts
-            repeat: 10
-          - name: image-mime-integrity-10x
-            file: tests/browser/image-mime-integrity-boundary.spec.ts
-            repeat: 10
-          - name: image-ocr-quality-10x
-            file: tests/browser/image-ocr-quality.spec.ts
-            repeat: 10
-          - name: original-source-preview-20x
-            file: tests/browser/original-source-preview.spec.ts
+          - name: image-ocr-output-limits-20x
+            file: tests/browser/image-ocr-output-limits.spec.ts
             repeat: 20
-          - name: stale-consistency-10x
-            file: tests/browser/stale-consistency-resolution.spec.ts
+          - name: malformed-extraction-ui-10x
+            file: tests/browser/malformed-extraction-ui.spec.ts
             repeat: 10
-          - name: stale-extraction-10x
-            file: tests/browser/stale-extraction-provenance.spec.ts
+          - name: pdf-processing-lifecycle-10x
+            file: tests/browser/pdf-processing-lifecycle.spec.ts
             repeat: 10
-          - name: suggestion-dismissal-10x
-            file: tests/browser/suggestion-dismissal-failure.spec.ts
+          - name: report-private-notes-10x
+            file: tests/browser/report-private-notes.spec.ts
+            repeat: 10
+          - name: timeline-storage-failure-10x
+            file: tests/browser/timeline-storage-failure.spec.ts
             repeat: 10
     steps:
       - name: Check out repository
