@@ -16,92 +16,76 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: foundation-backup
-            files: >-
-              tests/browser/accessibility.spec.ts
-              tests/browser/analysis-input-validation.spec.ts
-              tests/browser/backup-deep-link.spec.ts
-              tests/browser/backup-interrupted-processing-recovery.spec.ts
-          - name: cases
-            files: >-
-              tests/browser/case-archive-failure.spec.ts
-              tests/browser/case-deletion-failure.spec.ts
-              tests/browser/case-details-storage-failure.spec.ts
-              tests/browser/case-history-empty-state.spec.ts
-              tests/browser/case-hub-archive-restore.spec.ts
-              tests/browser/case-hub-deletion.spec.ts
-              tests/browser/case-hub-next-action.spec.ts
-              tests/browser/case-lifecycle.spec.ts
-              tests/browser/case-restore-failure.spec.ts
-              tests/browser/checklist-storage-failure.spec.ts
-              tests/browser/currency-neutral-amount.spec.ts
-          - name: records-foundation
-            files: >-
-              tests/browser/duplicate-original-rejection.spec.ts
-              tests/browser/encrypted-backup-restore.spec.ts
-              tests/browser/extraction-warning-review.spec.ts
-              tests/browser/fact-removal-failure.spec.ts
-              tests/browser/file-deletion-failure.spec.ts
-              tests/browser/file-storage-failure.spec.ts
-              tests/browser/hostile-text-boundary.spec.ts
-          - name: images-intake
-            files: >-
-              tests/browser/image-format-intake.spec.ts
-              tests/browser/image-mime-integrity-boundary.spec.ts
-              tests/browser/image-ocr-active-cleanup.spec.ts
-              tests/browser/image-ocr-cancellation.spec.ts
-              tests/browser/image-ocr-no-readable-text.spec.ts
-              tests/browser/image-ocr-output-limits.spec.ts
-              tests/browser/image-ocr-quality.spec.ts
-              tests/browser/image-ocr-success.spec.ts
-              tests/browser/image-ocr-timeout.spec.ts
-              tests/browser/image-ocr-unavailable.spec.ts
-              tests/browser/intake-storage-recovery.spec.ts
-              tests/browser/intake-storage-unavailable.spec.ts
-              tests/browser/intake-unsaved-exit.spec.ts
-          - name: library-record-review
-            files: >-
-              tests/browser/library-workspace-accessibility.spec.ts
-              tests/browser/linked-source-removal.spec.ts
-              tests/browser/malformed-extraction-ui.spec.ts
-              tests/browser/malformed-pdf-processing-boundary.spec.ts
-              tests/browser/manual-fact-storage-failure.spec.ts
-              tests/browser/ocr-quality-integrity.spec.ts
-              tests/browser/original-hash-preflight.spec.ts
-              tests/browser/original-source-preview.spec.ts
-              tests/browser/oversized-file-rejection.spec.ts
-          - name: pdf-processing
-            files: >-
-              tests/browser/pdf-processing-lifecycle.spec.ts
-              tests/browser/pdf-signature-preflight.spec.ts
-              tests/browser/processing-lease-recovery.spec.ts
-              tests/browser/processing-storage-cas.spec.ts
-          - name: reports-sources
-            files: >-
-              tests/browser/report-consistency-disclosure.spec.ts
-              tests/browser/report-preview-print.spec.ts
-              tests/browser/report-private-notes.spec.ts
-              tests/browser/scanned-pdf-ocr-boundary.spec.ts
-              tests/browser/source-consistency-resolution.spec.ts
-              tests/browser/source-linked-write-after-removal.spec.ts
-              tests/browser/source-removal-concurrency.spec.ts
-              tests/browser/source-upload-case-deletion.spec.ts
-          - name: stale-storage
-            files: >-
-              tests/browser/stale-consistency-resolution.spec.ts
-              tests/browser/stale-extraction-provenance.spec.ts
-              tests/browser/storage-protection-lifecycle.spec.ts
-              tests/browser/storage-recovery-ui.spec.ts
-              tests/browser/storage-schema-migration.spec.ts
-          - name: suggestions-tail
-            files: >-
-              tests/browser/suggestion-atomic-transition.spec.ts
-              tests/browser/suggestion-confirmation-failure.spec.ts
-              tests/browser/suggestion-correction-failure.spec.ts
-              tests/browser/suggestion-dismissal-failure.spec.ts
-              tests/browser/suggestion-uncertain-failure.spec.ts
-              tests/browser/timeline-storage-failure.spec.ts
-              tests/browser/workspace-startup-recovery.spec.ts
+          - name: accessibility
+            file: tests/browser/accessibility.spec.ts
+          - name: analysis-input-validation
+            file: tests/browser/analysis-input-validation.spec.ts
+          - name: backup-deep-link
+            file: tests/browser/backup-deep-link.spec.ts
+          - name: backup-interrupted
+            file: tests/browser/backup-interrupted-processing-recovery.spec.ts
+          - name: duplicate-original
+            file: tests/browser/duplicate-original-rejection.spec.ts
+          - name: encrypted-backup
+            file: tests/browser/encrypted-backup-restore.spec.ts
+          - name: extraction-warning
+            file: tests/browser/extraction-warning-review.spec.ts
+          - name: fact-removal
+            file: tests/browser/fact-removal-failure.spec.ts
+          - name: file-deletion
+            file: tests/browser/file-deletion-failure.spec.ts
+          - name: file-storage
+            file: tests/browser/file-storage-failure.spec.ts
+          - name: hostile-text
+            file: tests/browser/hostile-text-boundary.spec.ts
+          - name: library-accessibility
+            file: tests/browser/library-workspace-accessibility.spec.ts
+          - name: linked-source-removal
+            file: tests/browser/linked-source-removal.spec.ts
+          - name: malformed-extraction
+            file: tests/browser/malformed-extraction-ui.spec.ts
+          - name: malformed-pdf
+            file: tests/browser/malformed-pdf-processing-boundary.spec.ts
+          - name: manual-fact
+            file: tests/browser/manual-fact-storage-failure.spec.ts
+          - name: ocr-quality-integrity
+            file: tests/browser/ocr-quality-integrity.spec.ts
+          - name: original-hash-preflight
+            file: tests/browser/original-hash-preflight.spec.ts
+          - name: original-preview
+            file: tests/browser/original-source-preview.spec.ts
+          - name: oversized-file
+            file: tests/browser/oversized-file-rejection.spec.ts
+          - name: report-consistency
+            file: tests/browser/report-consistency-disclosure.spec.ts
+          - name: report-preview
+            file: tests/browser/report-preview-print.spec.ts
+          - name: report-private-notes
+            file: tests/browser/report-private-notes.spec.ts
+          - name: scanned-pdf
+            file: tests/browser/scanned-pdf-ocr-boundary.spec.ts
+          - name: source-consistency
+            file: tests/browser/source-consistency-resolution.spec.ts
+          - name: source-linked-after-removal
+            file: tests/browser/source-linked-write-after-removal.spec.ts
+          - name: source-removal-concurrency
+            file: tests/browser/source-removal-concurrency.spec.ts
+          - name: source-upload-case-deletion
+            file: tests/browser/source-upload-case-deletion.spec.ts
+          - name: suggestion-atomic
+            file: tests/browser/suggestion-atomic-transition.spec.ts
+          - name: suggestion-confirmation
+            file: tests/browser/suggestion-confirmation-failure.spec.ts
+          - name: suggestion-correction
+            file: tests/browser/suggestion-correction-failure.spec.ts
+          - name: suggestion-dismissal
+            file: tests/browser/suggestion-dismissal-failure.spec.ts
+          - name: suggestion-uncertain
+            file: tests/browser/suggestion-uncertain-failure.spec.ts
+          - name: timeline-storage
+            file: tests/browser/timeline-storage-failure.spec.ts
+          - name: workspace-startup
+            file: tests/browser/workspace-startup-recovery.spec.ts
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -122,9 +106,5 @@ jobs:
       - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run browser group
-        env:
-          TEST_FILES: ${{ matrix.files }}
-        run: |
-          read -ra files <<< "$TEST_FILES"
-          ./node_modules/.bin/playwright test "${files[@]}" --workers=1 --retries=0
+      - name: Run isolated browser file
+        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --workers=1 --retries=0
