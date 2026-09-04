@@ -16,12 +16,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: fact-removal-file-20x
-            file: tests/browser/fact-removal-failure.spec.ts
+          - name: duplicate-original-20x
+            file: tests/browser/duplicate-original-rejection.spec.ts
             repeat: 20
-          - name: source-removal-file-10x
-            file: tests/browser/source-removal-concurrency.spec.ts
-            repeat: 10
+          - name: extraction-warning-5x
+            file: tests/browser/extraction-warning-review.spec.ts
+            repeat: 5
+          - name: image-no-readable-text-5x
+            file: tests/browser/image-ocr-no-readable-text.spec.ts
+            repeat: 5
+          - name: malformed-pdf-5x
+            file: tests/browser/malformed-pdf-processing-boundary.spec.ts
+            repeat: 5
+          - name: manual-fact-failure-5x
+            file: tests/browser/manual-fact-storage-failure.spec.ts
+            repeat: 5
+          - name: ocr-quality-integrity-20x
+            file: tests/browser/ocr-quality-integrity.spec.ts
+            repeat: 20
+          - name: pdf-signature-5x
+            file: tests/browser/pdf-signature-preflight.spec.ts
+            repeat: 5
+          - name: report-consistency-5x
+            file: tests/browser/report-consistency-disclosure.spec.ts
+            repeat: 5
+          - name: source-linked-after-removal-20x
+            file: tests/browser/source-linked-write-after-removal.spec.ts
+            repeat: 20
+          - name: suggestion-atomic-5x
+            file: tests/browser/suggestion-atomic-transition.spec.ts
+            repeat: 5
+          - name: suggestion-confirmation-5x
+            file: tests/browser/suggestion-confirmation-failure.spec.ts
+            repeat: 5
+          - name: suggestion-correction-5x
+            file: tests/browser/suggestion-correction-failure.spec.ts
+            repeat: 5
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -44,27 +74,3 @@ jobs:
 
       - name: Repeat browser file
         run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --workers=1 --retries=0 --repeat-each=${{ matrix.repeat }}
-
-  unit-diagnostic:
-    name: Unit diagnostic — image cancellation 20x
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.14.1
-
-      - name: Install pinned direct dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
-
-      - name: Repeat image cleanup tests
-        run: |
-          for iteration in $(seq 1 20); do
-            ./node_modules/.bin/tsx --test tests/image-ocr-active-cleanup.test.ts
-          done
