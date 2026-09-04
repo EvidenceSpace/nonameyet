@@ -6,6 +6,7 @@ export default defineConfig({
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
+  failOnFlakyTests: Boolean(process.env.CI),
   reporter: "list",
   timeout: 45_000,
   expect: { timeout: 8_000 },
