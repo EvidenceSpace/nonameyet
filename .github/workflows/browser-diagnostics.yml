@@ -16,17 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: fact-interrupted-20x
+          - name: fact-removal-file-20x
             file: tests/browser/fact-removal-failure.spec.ts
-            grep: an interrupted fact removal preserves the confirmed fact and provenance
             repeat: 20
-          - name: fact-stale-20x
-            file: tests/browser/fact-removal-failure.spec.ts
-            grep: a stale rendered fact cannot remove the newer stored fact
-            repeat: 20
-          - name: fact-file-10x
-            file: tests/browser/fact-removal-failure.spec.ts
-            grep: .
+          - name: source-removal-file-10x
+            file: tests/browser/source-removal-concurrency.spec.ts
             repeat: 10
     steps:
       - name: Check out repository
@@ -48,5 +42,29 @@ jobs:
       - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Repeat fact-removal browser scenarios
-        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --grep "${{ matrix.grep }}" --workers=1 --retries=0 --repeat-each=${{ matrix.repeat }}
+      - name: Repeat browser file
+        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --workers=1 --retries=0 --repeat-each=${{ matrix.repeat }}
+
+  unit-diagnostic:
+    name: Unit diagnostic — image cancellation 20x
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned direct dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Repeat image cleanup tests
+        run: |
+          for iteration in $(seq 1 20); do
+            ./node_modules/.bin/tsx --test tests/image-ocr-active-cleanup.test.ts
+          done

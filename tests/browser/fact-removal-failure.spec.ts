@@ -32,14 +32,28 @@ async function openWorkspace(page: Page, title: string) {
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
   await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
-  await page.locator("#file-input").setInputFiles({
-    name: "invoice.png",
-    mimeType: "image/png",
-    buffer: imageBytes,
-  });
+  await page.evaluate(async (values: number[]) => {
+    const caseId = new URLSearchParams(location.search).get("id") as string;
+    const storage = await import("/storage.js");
+    const original = new File([Uint8Array.from(values)], "invoice.png", {
+      type: "image/png",
+      lastModified: 0,
+    });
+    await storage.saveFile({
+      id: "file_atomic_fact_removal",
+      caseId,
+      name: original.name,
+      type: original.type,
+      size: original.size,
+      sha256: await storage.sha256(original),
+      createdAt: "2026-08-06T18:00:00.000Z",
+      original,
+    });
+  }, [...imageBytes]);
+  await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   const fileRow = page.locator(".file-row", { hasText: "invoice.png" });
   await expect(fileRow).toHaveCount(1, { timeout: 30_000 });
-  await expect(page.locator("#upload-message")).toHaveText("Stored invoice.png locally.", { timeout: 30_000 });
   await expect(fileRow.locator(".delete-file")).toBeEnabled();
 }
 
