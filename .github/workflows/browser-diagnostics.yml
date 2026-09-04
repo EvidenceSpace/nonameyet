@@ -16,76 +16,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: accessibility
-            file: tests/browser/accessibility.spec.ts
-          - name: analysis-input-validation
-            file: tests/browser/analysis-input-validation.spec.ts
-          - name: backup-deep-link
-            file: tests/browser/backup-deep-link.spec.ts
-          - name: backup-interrupted
-            file: tests/browser/backup-interrupted-processing-recovery.spec.ts
-          - name: duplicate-original
-            file: tests/browser/duplicate-original-rejection.spec.ts
-          - name: encrypted-backup
-            file: tests/browser/encrypted-backup-restore.spec.ts
-          - name: extraction-warning
-            file: tests/browser/extraction-warning-review.spec.ts
-          - name: fact-removal
+          - name: fact-interrupted
             file: tests/browser/fact-removal-failure.spec.ts
-          - name: file-deletion
-            file: tests/browser/file-deletion-failure.spec.ts
-          - name: file-storage
-            file: tests/browser/file-storage-failure.spec.ts
-          - name: hostile-text
-            file: tests/browser/hostile-text-boundary.spec.ts
-          - name: library-accessibility
-            file: tests/browser/library-workspace-accessibility.spec.ts
-          - name: linked-source-removal
-            file: tests/browser/linked-source-removal.spec.ts
-          - name: malformed-extraction
-            file: tests/browser/malformed-extraction-ui.spec.ts
-          - name: malformed-pdf
-            file: tests/browser/malformed-pdf-processing-boundary.spec.ts
-          - name: manual-fact
-            file: tests/browser/manual-fact-storage-failure.spec.ts
-          - name: ocr-quality-integrity
-            file: tests/browser/ocr-quality-integrity.spec.ts
-          - name: original-hash-preflight
-            file: tests/browser/original-hash-preflight.spec.ts
-          - name: original-preview
-            file: tests/browser/original-source-preview.spec.ts
-          - name: oversized-file
-            file: tests/browser/oversized-file-rejection.spec.ts
-          - name: report-consistency
-            file: tests/browser/report-consistency-disclosure.spec.ts
-          - name: report-preview
-            file: tests/browser/report-preview-print.spec.ts
-          - name: report-private-notes
-            file: tests/browser/report-private-notes.spec.ts
-          - name: scanned-pdf
-            file: tests/browser/scanned-pdf-ocr-boundary.spec.ts
-          - name: source-consistency
-            file: tests/browser/source-consistency-resolution.spec.ts
-          - name: source-linked-after-removal
-            file: tests/browser/source-linked-write-after-removal.spec.ts
-          - name: source-removal-concurrency
+            grep: an interrupted fact removal preserves the confirmed fact and provenance
+          - name: fact-stale
+            file: tests/browser/fact-removal-failure.spec.ts
+            grep: a stale rendered fact cannot remove the newer stored fact
+          - name: source-linked-race
             file: tests/browser/source-removal-concurrency.spec.ts
-          - name: source-upload-case-deletion
-            file: tests/browser/source-upload-case-deletion.spec.ts
-          - name: suggestion-atomic
-            file: tests/browser/suggestion-atomic-transition.spec.ts
-          - name: suggestion-confirmation
-            file: tests/browser/suggestion-confirmation-failure.spec.ts
-          - name: suggestion-correction
-            file: tests/browser/suggestion-correction-failure.spec.ts
-          - name: suggestion-dismissal
-            file: tests/browser/suggestion-dismissal-failure.spec.ts
-          - name: suggestion-uncertain
-            file: tests/browser/suggestion-uncertain-failure.spec.ts
-          - name: timeline-storage
-            file: tests/browser/timeline-storage-failure.spec.ts
-          - name: workspace-startup
-            file: tests/browser/workspace-startup-recovery.spec.ts
+            grep: a fact linked after render blocks duplicate source-removal attempts
+          - name: source-stale
+            file: tests/browser/source-removal-concurrency.spec.ts
+            grep: a source changed after render is not removed as the stale row
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -106,5 +48,5 @@ jobs:
       - name: Install pinned Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run isolated browser file
-        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --workers=1 --retries=0
+      - name: Repeat isolated browser scenario
+        run: ./node_modules/.bin/playwright test "${{ matrix.file }}" --grep "${{ matrix.grep }}" --workers=1 --retries=0 --repeat-each=5
