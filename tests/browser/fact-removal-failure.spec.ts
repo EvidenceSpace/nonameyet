@@ -31,13 +31,16 @@ async function openWorkspace(page: Page, title: string) {
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   await page.locator("#file-input").setInputFiles({
     name: "invoice.png",
     mimeType: "image/png",
     buffer: imageBytes,
   });
-  await expect(page.locator("#workspace")).toBeVisible();
-  await expect(page.locator(".file-row", { hasText: "invoice.png" })).toHaveCount(1);
+  const fileRow = page.locator(".file-row", { hasText: "invoice.png" });
+  await expect(fileRow).toHaveCount(1, { timeout: 30_000 });
+  await expect(page.locator("#upload-message")).toHaveText("Stored invoice.png locally.", { timeout: 30_000 });
+  await expect(fileRow.locator(".delete-file")).toBeEnabled();
 }
 
 async function seedLegacyFact(page: Page, value: string) {
@@ -72,7 +75,10 @@ test("an interrupted fact removal preserves the confirmed fact and provenance", 
   const before = await seedLegacyFact(page, "Invoice total ₹5,000");
   await page.reload();
 
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   const row = page.locator(".fact-record", { hasText: "Invoice total ₹5,000" });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  await expect(row.locator(".delete-fact")).toBeEnabled();
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put;
     let injected = false;
@@ -105,6 +111,7 @@ test("an interrupted fact removal preserves the confirmed fact and provenance", 
   ])).toEqual([["fact_atomic_removal", before.hash]]);
   expect(stored.updatedAt).toBe(before.updatedAt);
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   await expect(page.locator(".fact-record", { hasText: "Invoice total ₹5,000" })).toHaveCount(1);
   expect(observed.externalRequests).toEqual([]);
   expect(observed.pageErrors).toEqual([]);
@@ -116,7 +123,10 @@ test("a stale rendered fact cannot remove the newer stored fact", async ({ page 
   await seedLegacyFact(page, "Invoice total ₹5,000");
   await page.reload();
 
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   const staleRow = page.locator(".fact-record", { hasText: "Invoice total ₹5,000" });
+  await expect(staleRow).toHaveCount(1, { timeout: 30_000 });
+  await expect(staleRow.locator(".delete-fact")).toBeEnabled();
   const beforeRemoval = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -142,6 +152,7 @@ test("a stale rendered fact cannot remove the newer stored fact", async ({ page 
   expect(stored.facts[0].value).toBe("Invoice total ₹6,000");
   expect(stored.updatedAt).toBe(beforeRemoval.updatedAt);
   await page.reload();
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   await expect(page.locator(".fact-record", { hasText: "Invoice total ₹6,000" })).toHaveCount(1);
   expect(observed.externalRequests).toEqual([]);
   expect(observed.pageErrors).toEqual([]);

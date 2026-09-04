@@ -16,13 +16,16 @@ async function openCaseWithSource(page: any, title: string) {
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
   await page.locator("#file-input").setInputFiles({
     name: "proof.png",
     mimeType: "image/png",
     buffer: sourceBytes,
   });
-  await expect(page.locator(".file-row", { hasText: "proof.png" })).toHaveCount(1);
+  const row = page.locator(".file-row", { hasText: "proof.png" });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
+  await expect(page.locator("#upload-message")).toHaveText("Stored proof.png locally.", { timeout: 30_000 });
+  await expect(row.locator(".delete-file")).toBeEnabled();
 }
 
 test("a fact linked after render blocks duplicate source-removal attempts", async ({ page }) => {
@@ -30,6 +33,7 @@ test("a fact linked after render blocks duplicate source-removal attempts", asyn
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await openCaseWithSource(page, "Late source link");
   const row = page.locator(".file-row", { hasText: "proof.png" });
+  await expect(row.locator(".delete-file")).toBeEnabled();
 
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
@@ -85,6 +89,7 @@ test("a source changed after render is not removed as the stale row", async ({ p
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await openCaseWithSource(page, "Stale source row");
   const row = page.locator(".file-row", { hasText: "proof.png" });
+  await expect(row.locator(".delete-file")).toBeEnabled();
 
   const changedAt = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
@@ -106,6 +111,8 @@ test("a source changed after render is not removed as the stale row", async ({ p
     return changedAt;
   });
 
+  await expect(row).toHaveCount(1);
+  await expect(row.locator(".delete-file")).toBeEnabled();
   await row.locator(".delete-file").click();
   await expect(page.locator("#upload-message")).toHaveText(
     "This source record changed in another tab. Nothing was removed. Reload and review the latest version.",
