@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { waitForWorkspace } from "./workspace-file-fixture";
 
 async function createCase(page: any, title: string) {
   await page.goto("/cases-new.html");
@@ -11,6 +12,7 @@ async function createCase(page: any, title: string) {
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
+  await waitForWorkspace(page);
   return page.evaluate(() => new URLSearchParams(location.search).get("id"));
 }
 

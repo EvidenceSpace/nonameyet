@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -26,7 +27,12 @@ test("shows extraction warnings beside reviewable source text", async ({ page })
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "uncertain-message.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [{
+    id: "file_extraction_warning",
+    name: "uncertain-message.png",
+    mimeType: "image/png",
+    buffer: imageBytes,
+  }]);
 
   await page.evaluate(async (visibleWarning) => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
@@ -49,6 +55,7 @@ test("shows extraction warnings beside reviewable source text", async ({ page })
     });
   }, warning);
   await page.reload();
+  await waitForWorkspace(page);
 
   const row = page.locator(".file-row", { hasText: "uncertain-message.png" });
   await expect(row.locator(".processing-status")).toHaveText("Text ready");

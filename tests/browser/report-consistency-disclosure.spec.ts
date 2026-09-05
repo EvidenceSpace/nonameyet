@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Locator, type Page } from "playwright/test";
+import { seedWorkspaceFiles } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -43,9 +44,9 @@ test("discloses unresolved and resolved source comparisons without leaking notes
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
 
-  await page.locator("#file-input").setInputFiles([
-    { name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
-    { name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
+  await seedWorkspaceFiles(page, [
+    { id: "file_report_proposal", name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
+    { id: "file_report_invoice", name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
   ]);
   await addPriceFact(page, page.locator(".file-row", { hasText: "proposal.png" }), "5,000");
   await addPriceFact(page, page.locator(".file-row", { hasText: "invoice.png" }), "6,000");

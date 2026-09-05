@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -26,12 +27,7 @@ test("deleted sources cannot be recreated as orphaned linked records", async ({ 
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({
-    name: "source.png",
-    mimeType: "image/png",
-    buffer: imageBytes,
-  });
-  await expect(page.locator(".file-row")).toHaveCount(1);
+  await seedWorkspaceFiles(page, [{ id: "file_source_linked_guard", name: "source.png", mimeType: "image/png", buffer: imageBytes }]);
 
   const result = await page.evaluate(async () => {
     const storage = await import("/storage.js");

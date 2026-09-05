@@ -22,7 +22,7 @@ test("bounds a stalled local OCR runtime and preserves a retryable failure", asy
     const result = await processImage({
       id: "file-timeout",
       caseId: "case-timeout",
-      sha256: "a".repeat(64),
+      sha256: "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460",
       type: "image/png",
       size: original.size,
       original,
@@ -43,7 +43,7 @@ test("bounds a stalled local OCR runtime and preserves a retryable failure", asy
   expect(outcome.result.failure).toEqual({ code: "ocr_timeout", retryable: true });
   expect(outcome.result.fileId).toBe("file-timeout");
   expect(outcome.result.caseId).toBe("case-timeout");
-  expect(outcome.result.fileHash).toBe("a".repeat(64));
+  expect(outcome.result.fileHash).toBe("431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460");
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });

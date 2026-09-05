@@ -6,9 +6,17 @@ import { browserTextDetectorRuntime, processImage } from "../web/image-ocr.js";
 const png = Uint8Array.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0,0,0,0]);
 const file = { id: "file-1", caseId: "case-1", sha256: createHash("sha256").update(png).digest("hex"), type: "image/png", size: png.length, original: { async arrayBuffer() { return png.buffer; } } };
 
-function hangingRuntime(state: { closed: boolean; resolve?: (value: unknown) => void }) {
+function hangingRuntime(
+  state: { closed: boolean; resolve?: (value: unknown) => void },
+  onDetect: () => void = () => {},
+) {
   return browserTextDetectorRuntime({
-    TextDetector: class { detect() { return new Promise((resolve) => { state.resolve = resolve; }); } },
+    TextDetector: class {
+      detect() {
+        onDetect();
+        return new Promise((resolve) => { state.resolve = resolve; });
+      }
+    },
     async createImageBitmap() { return { width: 100, height: 100, close() { state.closed = true; } }; },
   })!;
 }
@@ -22,8 +30,15 @@ test("timeout actively closes the bitmap and ignores a hanging detector", async 
 test("user cancellation actively closes the bitmap", async () => {
   const state = { closed: false };
   const controller = new AbortController();
-  const pending = processImage(file, { runtime: hangingRuntime(state), signal: controller.signal, timeoutMs: 1_000 });
-  await new Promise((resolve) => setTimeout(resolve, 0)); controller.abort();
+  let markDetectorStarted!: () => void;
+  const detectorStarted = new Promise<void>((resolve) => { markDetectorStarted = resolve; });
+  const pending = processImage(file, {
+    runtime: hangingRuntime(state, markDetectorStarted),
+    signal: controller.signal,
+    timeoutMs: 1_000,
+  });
+  await detectorStarted;
+  controller.abort();
   const result = await pending;
   assert.equal(result.status, "cancelled"); assert.deepEqual(result.failure, { code: "cancelled", retryable: false }); assert.equal(state.closed, true);
 });

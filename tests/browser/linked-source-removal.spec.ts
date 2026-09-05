@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const sourceBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -24,15 +25,11 @@ test("blocks source removal until its confirmed fact is removed", async ({ page 
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await seedWorkspaceFiles(page, [
+    { name: "linked-source.png", mimeType: "image/png", bytes: sourceBytes },
+  ]);
 
-  await page.locator("#file-input").setInputFiles({
-    name: "linked-source.png",
-    mimeType: "image/png",
-    buffer: sourceBytes,
-  });
-  const row = page.locator(".file-row");
-  await expect(row).toHaveCount(1);
+  const row = page.locator(".file-row", { hasText: "linked-source.png" });
   await row.locator(".source-file").click();
   const factDialog = page.locator("#fact-dialog");
   await expect(factDialog).toBeVisible();
@@ -51,7 +48,7 @@ test("blocks source removal until its confirmed fact is removed", async ({ page 
   await expect(page.locator(".fact-record")).toHaveCount(1);
 
   await page.reload();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   await expect(page.locator(".file-row")).toHaveCount(1);
   await expect(page.locator(".fact-record")).toHaveCount(1);
   await expect(page.locator(".fact-record")).toContainText("Payment remains outstanding");
@@ -63,6 +60,7 @@ test("blocks source removal until its confirmed fact is removed", async ({ page 
   await expect(page.locator("#file-count")).toHaveText("0");
 
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator(".file-row")).toHaveCount(0);
   await expect(page.locator(".fact-record")).toHaveCount(0);
   expect(externalRequests).toEqual([]);

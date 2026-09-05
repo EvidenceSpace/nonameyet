@@ -1,7 +1,22 @@
-import { expect, test } from "playwright/test";
+import { expect, test, type Page } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 const staleFailureMessage = "This suggestion changed in another tab. Nothing was confirmed. Reload and review the latest version.";
+
+async function openWorkspaceWithFile(page: Page, title: string, summary: string, fileId: string) {
+  await page.goto("/cases-new.html");
+  await page.locator("#case-title").fill(title);
+  await page.locator("#client").fill("Example client");
+  await page.locator("#amount").fill("5000");
+  await page.locator("#summary").fill(summary);
+  await page.locator("#continue-button").click();
+  await page.locator("#continue-button").click();
+  await page.locator("#local-storage-ack").check();
+  await page.locator("#continue-button").click();
+  await page.locator("#open-workspace").click();
+  await seedWorkspaceFiles(page, [{ id: fileId, name: "invoice.png", mimeType: "image/png", buffer: imageBytes }]);
+}
 
 test("confirmation and correction commit exact review decisions once", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -12,18 +27,12 @@ test("confirmation and correction commit exact review decisions once", async ({ 
     if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
   });
 
-  await page.goto("/cases-new.html");
-  await page.locator("#case-title").fill("Exact atomic review decisions");
-  await page.locator("#client").fill("Example client");
-  await page.locator("#amount").fill("5000");
-  await page.locator("#summary").fill("A synthetic case verifying exact-current suggestion confirmation and correction.");
-  await page.locator("#continue-button").click();
-  await page.locator("#continue-button").click();
-  await page.locator("#local-storage-ack").check();
-  await page.locator("#continue-button").click();
-  await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
-
+  await openWorkspaceWithFile(
+    page,
+    "Exact atomic review decisions",
+    "A synthetic case verifying exact-current suggestion confirmation and correction.",
+    "file_atomic_review_decisions",
+  );
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -39,6 +48,7 @@ test("confirmation and correction commit exact review decisions once", async ({ 
     return { updatedAt: (await storage.getCase(caseId)).updatedAt, fileHash: file.sha256 };
   });
   await page.reload();
+  await waitForWorkspace(page);
 
   const confirmation = page.locator('.suggestion-card[data-id="suggestion_atomic_success_confirm"]');
   await expect(confirmation).toHaveCount(1);
@@ -48,7 +58,7 @@ test("confirmation and correction commit exact review decisions once", async ({ 
     button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
   await confirmationNavigation;
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_atomic_success_confirm"]')).toHaveCount(0);
   await expect(page.locator(".fact-record")).toHaveCount(1);
 
@@ -60,7 +70,7 @@ test("confirmation and correction commit exact review decisions once", async ({ 
   const correctionNavigation = page.waitForNavigation({ waitUntil: "domcontentloaded" });
   await page.locator("#correction-form").evaluate((form: HTMLFormElement) => form.requestSubmit());
   await correctionNavigation;
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   await expect(page.locator(".fact-record")).toHaveCount(2);
   await expect(page.locator("#nav-review-count")).toHaveText("0");
   await expect(page.locator("#nav-fact-count")).toHaveText("2");
@@ -94,18 +104,12 @@ test("a stale rendered card cannot confirm a changed suggestion", async ({ page 
     if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
   });
 
-  await page.goto("/cases-new.html");
-  await page.locator("#case-title").fill("Stale review protection");
-  await page.locator("#client").fill("Example client");
-  await page.locator("#amount").fill("5000");
-  await page.locator("#summary").fill("A synthetic case verifying that a changed suggestion cannot be accepted from stale UI.");
-  await page.locator("#continue-button").click();
-  await page.locator("#continue-button").click();
-  await page.locator("#local-storage-ack").check();
-  await page.locator("#continue-button").click();
-  await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
-
+  await openWorkspaceWithFile(
+    page,
+    "Stale review protection",
+    "A synthetic case verifying that a changed suggestion cannot be accepted from stale UI.",
+    "file_stale_review",
+  );
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -119,6 +123,7 @@ test("a stale rendered card cannot confirm a changed suggestion", async ({ page 
     });
   });
   await page.reload();
+  await waitForWorkspace(page);
 
   const card = page.locator('.suggestion-card[data-id="suggestion_stale_render"]');
   const confirmButton = card.locator(".confirm-suggestion");
@@ -151,6 +156,7 @@ test("a stale rendered card cannot confirm a changed suggestion", async ({ page 
   ]);
 
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_stale_render"] .suggestion-value')).toHaveText("₹6,000");
   await expect(page.locator(".fact-record")).toHaveCount(0);
   expect(externalRequests).toEqual([]);
@@ -166,18 +172,12 @@ test("stale rendered cards cannot mark changed suggestions not-sure or dismissed
     if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname !== "127.0.0.1") externalRequests.push(request.url());
   });
 
-  await page.goto("/cases-new.html");
-  await page.locator("#case-title").fill("Stale non-acceptance protection");
-  await page.locator("#client").fill("Example client");
-  await page.locator("#amount").fill("5000");
-  await page.locator("#summary").fill("A synthetic case verifying that changed suggestions cannot be marked aside or dismissed from stale UI.");
-  await page.locator("#continue-button").click();
-  await page.locator("#continue-button").click();
-  await page.locator("#local-storage-ack").check();
-  await page.locator("#continue-button").click();
-  await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
-
+  await openWorkspaceWithFile(
+    page,
+    "Stale non-acceptance protection",
+    "A synthetic case verifying that changed suggestions cannot be marked aside or dismissed from stale UI.",
+    "file_stale_nonacceptance",
+  );
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -192,6 +192,7 @@ test("stale rendered cards cannot mark changed suggestions not-sure or dismissed
     await storage.saveSuggestion({ ...base, id: "suggestion_stale_dismiss", value: "₹5,400" });
   });
   await page.reload();
+  await waitForWorkspace(page);
 
   const uncertainCard = page.locator('.suggestion-card[data-id="suggestion_stale_uncertain"]');
   const dismissCard = page.locator('.suggestion-card[data-id="suggestion_stale_dismiss"]');
@@ -235,6 +236,7 @@ test("stale rendered cards cannot mark changed suggestions not-sure or dismissed
   ]);
 
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_stale_uncertain"] .suggestion-value')).toHaveText("₹6,200");
   await expect(page.locator('.suggestion-card[data-id="suggestion_stale_dismiss"] .suggestion-value')).toHaveText("₹6,400");
   await expect(page.locator(".fact-record")).toHaveCount(0);

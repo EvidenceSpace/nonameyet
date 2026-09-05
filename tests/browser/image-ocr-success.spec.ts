@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -41,14 +42,12 @@ test("extracts local image text with reviewable provenance", async ({ page }) =>
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await seedWorkspaceFiles(page, [
+    { name: "invoice-message.png", mimeType: "image/png", bytes: imageBytes },
+  ]);
 
-  await page.locator("#file-input").setInputFiles({
-    name: "invoice-message.png",
-    mimeType: "image/png",
-    buffer: imageBytes,
-  });
   const row = page.locator(".file-row", { hasText: "invoice-message.png" });
+  await expect(row.locator(".process-file")).toBeEnabled();
   await row.locator(".process-file").click();
 
   await expect(row.locator(".processing-status")).toHaveText("Text ready");
@@ -75,6 +74,7 @@ test("extracts local image text with reviewable provenance", async ({ page }) =>
   await preview.locator("#close-preview").click();
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "invoice-message.png" });
   await expect(persisted.locator(".processing-status")).toHaveText("Text ready");
   await persisted.locator(".view-extracted-text").click();
