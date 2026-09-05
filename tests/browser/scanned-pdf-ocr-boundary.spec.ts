@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 function createImageOnlyPdf() {
   const objects = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Count 1 /Kids [3 0 R] >>", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>", "<< /Length 0 >>\nstream\n\nendstream"];
@@ -33,10 +34,13 @@ test("routes a scanned PDF to truthful local recovery without AI actions", async
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-  await page.locator("#file-input").setInputFiles({ name: "scanned-invoice.pdf", mimeType: "application/pdf", buffer: createImageOnlyPdf() });
+  await seedWorkspaceFiles(page, [
+    { name: "scanned-invoice.pdf", mimeType: "application/pdf", bytes: createImageOnlyPdf() },
+  ]);
+
   const row = page.locator(".file-row", { hasText: "scanned-invoice.pdf" });
   await expect(row.locator(".processing-status")).toHaveText("Not processed");
+  await expect(row.locator(".process-file")).toBeEnabled();
   await row.locator(".process-file").click();
   await expect(row.locator(".processing-status")).toHaveText("Scanned PDF", { timeout: 30_000 });
   await expect(row.locator(".processing-note")).toHaveText(recoveryMessage);
@@ -52,6 +56,7 @@ test("routes a scanned PDF to truthful local recovery without AI actions", async
   await expect(preview.locator("#record-preview embed[type='application/pdf']")).toHaveCount(1);
   await preview.locator("#close-preview").click();
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "scanned-invoice.pdf" });
   await expect(persisted.locator(".processing-status")).toHaveText("Scanned PDF");
   await expect(persisted.locator(".processing-note")).toHaveText(recoveryMessage);
