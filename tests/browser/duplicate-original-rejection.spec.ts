@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -24,7 +25,7 @@ test("rejects duplicate original bytes without creating partial state", async ({
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
+  await waitForWorkspace(page);
 
   await page.locator("#file-input").setInputFiles({
     name: "proposal.png",
@@ -60,7 +61,7 @@ test("rejects duplicate original bytes without creating partial state", async ({
   await expect(page.locator("#file-size")).toHaveText(storedSize || "");
 
   await page.reload();
-  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "proposal.png" });
   await expect(persisted).toHaveCount(1);
   await expect(page.locator(".file-row", { hasText: "invoice-copy.png" })).toHaveCount(0);

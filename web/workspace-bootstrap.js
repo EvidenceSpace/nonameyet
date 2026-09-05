@@ -54,6 +54,7 @@ async function boot() {
     if (state === "ready") {
       await recoverOrphanedProcessingRuns(caseId);
       await loadWorkspaceModules();
+      workspace.dataset.ready = "true";
     } else showStorageRecovery(new Error("Workspace storage became unavailable."));
   } catch (error) {
     showStorageRecovery(error);

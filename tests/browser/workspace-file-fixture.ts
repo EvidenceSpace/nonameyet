@@ -12,7 +12,9 @@ export type StoredFileFixture = {
 } & StoredFileBytes;
 
 export async function waitForWorkspace(page: Page) {
-  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
+  const workspace = page.locator("#workspace");
+  await expect(workspace).toBeVisible({ timeout: 30_000 });
+  await expect(workspace).toHaveAttribute("data-ready", "true", { timeout: 30_000 });
 }
 
 export async function seedWorkspaceFiles(page: Page, fixtures: StoredFileFixture[]) {
