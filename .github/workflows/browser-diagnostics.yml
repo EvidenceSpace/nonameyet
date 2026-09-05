@@ -16,21 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: image-ocr-output-limits-20x
-            file: tests/browser/image-ocr-output-limits.spec.ts
+          - name: image-ocr-cancellation-20x
+            file: tests/browser/image-ocr-cancellation.spec.ts
             repeat: 20
-          - name: malformed-extraction-ui-10x
-            file: tests/browser/malformed-extraction-ui.spec.ts
-            repeat: 10
-          - name: pdf-processing-lifecycle-10x
-            file: tests/browser/pdf-processing-lifecycle.spec.ts
-            repeat: 10
-          - name: report-private-notes-10x
-            file: tests/browser/report-private-notes.spec.ts
-            repeat: 10
-          - name: timeline-storage-failure-10x
-            file: tests/browser/timeline-storage-failure.spec.ts
-            repeat: 10
+          - name: source-consistency-resolution-20x
+            file: tests/browser/source-consistency-resolution.spec.ts
+            repeat: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

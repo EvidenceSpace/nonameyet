@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -39,14 +40,9 @@ test("cancels local image OCR without creating downstream evidence", async ({ pa
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-
-  await page.locator("#file-input").setInputFiles({
-    name: "message-to-cancel.png",
-    mimeType: "image/png",
-    buffer: imageBytes,
-  });
+  await seedWorkspaceFiles(page, [{ id: "file_ocr_cancellation", name: "message-to-cancel.png", mimeType: "image/png", buffer: imageBytes }]);
   const row = page.locator(".file-row", { hasText: "message-to-cancel.png" });
+  await expect(row.locator(".process-file")).toBeEnabled({ timeout: 30_000 });
   await row.locator(".process-file").click();
   await expect(row.locator(".processing-status")).toHaveText("Processing…");
   await expect(row.locator(".cancel-processing")).toHaveText("Cancel");
@@ -68,6 +64,7 @@ test("cancels local image OCR without creating downstream evidence", async ({ pa
   await preview.locator("#close-preview").click();
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "message-to-cancel.png" });
   await expect(persisted.locator(".processing-status")).toHaveText("Cancelled");
   await expect(persisted.locator(".processing-note")).toHaveText(cancelledMessage);
