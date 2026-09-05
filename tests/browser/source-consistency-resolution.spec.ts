@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -34,16 +35,12 @@ test("reviews a verified cross-source difference without rewriting either fact",
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-
-  await page.locator("#file-input").setInputFiles([
-    { name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
-    { name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
+  await seedWorkspaceFiles(page, [
+    { id: "file_consistency_proposal", name: "proposal.png", mimeType: "image/png", buffer: imageBytes },
+    { id: "file_consistency_invoice", name: "invoice.png", mimeType: "image/png", buffer: Buffer.concat([imageBytes, Buffer.from([0])]) },
   ]);
   const proposal = page.locator(".file-row", { hasText: "proposal.png" });
   const invoice = page.locator(".file-row", { hasText: "invoice.png" });
-  await expect(proposal).toBeVisible();
-  await expect(invoice).toBeVisible();
   await addAgreedPriceFact(page, proposal, "5,000");
   await addAgreedPriceFact(page, invoice, "6,000");
 
@@ -83,6 +80,7 @@ test("reviews a verified cross-source difference without rewriting either fact",
   await expect(page.locator(".file-row")).toHaveCount(2);
 
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator(".consistency-item.resolved")).toHaveCount(1);
   await expect(page.locator(".consistency-item.resolved")).toContainText("Selected: 6,000");
   await expect(page.locator(".consistency-item.resolved")).toContainText(

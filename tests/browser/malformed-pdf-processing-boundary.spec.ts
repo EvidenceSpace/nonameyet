@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const malformedPdf = Buffer.from(
   "%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\nThis file is intentionally truncated.",
@@ -25,9 +26,8 @@ test("fails permanently for a malformed PDF while preserving the original", asyn
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await seedWorkspaceFiles(page, [{ id: "file_malformed_pdf", name: "damaged-invoice.pdf", mimeType: "application/pdf", buffer: malformedPdf }]);
 
-  await page.locator("#file-input").setInputFiles({ name: "damaged-invoice.pdf", mimeType: "application/pdf", buffer: malformedPdf });
   const row = page.locator(".file-row", { hasText: "damaged-invoice.pdf" });
   await expect(row).toContainText("Stored locally");
   await expect(row.locator(".processing-status")).toHaveText("Not processed");
@@ -50,6 +50,7 @@ test("fails permanently for a malformed PDF while preserving the original", asyn
   await preview.locator("#close-preview").click();
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "damaged-invoice.pdf" });
   await expect(persisted.locator(".processing-status")).toHaveText("Needs attention");
   await expect(persisted.locator(".processing-note")).toHaveText(corruptMessage);

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { expect, test } from "playwright/test";
+import { waitForWorkspace } from "./workspace-file-fixture";
 
 const sourceBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -26,12 +27,13 @@ test("persists, identifies, previews, deduplicates, and removes an original sour
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
 
   const fileInput = page.locator("#file-input");
   await fileInput.setInputFiles({ name: "source-preview.png", mimeType: "image/png", buffer: sourceBytes });
   const row = page.locator(".file-row");
-  await expect(row).toHaveCount(1);
+  await expect(page.locator("#upload-message")).toHaveText("Stored source-preview.png locally.", { timeout: 30_000 });
+  await expect(row).toHaveCount(1, { timeout: 30_000 });
   await expect(row).toContainText("source-preview.png");
   await expect(row).toContainText(`SHA-256 ${expectedHash.slice(0, 10)}…`);
   await expect(page.locator("#file-count")).toHaveText("1");
@@ -50,7 +52,7 @@ test("persists, identifies, previews, deduplicates, and removes an original sour
   await expect(dialog.locator("#record-preview")).toBeEmpty();
 
   await page.reload();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
   await expect(page.locator(".file-row")).toHaveCount(1);
   await page.locator(".file-row .preview-file").click();
   await expect(dialog).toBeVisible();
@@ -58,7 +60,7 @@ test("persists, identifies, previews, deduplicates, and removes an original sour
   await dialog.locator("#close-preview").click();
 
   await fileInput.setInputFiles({ name: "duplicate.png", mimeType: "image/png", buffer: sourceBytes });
-  await expect(page.locator("#upload-message")).toContainText("duplicate.png is already in this case");
+  await expect(page.locator("#upload-message")).toHaveText("duplicate.png is already in this case.", { timeout: 30_000 });
   await expect(page.locator(".file-row")).toHaveCount(1);
 
   await page.locator(".file-row .delete-file").click();
@@ -66,6 +68,7 @@ test("persists, identifies, previews, deduplicates, and removes an original sour
   await expect(page.locator("#file-count")).toHaveText("0");
   await expect(page.locator(".empty-files")).toContainText("No records added yet");
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator(".file-row")).toHaveCount(0);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);

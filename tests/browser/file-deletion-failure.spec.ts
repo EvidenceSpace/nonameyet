@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -25,11 +26,8 @@ test("an interrupted removal preserves the original and its processing state", a
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-
-  await page.locator("#file-input").setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [{ id: "file_deletion_failure", name: "proof.png", mimeType: "image/png", buffer: imageBytes }]);
   const row = page.locator(".file-row", { hasText: "proof.png" });
-  await expect(row).toHaveCount(1);
 
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
@@ -83,6 +81,7 @@ test("an interrupted removal preserves the original and its processing state", a
   expect(after.updatedAt).toBe(before.updatedAt);
 
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator(".file-row", { hasText: "proof.png" })).toHaveCount(1);
   await expect(page.locator("#file-count")).toHaveText("1");
   expect(externalRequests).toEqual([]);

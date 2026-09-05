@@ -67,7 +67,7 @@ test("stops at the selectable-text cap and cleans resources", async () => {
 test("times out stalled PDF.js work, destroys the task, and remains retryable", async () => {
   let taskDestroys = 0;
   const result = await processPdf(source(async () => pdfBytes()), {
-    timeoutMs: 5,
+    timeoutMs: 250,
     runtime: { getDocument: () => ({ promise: new Promise(() => {}), destroy() { taskDestroys += 1; } }) },
   });
   assert.equal(result.message, PDF_TIMEOUT_MESSAGE);

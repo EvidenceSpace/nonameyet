@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 const failureMessage = "The suggestion could not be confirmed on this device. Nothing was changed. Try again.";
@@ -21,7 +22,7 @@ test("an interrupted confirmation preserves the suggestion without creating a fa
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [{ id: "file_suggestion_confirmation", name: "invoice.png", mimeType: "image/png", buffer: imageBytes }]);
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -36,6 +37,7 @@ test("an interrupted confirmation preserves the suggestion without creating a fa
     return { updatedAt: (await storage.getCase(caseId)).updatedAt };
   });
   await page.reload();
+  await waitForWorkspace(page);
   const card = page.locator('.suggestion-card[data-id="suggestion_atomic_confirmation"]');
   await expect(card).toHaveCount(1);
   await page.evaluate(() => {
@@ -73,6 +75,7 @@ test("an interrupted confirmation preserves the suggestion without creating a fa
   expect(stored.suggestions.map((item: { id: string }) => item.id)).toEqual(["suggestion_atomic_confirmation"]);
   expect(stored.updatedAt).toBe(before.updatedAt);
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_atomic_confirmation"]')).toHaveCount(1);
   await expect(page.locator(".fact-record")).toHaveCount(0);
   expect(externalRequests).toEqual([]);

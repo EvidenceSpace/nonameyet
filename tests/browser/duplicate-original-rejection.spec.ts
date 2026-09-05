@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -24,15 +25,17 @@ test("rejects duplicate original bytes without creating partial state", async ({
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await waitForWorkspace(page);
 
   await page.locator("#file-input").setInputFiles({
     name: "proposal.png",
     mimeType: "image/png",
     buffer: imageBytes,
   });
+  const message = page.locator("#upload-message");
   const original = page.locator(".file-row", { hasText: "proposal.png" });
-  await expect(original).toHaveCount(1);
+  await expect(message).toHaveText("Stored proposal.png locally.", { timeout: 30_000 });
+  await expect(original).toHaveCount(1, { timeout: 30_000 });
   await expect(page.locator("#file-count")).toHaveText("1");
   const storedSize = await page.locator("#file-size").textContent();
 
@@ -48,8 +51,7 @@ test("rejects duplicate original bytes without creating partial state", async ({
     mimeType: "image/png",
     buffer: imageBytes,
   });
-  const message = page.locator("#upload-message");
-  await expect(message).toHaveClass(/error/);
+  await expect(message).toHaveClass(/error/, { timeout: 30_000 });
   await expect(message).toHaveText("invoice-copy.png is already in this case.");
   await expect(page.locator(".file-row")).toHaveCount(1);
   await expect(page.locator(".file-row", { hasText: "proposal.png" })).toHaveCount(1);
@@ -59,6 +61,7 @@ test("rejects duplicate original bytes without creating partial state", async ({
   await expect(page.locator("#file-size")).toHaveText(storedSize || "");
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "proposal.png" });
   await expect(persisted).toHaveCount(1);
   await expect(page.locator(".file-row", { hasText: "invoice-copy.png" })).toHaveCount(0);

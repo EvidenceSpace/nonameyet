@@ -1,4 +1,5 @@
 import { confirmSuggestionAsFact, syncRenderedFactSnapshots, syncRenderedSuggestionSnapshots } from "./review-transition.js";
+import { formatCaseAmount } from "./case-details-model.js";
 import {
   createId, deleteCase, deleteFile, deleteSuggestion, FileRemovalError, FileWriteError, getCase,
   getFactsForCase, getFilesForCase, getSuggestionsForCase, saveCase, saveFact,
@@ -45,17 +46,13 @@ function syncRenderedFileSnapshots(currentFiles = []) {
 function requireRenderedFile(fileId) {
   const file = renderedFileSnapshots.get(fileId);
   if (!file || !validFileRemovalSnapshot(file)) {
-    throw new FileRemovalError(
-      "stale_file",
-      "This source record changed in another tab. Nothing was removed. Reload and review the latest version.",
-    );
+    throw new FileRemovalError("stale_file", "This source record changed in another tab. Nothing was removed. Reload and review the latest version.");
   }
   return structuredClone(file);
 }
 
 function setFileRowBusy(fileId, busy) {
-  const row = [...document.querySelectorAll(".file-row")]
-    .find((candidate) => candidate.dataset.id === fileId);
+  const row = [...document.querySelectorAll(".file-row")].find((candidate) => candidate.dataset.id === fileId);
   if (!row) return;
   if (busy) row.setAttribute("aria-busy", "true");
   else row.removeAttribute("aria-busy");
@@ -63,35 +60,21 @@ function setFileRowBusy(fileId, busy) {
 }
 
 function fileRemovalFailureText(error, file) {
-  if (error instanceof FileRemovalError && ["stale_file", "file_linked", "case_missing"].includes(error.code)) {
-    return error.message;
-  }
+  if (error instanceof FileRemovalError && ["stale_file", "file_linked", "case_missing"].includes(error.code)) return error.message;
   return `${file.name} could not be removed from this device. Nothing was changed. Try again.`;
 }
 
 async function removeRenderedFile(fileId) {
   if (activeFileRemovals.has(fileId)) return;
   let file;
-  try {
-    file = requireRenderedFile(fileId);
-  } catch (error) {
-    message.className = "upload-message error";
-    message.textContent = error.message;
-    return;
-  }
+  try { file = requireRenderedFile(fileId); }
+  catch (error) { message.className = "upload-message error"; message.textContent = error.message; return; }
   activeFileRemovals.add(fileId);
   setFileRowBusy(fileId, true);
   message.className = "upload-message";
   message.textContent = `Removing ${file.name} from this device…`;
-  try {
-    await deleteFile(file);
-    location.reload();
-  } catch (error) {
-    message.className = "upload-message error";
-    message.textContent = fileRemovalFailureText(error, file);
-    activeFileRemovals.delete(fileId);
-    setFileRowBusy(fileId, false);
-  }
+  try { await deleteFile(file); location.reload(); }
+  catch (error) { message.className = "upload-message error"; message.textContent = fileRemovalFailureText(error, file); activeFileRemovals.delete(fileId); setFileRowBusy(fileId, false); }
 }
 
 function renderStats() {
@@ -132,9 +115,7 @@ function renderFiles() {
   syncRenderedFileSnapshots(files);
   root.querySelectorAll(".preview-file").forEach((button) => button.addEventListener("click", () => previewFile(button.dataset.id)));
   root.querySelectorAll(".source-file").forEach((button) => button.addEventListener("click", () => openFactDialog(button.dataset.id)));
-  root.querySelectorAll(".delete-file").forEach((button) => button.addEventListener("click", () => {
-    void removeRenderedFile(button.dataset.id);
-  }));
+  root.querySelectorAll(".delete-file").forEach((button) => button.addEventListener("click", () => { void removeRenderedFile(button.dataset.id); }));
   renderStats(); renderSourceOptions();
 }
 
@@ -161,10 +142,7 @@ function renderSuggestions() {
   const warning = document.querySelector("#review-warning");
   warning.hidden = signals.length === 0;
   document.querySelector("#review-warning-copy").textContent = signals.length ? ` ${signals.length} instruction-like passage${signals.length === 1 ? " was" : "s were"} treated as document content, not commands.` : "";
-  if (!active.length) {
-    root.innerHTML = '<div class="empty-suggestions"><strong>No suggestions need review.</strong>AI-generated details will appear here only after they pass source-quote checks.</div>';
-    renderStats(); return;
-  }
+  if (!active.length) { root.innerHTML = '<div class="empty-suggestions"><strong>No suggestions need review.</strong>AI-generated details will appear here only after they pass source-quote checks.</div>'; renderStats(); return; }
   root.innerHTML = active.map((suggestion) => {
     const file = files.find((item) => item.id === suggestion.fileId);
     const quote = suggestion.sourceReference?.locator?.quote || suggestion.quote || "Source quote unavailable";
@@ -183,12 +161,7 @@ function renderSuggestions() {
 }
 
 async function acceptSuggestion(suggestion, value, status) {
-  const fact = {
-    id: createId("fact"), caseId, label: suggestion.label, type: "other", value,
-    sourceFileId: suggestion.fileId, sourceReference: suggestion.sourceReference,
-    status, manuallyEntered: false, aiSuggested: true, decidedByUser: true,
-    createdAt: new Date().toISOString(),
-  };
+  const fact = { id: createId("fact"), caseId, label: suggestion.label, type: "other", value, sourceFileId: suggestion.fileId, sourceReference: suggestion.sourceReference, status, manuallyEntered: false, aiSuggested: true, decidedByUser: true, createdAt: new Date().toISOString() };
   await confirmSuggestionAsFact(fact, suggestion);
   facts.push(fact);
   suggestions = suggestions.filter((item) => item.id !== suggestion.id);
@@ -208,9 +181,7 @@ async function addFiles(selected) {
       await saveFile(stored); files.push(stored); message.textContent = `Stored ${file.name} locally.`;
     } catch (error) {
       message.className = "upload-message error";
-      message.textContent = error instanceof FileWriteError && error.code === "case_missing"
-        ? `${file.name} was not stored because this case was removed in another tab. Return to Case Hub to continue.`
-        : `${file.name} could not be stored on this device. Check available browser storage and try again.`;
+      message.textContent = error instanceof FileWriteError && error.code === "case_missing" ? `${file.name} was not stored because this case was removed in another tab. Return to Case Hub to continue.` : `${file.name} could not be stored on this device. Check available browser storage and try again.`;
     }
   }
   fileInput.value = ""; renderFiles();
@@ -254,7 +225,7 @@ async function init() {
   document.querySelector("#sidebar-title").textContent = record.title;
   document.querySelector("#workspace-title").textContent = record.title;
   document.querySelector("#workspace-summary").textContent = record.summary;
-  document.querySelector("#workspace-amount").textContent = record.amount ? `₹${record.amount}` : "Not entered";
+  document.querySelector("#workspace-amount").textContent = formatCaseAmount(record.amount);
   document.title = `${record.title} — CaseFind`;
   renderChecklist(); renderFiles(); renderSuggestions(); renderFacts(); workspace.hidden = false;
 }

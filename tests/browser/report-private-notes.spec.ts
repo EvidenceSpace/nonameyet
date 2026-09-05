@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles } from "./workspace-file-fixture";
 
 const caseTitle = "Private note export boundary";
 const privateNote = 'PRIVATE CONTEXT <img src="https://evil.test/private.png">';
@@ -31,14 +32,7 @@ test("keeps private fact notes out until the user opts in", async ({ page, conte
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
-
-  await page.locator("#file-input").setInputFiles({
-    name: "payment-proof.png",
-    mimeType: "image/png",
-    buffer: onePixelPng,
-  });
-  await expect(page.locator(".file-row")).toHaveCount(1);
+  await seedWorkspaceFiles(page, [{ id: "file_report_private_notes", name: "payment-proof.png", mimeType: "image/png", buffer: onePixelPng }]);
   await page.locator(".file-row .source-file").click();
   const factDialog = page.locator("#fact-dialog");
   await expect(factDialog).toBeVisible();

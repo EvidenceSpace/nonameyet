@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 const failureMessage = "The correction could not be saved on this device. Nothing was changed. Try again.";
@@ -21,7 +22,7 @@ test("an interrupted correction preserves the suggestion without creating a fact
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [{ id: "file_suggestion_correction", name: "invoice.png", mimeType: "image/png", buffer: imageBytes }]);
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -36,6 +37,7 @@ test("an interrupted correction preserves the suggestion without creating a fact
     return { updatedAt: (await storage.getCase(caseId)).updatedAt };
   });
   await page.reload();
+  await waitForWorkspace(page);
   const card = page.locator('.suggestion-card[data-id="suggestion_atomic_correction"]');
   await expect(card).toHaveCount(1);
   await card.locator(".correct-suggestion").click();
@@ -77,6 +79,7 @@ test("an interrupted correction preserves the suggestion without creating a fact
   expect(stored.updatedAt).toBe(before.updatedAt);
   await page.locator("#cancel-correction").click();
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_atomic_correction"]')).toHaveCount(1);
   await expect(page.locator(".fact-record")).toHaveCount(0);
   expect(externalRequests).toEqual([]);

@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
@@ -10,8 +11,10 @@ test("fails closed when local OCR returns excessive text blocks", async ({ page 
   await page.goto("/cases-new.html");
   await page.locator("#case-title").fill("Bound OCR output"); await page.locator("#client").fill("Example client"); await page.locator("#amount").fill("5000"); await page.locator("#summary").fill("Keep excessive OCR output out of local storage.");
   await page.locator("#continue-button").click(); await page.locator("#continue-button").click(); await page.locator("#local-storage-ack").check(); await page.locator("#continue-button").click(); await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "dense.png", mimeType: "image/png", buffer: imageBytes });
-  const row = page.locator(".file-row", { hasText: "dense.png" }); await row.locator(".process-file").click();
+  await seedWorkspaceFiles(page, [{ id: "file_ocr_output_limits", name: "dense.png", mimeType: "image/png", buffer: imageBytes }]);
+  const row = page.locator(".file-row", { hasText: "dense.png" });
+  await expect(row.locator(".process-file")).toBeEnabled({ timeout: 30_000 });
+  await row.locator(".process-file").click();
   await expect(row.locator(".processing-status")).toHaveText("Needs attention"); await expect(row.locator(".process-file")).toHaveCount(0); await expect(row.locator(".view-extracted-text")).toHaveCount(0); await expect(row.locator(".analyze-record")).toHaveCount(0);
   const stored = await page.evaluate(async () => { const caseId = new URLSearchParams(location.search).get("id") as string; const storage = await import("/storage.js"); return (await storage.getProcessingForCase(caseId))[0]; });
   expect(stored.failure).toEqual({ code: "output_too_large", retryable: false }); expect(stored.artifact).toBeUndefined();

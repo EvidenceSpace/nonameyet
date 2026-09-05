@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 const failureMessage = "The review status could not be changed on this device. Nothing was changed. Try again.";
@@ -21,7 +22,10 @@ test("an interrupted not-sure decision preserves the original suggestion status"
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "invoice.png", mimeType: "image/png", buffer: imageBytes });
+  await seedWorkspaceFiles(page, [
+    { name: "invoice.png", mimeType: "image/png", bytes: imageBytes },
+  ]);
+
   const before = await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -36,6 +40,7 @@ test("an interrupted not-sure decision preserves the original suggestion status"
     return { updatedAt: (await storage.getCase(caseId)).updatedAt };
   });
   await page.reload();
+  await waitForWorkspace(page);
   const card = page.locator('.suggestion-card[data-id="suggestion_atomic_uncertain"]');
   await expect(card).toHaveCount(1);
   await page.evaluate(() => {
@@ -68,6 +73,7 @@ test("an interrupted not-sure decision preserves the original suggestion status"
   expect(stored.suggestions[0].status).toBe("suggested");
   expect(stored.updatedAt).toBe(before.updatedAt);
   await page.reload();
+  await waitForWorkspace(page);
   await expect(page.locator('.suggestion-card[data-id="suggestion_atomic_uncertain"] .uncertain-badge')).toHaveCount(0);
   expect(externalRequests).toEqual([]);
   expect(pageErrors).toEqual([]);

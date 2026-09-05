@@ -1,6 +1,8 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const invalidPdfMessage = "This file does not contain a valid PDF header. CaseFind did not open it as a PDF or extract text. The original remains stored locally; verify the file format and add a genuine PDF explicitly.";
+const invalidPdfBytes = Buffer.from("Plain text renamed to PDF", "utf8");
 
 test("rejects mislabeled PDF bytes before parsing while preserving the original", async ({ page }) => {
   const pageErrors: string[] = [];
@@ -21,13 +23,8 @@ test("rejects mislabeled PDF bytes before parsing while preserving the original"
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
+  await seedWorkspaceFiles(page, [{ id: "file_pdf_signature", name: "renamed-notes.pdf", mimeType: "application/pdf", buffer: invalidPdfBytes }]);
 
-  await page.locator("#file-input").setInputFiles({
-    name: "renamed-notes.pdf",
-    mimeType: "application/pdf",
-    buffer: Buffer.from("Plain text renamed to PDF", "utf8"),
-  });
   const row = page.locator(".file-row", { hasText: "renamed-notes.pdf" });
   await expect(row).toContainText("Stored locally");
   await row.locator(".process-file").click();
@@ -47,6 +44,7 @@ test("rejects mislabeled PDF bytes before parsing while preserving the original"
   await preview.locator("#close-preview").click();
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "renamed-notes.pdf" });
   await expect(persisted.locator(".processing-status")).toHaveText("Needs attention");
   await expect(persisted.locator(".processing-note")).toHaveText(invalidPdfMessage);

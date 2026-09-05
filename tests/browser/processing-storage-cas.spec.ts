@@ -1,5 +1,7 @@
 import { expect, test } from "playwright/test";
 
+const fileHash = "86edbaa24831badfa0a8b04bb410141e2ee4182b6d0014493fe262a7a331c20b";
+
 test("atomically keeps newer processing state when stale work finishes", async ({ page }) => {
   const pageErrors: string[] = [];
   const externalRequests: string[] = [];
@@ -10,7 +12,7 @@ test("atomically keeps newer processing state when stale work finishes", async (
   });
 
   await page.goto("/index.html");
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(async (fileHash) => {
     await new Promise<void>((resolve, reject) => {
       const request = indexedDB.deleteDatabase("casefind-preview");
       request.onsuccess = () => resolve();
@@ -20,37 +22,12 @@ test("atomically keeps newer processing state when stale work finishes", async (
     const recovery = await import(`/processing-run-recovery.js?cas=${Date.now()}`);
     const caseId = "case-cas";
     const fileId = "file-cas";
-    const expected = {
-      fileId,
-      caseId,
-      fileHash: "a".repeat(64),
-      status: "ready_for_ai",
-      message: "Text ready with one missing page.",
-      updatedAt: "2026-08-05T12:00:00.000Z",
-      artifact: {
-        adapterId: "pdfjs-text",
-        adapterVersion: "1.0.0+pdfjs-4.10.38",
-        pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "" }],
-        text: "Existing text",
-        warnings: ["Page 2 needs OCR."],
-      },
-      failure: { code: "ocr_timeout", retryable: true },
-    };
-    const improved = {
-      ...expected,
-      message: "Text ready from 2 pages.",
-      updatedAt: "2026-08-05T12:01:00.000Z",
-      artifact: {
-        ...expected.artifact,
-        adapterId: "pdfjs-text+local-pdf-ocr",
-        pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "Recovered text" }],
-        text: "Existing text\n\nRecovered text",
-        warnings: [],
-      },
-      failure: undefined,
-    };
+    const expected = { fileId, caseId, fileHash, status: "ready_for_ai", message: "Text ready with one missing page.", updatedAt: "2026-08-05T12:00:00.000Z", artifact: { adapterId: "pdfjs-text", adapterVersion: "1.0.0+pdfjs-4.10.38", pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "" }], text: "Existing text", warnings: ["Page 2 needs OCR."] }, failure: { code: "ocr_timeout", retryable: true } };
+    const improved = { ...expected, message: "Text ready from 2 pages.", updatedAt: "2026-08-05T12:01:00.000Z", artifact: { ...expected.artifact, adapterId: "pdfjs-text+local-pdf-ocr", pages: [{ pageNumber: 1, text: "Existing text" }, { pageNumber: 2, text: "Recovered text" }], text: "Existing text\n\nRecovered text", warnings: [] }, failure: undefined };
 
     await storage.saveCase({ id: caseId, title: "CAS test", updatedAt: "2026-08-05T11:59:00.000Z" });
+    const original = new File([new TextEncoder().encode("%PDF-1.7")], "cas.pdf", { type: "application/pdf", lastModified: 1_754_395_200_000 });
+    await storage.saveFile({ id: fileId, caseId, name: original.name, type: original.type, size: original.size, sha256: fileHash, createdAt: "2026-08-05T11:59:30.000Z", original });
     await storage.saveProcessing(expected);
     const firstReplacement = await storage.saveProcessingIfCurrent(expected, improved);
     const afterFirst = (await storage.getProcessingForCase(caseId))[0];
@@ -65,64 +42,25 @@ test("atomically keeps newer processing state when stale work finishes", async (
     const afterConflict = (await storage.getProcessingForCase(caseId))[0];
     const activityAfterConflict = (await storage.getCase(caseId)).updatedAt;
 
-    const firstRunMarker = {
-      fileId,
-      caseId,
-      fileHash: expected.fileHash,
-      status: "extracting",
-      message: "Older processing run",
-      updatedAt: "2026-08-05T12:04:00.000Z",
-    };
+    const firstRunMarker = { fileId, caseId, fileHash: expected.fileHash, status: "extracting", message: "Older processing run", updatedAt: "2026-08-05T12:04:00.000Z" };
     await storage.saveProcessing(firstRunMarker);
-    const newerRunMarker = {
-      ...firstRunMarker,
-      message: "Newer processing run",
-      updatedAt: "2026-08-05T12:05:00.000Z",
-    };
+    const newerRunMarker = { ...firstRunMarker, message: "Newer processing run", updatedAt: "2026-08-05T12:05:00.000Z" };
     await storage.saveProcessing(newerRunMarker);
     const ordinaryActivityBeforeConflict = (await storage.getCase(caseId)).updatedAt;
     await new Promise((resolve) => setTimeout(resolve, 10));
-    const staleRunResult = {
-      ...improved,
-      message: "Older run result",
-      updatedAt: "2026-08-05T12:06:00.000Z",
-    };
+    const staleRunResult = { ...improved, message: "Older run result", updatedAt: "2026-08-05T12:06:00.000Z" };
     const ordinaryReplacement = await storage.saveProcessingIfCurrent(firstRunMarker, staleRunResult);
     const afterOrdinaryConflict = (await storage.getProcessingForCase(caseId))[0];
     const ordinaryActivityAfterConflict = (await storage.getCase(caseId)).updatedAt;
 
-    const failedRunMarker = {
-      ...firstRunMarker,
-      message: "Run that exits unexpectedly",
-      updatedAt: "2026-08-05T12:07:00.000Z",
-    };
+    const failedRunMarker = { ...firstRunMarker, message: "Run that exits unexpectedly", updatedAt: "2026-08-05T12:07:00.000Z" };
     await storage.saveProcessing(failedRunMarker);
-    const failureJob = recovery.buildUnexpectedProcessingFailure(
-      failedRunMarker,
-      "2026-08-05T12:08:00.000Z",
-    );
+    const failureJob = recovery.buildUnexpectedProcessingFailure(failedRunMarker, "2026-08-05T12:08:00.000Z");
     const failureRecovered = await storage.saveProcessingIfCurrent(failedRunMarker, failureJob);
     const afterFailureRecovery = (await storage.getProcessingForCase(caseId))[0];
 
-    return {
-      firstReplacement,
-      firstMessage: afterFirst.message,
-      secondReplacement,
-      finalMessage: afterConflict.message,
-      activityBeforeConflict,
-      activityAfterConflict,
-      ordinaryReplacement,
-      ordinaryFinalMessage: afterOrdinaryConflict.message,
-      ordinaryActivityBeforeConflict,
-      ordinaryActivityAfterConflict,
-      failureRecovered,
-      failureStatus: afterFailureRecovery.status,
-      failureCode: afterFailureRecovery.failure?.code,
-      failureRetryable: afterFailureRecovery.failure?.retryable,
-      failureMessage: afterFailureRecovery.message,
-      failureHasArtifact: Object.hasOwn(afterFailureRecovery, "artifact"),
-    };
-  });
+    return { firstReplacement, firstMessage: afterFirst.message, secondReplacement, finalMessage: afterConflict.message, activityBeforeConflict, activityAfterConflict, ordinaryReplacement, ordinaryFinalMessage: afterOrdinaryConflict.message, ordinaryActivityBeforeConflict, ordinaryActivityAfterConflict, failureRecovered, failureStatus: afterFailureRecovery.status, failureCode: afterFailureRecovery.failure?.code, failureRetryable: afterFailureRecovery.failure?.retryable, failureMessage: afterFailureRecovery.message, failureHasArtifact: Object.hasOwn(afterFailureRecovery, "artifact") };
+  }, fileHash);
 
   expect(result.firstReplacement).toBe(true);
   expect(result.firstMessage).toBe("Text ready from 2 pages.");

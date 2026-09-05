@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 function createTextPdf(pageTexts: string[]) {
   const escapePdfText = (value: string) => value.replace(/([\\()])/g, "\\$1");
@@ -50,17 +51,12 @@ test("extracts PDF text locally and preserves provenance across reload", async (
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible();
 
   const pdf = createTextPdf([
     "Invoice total 5,000 remains unpaid.",
     "Payment is due within seven days.",
   ]);
-  await page.locator("#file-input").setInputFiles({
-    name: "invoice-selectable.pdf",
-    mimeType: "application/pdf",
-    buffer: pdf,
-  });
+  await seedWorkspaceFiles(page, [{ id: "file_pdf_processing", name: "invoice-selectable.pdf", mimeType: "application/pdf", buffer: pdf }]);
   const row = page.locator(".file-row", { hasText: "invoice-selectable.pdf" });
   await expect(row).toContainText("Stored locally");
   await expect(row.locator(".processing-status")).toHaveText("Not processed");
@@ -95,6 +91,7 @@ test("extracts PDF text locally and preserves provenance across reload", async (
   await preview.locator("#close-preview").click();
 
   await page.reload();
+  await waitForWorkspace(page);
   const persisted = page.locator(".file-row", { hasText: "invoice-selectable.pdf" });
   await expect(persisted.locator(".processing-status")).toHaveText("Text ready");
   await persisted.locator(".view-extracted-text").click();

@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles, waitForWorkspace } from "./workspace-file-fixture";
 
 const imageBytes = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
@@ -10,8 +11,11 @@ test("fails closed when stored OCR quality becomes inconsistent", async ({ page 
   await page.goto("/cases-new.html");
   await page.locator("#case-title").fill("Quality integrity"); await page.locator("#client").fill("Example client"); await page.locator("#amount").fill("5000"); await page.locator("#summary").fill("Reject misleading confidence metadata.");
   await page.locator("#continue-button").click(); await page.locator("#continue-button").click(); await page.locator("#local-storage-ack").check(); await page.locator("#continue-button").click(); await page.locator("#open-workspace").click();
-  await page.locator("#file-input").setInputFiles({ name: "integrity.png", mimeType: "image/png", buffer: imageBytes });
-  const row = page.locator(".file-row", { hasText: "integrity.png" }); await row.locator(".process-file").click(); await expect(row.locator(".processing-status")).toHaveText("Text ready");
+  await seedWorkspaceFiles(page, [{ id: "file_ocr_quality_integrity", name: "integrity.png", mimeType: "image/png", buffer: imageBytes }]);
+  const row = page.locator(".file-row", { hasText: "integrity.png" });
+  await expect(row.locator(".process-file")).toBeEnabled({ timeout: 30_000 });
+  await row.locator(".process-file").click();
+  await expect(row.locator(".processing-status")).toHaveText("Text ready");
   await page.evaluate(async () => {
     const caseId = new URLSearchParams(location.search).get("id") as string;
     const storage = await import("/storage.js");
@@ -19,6 +23,7 @@ test("fails closed when stored OCR quality becomes inconsistent", async ({ page 
     await storage.saveProcessing({ ...job, artifact: { ...job.artifact, quality: { confidence: .2, level: "high", reviewRequired: false, warning: null } } });
   });
   await page.reload();
+  await waitForWorkspace(page);
   const restored = page.locator(".file-row", { hasText: "integrity.png" });
   await expect(restored.locator(".processing-status")).toHaveText("Failed");
   await expect(restored.locator(".processing-note")).toHaveText("Stored extraction is invalid. Process the source again.");
