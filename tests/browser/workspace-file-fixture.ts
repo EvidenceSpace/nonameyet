@@ -1,12 +1,15 @@
 import { expect, type Page } from "playwright/test";
 
+type StoredFileBytes =
+  | { buffer: Uint8Array; bytes?: never }
+  | { bytes: Uint8Array; buffer?: never };
+
 export type StoredFileFixture = {
-  id: string;
+  id?: string;
   name: string;
   mimeType: string;
-  buffer: Uint8Array;
   createdAt?: string;
-};
+} & StoredFileBytes;
 
 export async function waitForWorkspace(page: Page) {
   await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
@@ -15,13 +18,18 @@ export async function waitForWorkspace(page: Page) {
 export async function seedWorkspaceFiles(page: Page, fixtures: StoredFileFixture[]) {
   if (!fixtures.length) throw new Error("At least one stored file fixture is required.");
   await waitForWorkspace(page);
-  const serialized = fixtures.map((fixture) => ({
-    id: fixture.id,
-    name: fixture.name,
-    mimeType: fixture.mimeType,
-    values: Array.from(fixture.buffer),
-    createdAt: fixture.createdAt || "2026-08-06T18:00:00.000Z",
-  }));
+  const serialized = fixtures.map((fixture, index) => {
+    const bytes = fixture.buffer ?? fixture.bytes;
+    if (!bytes) throw new Error(`Stored file fixture ${fixture.name} requires byte content.`);
+    const safeName = fixture.name.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase() || "record";
+    return {
+      id: fixture.id || `fixture_file_${index}_${safeName}`,
+      name: fixture.name,
+      mimeType: fixture.mimeType,
+      values: Array.from(bytes),
+      createdAt: fixture.createdAt || "2026-08-06T18:00:00.000Z",
+    };
+  });
   await page.evaluate(async (items: Array<{
     id: string;
     name: string;
