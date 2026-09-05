@@ -62,7 +62,6 @@ jobs:
           import json
           import os
           import pathlib
-          import urllib.request
 
           text = pathlib.Path("browser.log").read_text(encoding="utf-8", errors="replace")
           tail = "\n".join(text.splitlines()[-320:])
@@ -73,21 +72,19 @@ jobs:
               f"### Exact browser failure at `{os.environ['HEAD_SHA']}`\n\n"
               f"```text\n{tail}\n```"
           )
-          payload = json.dumps({"body": body}).encode("utf-8")
-          request = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['REPOSITORY']}/issues/{os.environ['PR_NUMBER']}/comments",
-              data=payload,
-              method="POST",
-              headers={
-                  "Accept": "application/vnd.github+json",
-                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                  "X-GitHub-Api-Version": "2022-11-28",
-                  "Content-Type": "application/json",
-              },
+          pathlib.Path("comment.json").write_text(
+              json.dumps({"body": body}),
+              encoding="utf-8",
           )
-          with urllib.request.urlopen(request) as response:
-              response.read()
           PY
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            --data-binary @comment.json \
+            "https://api.github.com/repos/$REPOSITORY/issues/$PR_NUMBER/comments"
 
       - name: Preserve the browser failure result
         if: ${{ steps.browser.outputs.status != '0' }}
