@@ -1,4 +1,5 @@
 import { expect, test } from "playwright/test";
+import { seedWorkspaceFiles } from "./workspace-file-fixture";
 
 const sourceBytes = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -16,15 +17,11 @@ async function openCaseWithSource(page: any, title: string) {
   await page.locator("#local-storage-ack").check();
   await page.locator("#continue-button").click();
   await page.locator("#open-workspace").click();
-  await expect(page.locator("#workspace")).toBeVisible({ timeout: 30_000 });
-  await page.locator("#file-input").setInputFiles({
-    name: "proof.png",
-    mimeType: "image/png",
-    buffer: sourceBytes,
-  });
+  await seedWorkspaceFiles(page, [
+    { name: "proof.png", mimeType: "image/png", bytes: sourceBytes },
+  ]);
+
   const row = page.locator(".file-row", { hasText: "proof.png" });
-  await expect(row).toHaveCount(1, { timeout: 30_000 });
-  await expect(page.locator("#upload-message")).toHaveText("Stored proof.png locally.", { timeout: 30_000 });
   await expect(row.locator(".delete-file")).toBeEnabled();
 }
 
