@@ -1,0 +1,91 @@
+name: Temporary browser failure capture
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: browser-failure-capture-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  browser-failure-capture:
+    name: Capture exact Chromium failures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288ca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+
+      - name: Install pinned Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run complete browser suite and retain output
+        id: browser
+        shell: bash
+        run: |
+          set +e
+          npm run test:browser > browser.log 2>&1
+          status=$?
+          set -e
+          cat browser.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Post exact failure tail to the pull request
+        if: ${{ steps.browser.outputs.status != '0' && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+
+          text = pathlib.Path("browser.log").read_text(encoding="utf-8", errors="replace")
+          tail = "\n".join(text.splitlines()[-320:])
+          if len(tail) > 50000:
+              tail = tail[-50000:]
+          body = (
+              f"<!-- temporary-browser-failure:{os.environ['HEAD_SHA']} -->\n"
+              f"### Exact browser failure at `{os.environ['HEAD_SHA']}`\n\n"
+              f"```text\n{tail}\n```"
+          )
+          pathlib.Path("comment.json").write_text(
+              json.dumps({"body": body}),
+              encoding="utf-8",
+          )
+          PY
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            --data-binary @comment.json \
+            "https://api.github.com/repos/$REPOSITORY/issues/$PR_NUMBER/comments"
+
+      - name: Preserve the browser failure result
+        if: ${{ steps.browser.outputs.status != '0' }}
+        run: exit 1
