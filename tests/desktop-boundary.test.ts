@@ -2,11 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  CASE_ROUTE_IDS,
   DESKTOP_PROTOCOL_VERSION,
   DESKTOP_SECURITY_BASELINE,
+  GLOBAL_ROUTE_IDS,
   parseDesktopDeepLink,
   validateDesktopBridgeRequest,
 } from "../src/desktop/boundary.js";
+import { CASE_LENSES, GLOBAL_DESTINATIONS } from "../web/evidencespace-shell-model.js";
+
+test("desktop routes stay identical to the approved shell model", () => {
+  assert.deepEqual(GLOBAL_ROUTE_IDS, GLOBAL_DESTINATIONS.map(({ id }) => id));
+  assert.deepEqual(CASE_ROUTE_IDS, CASE_LENSES.map(({ id }) => id));
+});
 
 test("canonical case deep links preserve safe route, case, and object context", () => {
   const result = parseDesktopDeepLink("evidencespace://open?route=evidence&case=C-03&object=E-04");
@@ -34,13 +42,20 @@ test("global deep links cannot smuggle case or object context", () => {
   if (!scoped.ok) assert.equal(scoped.error.code, "scope_mismatch");
 });
 
-test("deep links reject foreign origins, duplicate keys, unknown keys, and missing case context", () => {
+test("deep links reject foreign origins, authority tricks, fragments, paths, and scope errors", () => {
   const attempts = [
     "https://attacker.example/?route=home",
+    "evidencespace://user:pass@open?route=home",
+    "evidencespace://open:443?route=home",
+    "evidencespace://open/?route=home",
+    "evidencespace://open/path?route=home",
+    "evidencespace://open?route=home#fragment",
     "evidencespace://open?route=home&route=cases",
     "evidencespace://open?route=home&token=secret",
     "evidencespace://open?route=evidence",
-    "evidencespace://open/path?route=home",
+    "evidencespace://open?route=evidence&case=C-03.exe",
+    "evidencespace://open?route=evidence&case=C-03&object=../../source",
+    `evidencespace://open?route=home&ignored=${"a".repeat(2_048)}`,
   ];
 
   for (const attempt of attempts) assert.equal(parseDesktopDeepLink(attempt).ok, false);
@@ -75,7 +90,16 @@ test("the bridge accepts only versioned capabilities and native picker commands"
   }
 });
 
-test("the bridge rejects raw paths, duplicate kinds, unknown commands, and protocol drift", () => {
+test("the bridge rejects paths, duplicate kinds, unknown fields, accessors, and protocol drift", () => {
+  const accessorEnvelope = {
+    protocolVersion: 1,
+    requestId: "request_5",
+    command: "desktop:get-capabilities",
+    get payload() {
+      return {};
+    },
+  };
+
   const attempts = [
     {
       protocolVersion: 1,
@@ -91,6 +115,14 @@ test("the bridge rejects raw paths, duplicate kinds, unknown commands, and proto
     },
     { protocolVersion: 1, requestId: "request_3", command: "desktop:run-shell", payload: {} },
     { protocolVersion: 2, requestId: "request_4", command: "desktop:get-capabilities", payload: {} },
+    { protocolVersion: 1, requestId: "request_6", command: "desktop:get-capabilities", payload: {}, extra: true },
+    {
+      protocolVersion: 1,
+      requestId: "x".repeat(65),
+      command: "desktop:get-capabilities",
+      payload: {},
+    },
+    accessorEnvelope,
   ];
 
   for (const attempt of attempts) assert.equal(validateDesktopBridgeRequest(attempt).ok, false);

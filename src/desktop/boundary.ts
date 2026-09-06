@@ -96,10 +96,15 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function hasExactKeys(record: Record<string, unknown>, expected: readonly string[]): boolean {
+function hasExactDataKeys(record: Record<string, unknown>, expected: readonly string[]): boolean {
   const keys = Reflect.ownKeys(record);
-  return keys.length === expected.length
-    && keys.every((key) => typeof key === "string" && expected.includes(key));
+  if (keys.length !== expected.length) return false;
+
+  return keys.every((key) => {
+    if (typeof key !== "string" || !expected.includes(key)) return false;
+    const descriptor = Object.getOwnPropertyDescriptor(record, key);
+    return descriptor !== undefined && "value" in descriptor;
+  });
 }
 
 export function parseDesktopDeepLink(input: unknown): DesktopDeepLinkResult {
@@ -118,7 +123,7 @@ export function parseDesktopDeepLink(input: unknown): DesktopDeepLinkResult {
     return deepLinkFailure("invalid_origin", "The link does not belong to EvidenceSpace.");
   }
 
-  if (url.username || url.password || url.port || url.hash || (url.pathname !== "" && url.pathname !== "/")) {
+  if (url.username || url.password || url.port || url.hash || url.pathname !== "") {
     return deepLinkFailure("invalid_shape", "The link contains unsupported authority or path data.");
   }
 
@@ -207,7 +212,8 @@ function bridgeFailure(code: DesktopBridgeErrorCode, message: string): DesktopBr
 }
 
 export function validateDesktopBridgeRequest(input: unknown): DesktopBridgeValidation {
-  if (!isPlainRecord(input) || !hasExactKeys(input, ["protocolVersion", "requestId", "command", "payload"])) {
+  if (!isPlainRecord(input)
+    || !hasExactDataKeys(input, ["protocolVersion", "requestId", "command", "payload"])) {
     return bridgeFailure("invalid_envelope", "The desktop request envelope is invalid.");
   }
 
@@ -220,7 +226,7 @@ export function validateDesktopBridgeRequest(input: unknown): DesktopBridgeValid
   }
 
   if (input.command === "desktop:get-capabilities") {
-    if (!isPlainRecord(input.payload) || !hasExactKeys(input.payload, [])) {
+    if (!isPlainRecord(input.payload) || !hasExactDataKeys(input.payload, [])) {
       return bridgeFailure("invalid_payload", "The capabilities request payload must be empty.");
     }
 
@@ -237,7 +243,7 @@ export function validateDesktopBridgeRequest(input: unknown): DesktopBridgeValid
 
   if (input.command === "desktop:select-evidence-files") {
     if (!isPlainRecord(input.payload)
-      || !hasExactKeys(input.payload, ["caseId", "kinds", "multiple"])
+      || !hasExactDataKeys(input.payload, ["caseId", "kinds", "multiple"])
       || typeof input.payload.caseId !== "string"
       || !SAFE_CASE_ID.test(input.payload.caseId)
       || !Array.isArray(input.payload.kinds)

@@ -66,10 +66,15 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function hasExactKeys(record: Record<string, unknown>, expected: readonly string[]): boolean {
+function hasExactDataKeys(record: Record<string, unknown>, expected: readonly string[]): boolean {
   const keys = Reflect.ownKeys(record);
-  return keys.length === expected.length
-    && keys.every((key) => typeof key === "string" && expected.includes(key));
+  if (keys.length !== expected.length) return false;
+
+  return keys.every((key) => {
+    if (typeof key !== "string" || !expected.includes(key)) return false;
+    const descriptor = Object.getOwnPropertyDescriptor(record, key);
+    return descriptor !== undefined && "value" in descriptor;
+  });
 }
 
 function isMember<T extends string>(value: unknown, values: readonly T[]): value is T {
@@ -85,13 +90,15 @@ function isBoundedMetric(value: unknown, maximum: number, integer = false): valu
 }
 
 function isIsoInstant(value: unknown): value is string {
-  return typeof value === "string"
-    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
-    && !Number.isNaN(Date.parse(value));
+  if (typeof value !== "string"
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+
+  const milliseconds = Date.parse(value);
+  return !Number.isNaN(milliseconds) && new Date(milliseconds).toISOString() === value;
 }
 
 function parseObservation(value: unknown): DesktopHostObservation | null {
-  if (!isPlainRecord(value) || !hasExactKeys(value, OBSERVATION_KEYS)) return null;
+  if (!isPlainRecord(value) || !hasExactDataKeys(value, OBSERVATION_KEYS)) return null;
 
   if (!isMember(value.candidate, DESKTOP_HOST_CANDIDATES)
     || !isMember(value.platform, DESKTOP_HOST_PLATFORMS)
@@ -162,17 +169,17 @@ export function assessDesktopHostEvidence(input: unknown): DesktopHostEvidenceAs
   const blockers: string[] = [];
   const seen = new Set<string>();
 
-  input.forEach((value, index) => {
-    const observation = parseObservation(value);
+  for (let index = 0; index < input.length; index += 1) {
+    const observation = parseObservation(input[index]);
     if (!observation) {
       blockers.push(`invalid_observation:${index}`);
-      return;
+      continue;
     }
 
     const key = matrixKey(observation.candidate, observation.platform);
     if (seen.has(key)) {
       blockers.push(`duplicate_observation:${key}`);
-      return;
+      continue;
     }
     seen.add(key);
     observations.push(observation);
@@ -192,7 +199,7 @@ export function assessDesktopHostEvidence(input: unknown): DesktopHostEvidenceAs
     for (const [gate, passed] of Object.entries(qualityGates)) {
       if (!passed) blockers.push(`quality_gate:${key}:${gate}`);
     }
-  });
+  }
 
   const missing = REQUIRED_MATRIX.filter((key) => !seen.has(key));
   const ordered = observations.slice().sort((left, right) =>
