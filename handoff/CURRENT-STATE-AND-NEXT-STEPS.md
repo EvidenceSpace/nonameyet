@@ -5,12 +5,13 @@
 
 ## Current
 
+- The application design foundation remains approved; recorded implementation debt does not reopen the overall direction.
 - Repository readiness is complete. PR #99 restored the durable four-part quality gate; exact-head run `33973538762` passed.
 - The approved 37-screen connected EvidenceSpace prototype is preserved on `main` through PR #101; exact-head run `33973822119` passed.
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
 - The repository now includes an isolated EvidenceSpace static shell foundation with semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
 - The shell is framework-neutral and does not decide the desktop host, final renderer, canvas engine, cloud architecture, or provider stack.
-- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only workflow; temporary diagnostics are absent.
+- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must be removed before merge.
 
 ## Not implemented
 
