@@ -1,6 +1,6 @@
 # Next-phase engineering readiness
 
-**Status:** repository readiness complete; framework-neutral EvidenceSpace shell foundation implemented; target desktop/cloud architecture remains Decision required.
+**Status:** repository readiness and framework-neutral shell foundation complete; host-neutral desktop boundary implemented; packaged desktop and cloud architecture remain Decision required.
 
 ## Gate 1 — trustworthy CI: complete
 
@@ -11,15 +11,15 @@ Repository readiness was repaired in PR #99 without merging the stale broad PR #
 3. strict Chromium lifecycle with CI flakes treated as failures; and
 4. an aggregate gate.
 
-PR #99 exact-head run `33973538762` passed all four jobs. PR #101 exact-head run `33973822119` independently passed the same gate for the preserved connected prototype. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
+PR #99 exact-head run `33973538762`, PR #101 exact-head run `33973822119`, and PR #102 exact-head run `34016180978` each independently passed all four jobs. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
 
-These runs establish the last merged baselines only. Every changed exact head must pass the full gate before merge.
+These runs establish merged baselines only. Every changed exact head must pass the full gate before merge.
 
 ## Current implementation slice — accessible shell foundation
 
 The repository includes an isolated browser-rendered EvidenceSpace shell at `web/evidencespace-shell.html`. It does not replace the CaseFind entry point and does not choose a desktop host or renderer framework.
 
-Implemented in this slice:
+Implemented:
 
 - semantic tokens with System/Light/Dark behavior;
 - approved 22px/68px/108px large-window shell geometry;
@@ -30,24 +30,44 @@ Implemented in this slice:
 - one main landmark and H1, skip navigation, visible focus, practical targets, forced-colors support, reduced motion, and narrow bottom-navigation reflow; and
 - deterministic model and focused Chromium tests.
 
-Not implemented by this slice: persisted settings, identity, cloud workspaces, case domain data, collaboration, research providers, production AI, report generation, marketplace behavior, desktop packaging, or signed releases.
+Not implemented by the shell: persisted settings, identity, cloud workspaces, case domain data, collaboration, research providers, production AI, report generation, marketplace behavior, desktop packaging, or signed releases.
 
-## Gate 2 — ADR queue
+## Gate 2 — desktop boundary: implemented; runtime evidence pending
+
+ADR 0003 establishes the contract and measurement order without selecting a production host.
+
+Implemented:
+
+- protocol-v1 allowlisted native request envelopes;
+- capabilities discovery and native evidence-picker commands only;
+- exact data-key validation and rejection of raw renderer paths;
+- bounded privacy-safe EvidenceSpace deep links with case/object continuity;
+- a deny-by-default candidate-neutral desktop security baseline;
+- a four-cell Electron/Tauri × Windows/macOS evidence matrix;
+- exact commit and packaged-artifact binding; and
+- mandatory crash, deep-link, picker, accessibility-tree, signed-updater, and 16.7 ms Board-frame gates.
+
+The test observations are synthetic fixtures that prove assessor behavior. They do not establish package size, startup, memory, accessibility, security, update, or production support for either host.
+
+Electron is first in the packaged measurement order because it best matches the current web/Chromium foundation. Tauri remains the required comparator. React and every other final renderer choice remain Decision required.
+
+## Remaining ADR queue
 
 Create measured spikes, not preference essays:
 
-1. Desktop shell: Electron vs Tauri.
-2. Renderer framework and state boundaries.
-3. Canvas engine, accessibility model, operation log and serialization.
-4. Encrypted account-bound local cache, deep links and recovery.
-5. Modular-monolith API, PostgreSQL, object storage, outbox/worker.
-6. Realtime replay, deduplication, convergence and revocation.
-7. AI provider/tool boundary, schema validation and citation verifier.
-8. Legal research provider/source registry.
-9. Packaging, signing, update and rollback.
-10. Marketplace identity/payment providers only before marketplace work.
+1. Packaged Electron adapter on Windows and macOS against ADR 0003.
+2. Equivalent packaged Tauri adapter and an evidence-based host decision.
+3. Renderer framework and state boundaries.
+4. Canvas engine, accessibility model, operation log and serialization.
+5. Encrypted account-bound local cache and recovery.
+6. Modular-monolith API, PostgreSQL, object storage, outbox/worker.
+7. Realtime replay, deduplication, convergence and revocation.
+8. AI provider/tool boundary, schema validation and citation verifier.
+9. Legal research provider/source registry.
+10. Packaging, signing, update and rollback hardening.
+11. Marketplace identity/payment providers only before marketplace work.
 
-Every ADR includes context, measurable criteria, prototypes, Windows/macOS results, security/accessibility, cost/size, alternatives, migration, and rollback. The static shell is reusable evidence, not a silent renderer or desktop decision.
+Every ADR includes context, measurable criteria, prototypes, Windows/macOS results, security/accessibility, cost/size, alternatives, migration, and rollback. The static shell and boundary are reusable evidence, not a silent renderer or production-host decision.
 
 ## Recommended repository shape — decision required
 
@@ -110,13 +130,14 @@ Cases Library + New Case Story Field + Brief with manual fallback. No dependence
 
 ## Focused pull-request sequence
 
-Completed: repository readiness repair, connected-prototype preservation, and the accessible static shell foundation.
+Completed: repository readiness repair, connected-prototype preservation, accessible static shell foundation, and candidate-neutral desktop boundary/evidence harness.
 
-1. Desktop/renderer spike and ADR.
-2. Canvas/operation/outline spike and ADR.
-3. Authentication/session/recovery skeleton.
-4. Five-page onboarding with persisted preferences.
-5. Workspace switch/reconnect/draft recovery.
-6. Cases/Story Field/Brief.
+1. Disposable packaged Electron candidate against protocol v1, with Windows/macOS observations.
+2. Equivalent Tauri comparator, then record or defer the production-host decision.
+3. Renderer-framework and canvas/operation/structured-outline measured spikes.
+4. Authentication/session/recovery skeleton.
+5. Five-page onboarding with persisted preferences.
+6. Workspace switch/reconnect/draft recovery.
+7. Cases/Story Field/Brief.
 
 Prefer one observable user outcome per PR. Keep temporary spike diagnostics off `main`; keep durable automated tests with the code they protect.

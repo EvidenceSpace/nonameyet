@@ -1,8 +1,8 @@
 # EvidenceSpace master handoff report
 
-**Status:** repository readiness complete; accessible static shell foundation implemented  
+**Status:** repository readiness and accessible shell foundation complete; desktop boundary implemented; packaged candidate measurements pending  
 **Last reconciled:** 6 September 2026  
-**`main` baseline for this implementation slice:** `fcc12ac9e1e04977f4bcefb7c7fa7bd0aa08a3da`  
+**`main` baseline for this implementation slice:** `d4996d37df1f6b3b0e3e3f1fa8bca96a674eda1c`  
 **Audience:** a new human maintainer or advanced coding agent with no access to the prior conversation
 
 ## Takeover
@@ -71,17 +71,26 @@ The first target implementation slice is an isolated, browser-rendered shell at 
 
 The route content is deliberately honest foundation copy. It does not invent production data or imply that cloud, authentication, collaboration, AI, research, reports, or marketplace services are connected.
 
+The first architecture-spike slice adds a host-neutral boundary and evidence gate:
+
+- [`src/desktop/boundary.ts`](src/desktop/boundary.ts) defines protocol v1, safe canonical deep links, capabilities discovery, a native evidence-picker request, and a deny-by-default desktop security baseline;
+- [`src/desktop/spike-evidence.ts`](src/desktop/spike-evidence.ts) blocks a production-host decision until Electron and Tauri each have one valid Windows and one valid macOS observation;
+- observation records bind exact source and artifact hashes to package, startup, memory, frame, recovery, deep-link, picker, accessibility, and updater checks; and
+- ADR 0003 prioritizes Electron as the first packaged candidate while retaining Tauri as the required comparator.
+
+The passing unit fixtures prove validation and decision-gate behavior only. They are not packaged-host measurements and must never be reported as Electron/Tauri results.
+
 ## Architecture boundary
 
-The static shell foundation does **not** decide:
+The static shell and desktop contract do **not** decide:
 
-- Electron versus Tauri;
+- the production choice between Electron and Tauri;
 - the final renderer framework;
 - the canvas engine or collaboration operation model;
 - cache, cloud, database, object-storage, realtime, identity, AI, research, payment, or marketplace providers; or
-- packaging, signing, updater, and rollback design.
+- packaging, signing, updater, and rollback implementation.
 
-These remain Decision required and need measured spikes with Windows/macOS, accessibility, security, performance, package-size, migration, and rollback evidence.
+Electron is first in the measurement order because it aligns with the current web/Chromium foundation; Tauri remains mandatory comparative evidence. React also remains Decision required. Production selection needs packaged Windows/macOS, accessibility, security, performance, package-size, migration, and rollback evidence.
 
 ## Approved onboarding and Settings mapping
 
@@ -124,28 +133,31 @@ Sharing, messaging, booking, payment, filing, retention changes, and deletion re
 
 ## Repository and CI snapshot
 
-Repository readiness was repaired and merged through PR #99. Its final diagnostic-free exact-head run `33973538762` passed dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. The connected prototype was preserved through PR #101; exact-head run `33973822119` passed the same four jobs. The durable workflow is `.github/workflows/quality.yml`, TypeScript is `5.8.3`, and no temporary diagnostic workflow belongs on `main`.
+Repository readiness was repaired and merged through PR #99. Its final diagnostic-free exact-head run `33973538762` passed dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. The connected prototype was preserved through PR #101; exact-head run `33973822119` passed the same four jobs. The accessible shell foundation was merged through PR #102; final diagnostic-free exact-head run `34016180978` passed all four jobs and produced current baseline `d4996d37df1f6b3b0e3e3f1fa8bca96a674eda1c`.
+
+The durable workflow is `.github/workflows/quality.yml`, TypeScript is `5.8.3`, and no temporary diagnostic workflow belongs on `main`.
 
 Closed without merge after selective extraction or supersession: PRs #87, #89, #90, #92, #97, #98, and #100. PR #86 remains open and predates the current storage schema and target architecture; review it for narrow value rather than merging the stale branch wholesale.
 
-Every exact head must pass its own checks. Record the shell foundation’s final diagnostic-free run in PR #102 before merging; do not reuse the green status of PR #99 or #101 as evidence for a changed commit.
+Every exact head must pass its own checks. Record the desktop-boundary slice’s final diagnostic-free run in PR #103 before merging; do not reuse an earlier green commit as evidence for a changed head.
 
 ## Next-phase sequence
 
-1. **ADR spikes:** desktop shell, renderer framework, 2D canvas and operation model, encrypted cache/deep links, cloud/realtime skeleton.
-2. **First vertical slice:** authentication, recovery, five-page onboarding, persisted preferences, workspace switching, reconnect and draft recovery.
-3. **Cases and Brief:** Story Field, case lifecycle, jurisdiction confirmation, overall situation and disclosed organization progress.
-4. **Evidence:** immutable upload, processing, source viewer, derivatives, locators, library and search.
-5. **Space:** board domain, structured outline, core interactions, timeline/tasks, AI ghost proposals, then realtime.
-6. **AI and Research:** sourced Ask/Analyze/Plan/Research/Act, contrary material, citations, approval, audit, memory scope.
-7. **Work, Room and Notifications:** task ownership, human-first collaboration, shared AI, conversions, reconnect and revocation.
-8. **Reports and professional package:** review, redaction, versions, export, selective lawyer package.
-9. **Premium marketplace:** verification, conflict screening, booking, payment, refunds, reviews, operations.
-10. **Release hardening:** signed builds, accessibility/security audits, AI red-team, disaster recovery and staged launch.
+1. **Electron packaged candidate:** implement only the host adapter needed by ADR 0003; measure Windows/macOS package, startup, memory, Board frame time, crash recovery, deep links, picker, accessibility tree, and signed updater.
+2. **Tauri comparator and host decision:** run the same fixture and protocol; compare exact observations and record the production-host decision or the reason both remain blocked.
+3. **Renderer and canvas ADRs:** measure framework migration/bundle/accessibility/test cost, then canvas/operation/structured-outline performance, keyboard equivalence, serialization, replay, convergence, and undo.
+4. **First vertical slice:** authentication, recovery, five-page onboarding, persisted preferences, workspace switching, reconnect and draft recovery.
+5. **Cases and Brief:** Story Field, case lifecycle, jurisdiction confirmation, overall situation and disclosed organization progress.
+6. **Evidence:** immutable upload, processing, source viewer, derivatives, locators, library and search.
+7. **Space:** board domain, structured outline, core interactions, timeline/tasks, AI ghost proposals, then realtime.
+8. **AI and Research:** sourced Ask/Analyze/Plan/Research/Act, contrary material, citations, approval, audit, memory scope.
+9. **Work, Room and Notifications:** task ownership, human-first collaboration, shared AI, conversions, reconnect and revocation.
+10. **Reports and professional package:** review, redaction, versions, export, selective lawyer package.
+11. **Premium marketplace and release:** verification, conflict screening, booking/payment/refunds/reviews, then signed builds, audits, disaster recovery, and staged launch.
 
 ## Explicit V1 exclusions
 
-No native calls, broad private connectors, 3D case mode, required sound design, mobile app, background surveillance, autonomous filing/messaging/booking/payment/deletion, outcome prediction, or unqualified worldwide legal coverage.
+No broad private connectors, 3D case mode, required sound design, mobile app, background surveillance, autonomous filing/messaging/booking/payment/deletion, outcome prediction, or unqualified worldwide legal coverage.
 
 ## Design debt accepted for implementation
 
