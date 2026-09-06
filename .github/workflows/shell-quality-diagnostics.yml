@@ -1,0 +1,99 @@
+name: Shell quality diagnostics
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: shell-diagnostics-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-policy:
+    name: Diagnostic / dependency policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Verify direct dependency policy
+        run: npm run check:dependencies
+
+  workflow-policy:
+    name: Diagnostic / workflow policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Verify workflow supply-chain policy
+        run: npm run check:workflow-actions
+
+  canonical-docs:
+    name: Diagnostic / canonical docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Verify canonical documentation
+        run: npm run check:docs
+
+  generated-assets:
+    name: Diagnostic / generated assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Synchronize pinned local PDF.js assets
+        run: npm run sync:pdfjs
+      - name: Verify generated PDF.js assets are committed
+        run: git diff --exit-code -- web/vendor/pdfjs
+
+  typecheck:
+    name: Diagnostic / typecheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.14.1
+      - name: Install pinned dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Run typecheck
+        run: npm run typecheck
