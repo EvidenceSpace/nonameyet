@@ -5,7 +5,7 @@
 
 ## Current
 
-- The application design foundation remains approved; recorded implementation debt does not reopen the overall direction.
+- The application design foundation approved on 30 August 2026 remains the implementation baseline; recorded debt does not reopen the overall direction.
 - Repository readiness is complete. PR #99 restored the durable four-part quality gate; exact-head run `33973538762` passed.
 - The approved 37-screen connected EvidenceSpace prototype is preserved on `main` through PR #101; exact-head run `33973822119` passed.
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
