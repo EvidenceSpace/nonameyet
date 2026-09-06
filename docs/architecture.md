@@ -9,7 +9,7 @@ This document separates the architecture that exists today from infrastructure t
 The current product is a responsive static web application. The browser is the primary case workspace and system of record.
 
 - **Browser application:** case creation, local file selection, processing, verification, timeline, consistency review, readiness, backup, restore, archive, deletion, and report generation.
-- **IndexedDB:** `casefind-preview`, schema version 5, with `cases`, `files`, `facts`, `suggestions`, `processing`, and `events` stores.
+- **IndexedDB:** `casefind-preview`, schema version 6, with `cases`, `files`, `facts`, `suggestions`, `processing`, and `events` stores.
 - **Original records:** unchanged image and PDF bytes stored with the local file record and a SHA-256 digest.
 - **PDF text:** extracted locally with the pinned PDF.js 4.10.38 browser runtime.
 - **Image text:** local recognition is used only when the browser exposes the required capability; otherwise the product shows an explicit unavailable state.

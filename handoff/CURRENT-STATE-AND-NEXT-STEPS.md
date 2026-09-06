@@ -1,32 +1,34 @@
 # Current state and next steps
 
+**Last reconciled:** 6 September 2026  
+**Current `main` baseline for this slice:** `fcc12ac9e1e04977f4bcefb7c7fa7bd0aa08a3da`
+
 ## Current
 
-- `main` baseline before this handoff: `d983a7e8e720c164f2c3fab5bc6ced599ae2a5eb`.
-- CaseFind browser/local-first implementation with substantial provenance, processing, review, recovery and testing foundations.
-- Canonical target docs and prior handoff merged.
-- Approved connected design system and synthetic artifacts.
-- Remote quality check currently reports failure; exact log unavailable through the connected integration.
+- Repository readiness is complete. PR #99 restored the durable four-part quality gate; exact-head run `33973538762` passed.
+- The approved 37-screen connected EvidenceSpace prototype is preserved on `main` through PR #101; exact-head run `33973822119` passed.
+- CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
+- The repository now includes an isolated EvidenceSpace static shell foundation with semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
+- The shell is framework-neutral and does not decide the desktop host, final renderer, canvas engine, cloud architecture, or provider stack.
+- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only workflow; temporary diagnostics are absent.
 
 ## Not implemented
 
-Target desktop shell, cloud workspace, realtime collaboration, seven production lenses, persistent copilot, research service, marketplace, booking/payment and signed releases.
+Target desktop host, final renderer framework, persisted target settings, identity/recovery, cloud workspace, realtime collaboration, production case lenses, persistent copilot, research service, target reports, marketplace, booking/payment, packaging/signing, updater, and signed releases.
 
 ## Open PR disposition
 
-- #87: broad CI/test/prototype changes; do not merge wholesale; extract proven minimal fixes.
-- #86: timeline atomicity; reconcile with new domain/operation model.
-- #89/#90: old first-run/library visual foundations; superseded visually, mine only useful behavior.
-- #92: broad local integration draft; do not merge as target architecture.
+- #86 is the only pre-existing open pull request. It predates the current IndexedDB schema version 6 and approved target/operation model. Review for narrow still-useful timeline/provenance behavior; do not merge the stale branch wholesale.
+- PRs #87, #89, #90, #92, #97, #98, and #100 were closed without merge after supersession or selective extraction.
 
-## Next five focused PRs
+## Next five focused slices
 
-1. CI install diagnosis and minimal repair.
-2. Desktop/renderer spike + ADR.
-3. Canvas/operation/outline spike + ADR.
-4. Design tokens and accessible shell.
-5. Auth/recovery/five-step onboarding vertical slice.
+1. Require and inspect the shell foundation’s complete exact-head CI gate.
+2. Desktop/renderer and canvas/operation/outline measured spikes with ADRs.
+3. Authentication, session expiry, recovery, and account-bound cache skeleton.
+4. Five-step onboarding with persisted appearance, accessibility, legal, and guidance preferences.
+5. Workspace creation/switching, reconnect, and draft recovery; then Cases/Story Field/Brief.
 
 ## Verification expectation
 
-Every PR records exact commands, versions, platforms, states, counts, results, unverified areas, migration/rollback, remote SHA and CI. “Expected to pass” is not evidence.
+Every pull request records exact commands, versions, platforms, states, counts, results, unverified areas, migration/rollback, remote SHA, and CI. “Expected to pass” is not evidence. Keep CaseFind runnable until replacements prove and migrate its trust-critical behavior.
