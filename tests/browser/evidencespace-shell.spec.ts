@@ -1,6 +1,6 @@
-import { expect, test } from "playwright/test";
+import { expect, test, type Page } from "playwright/test";
 
-async function openShell(page: Parameters<typeof test>[0] extends never ? never : any, route = "home") {
+async function openShell(page: Page, route = "home") {
   await page.goto(`/evidencespace-shell.html?route=${route}`);
   await expect(page.locator("body")).toHaveAttribute("data-ready", "true");
 }
