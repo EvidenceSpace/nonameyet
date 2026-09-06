@@ -11,7 +11,7 @@
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
 - The repository now includes an isolated EvidenceSpace static shell foundation with semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
 - The shell is framework-neutral and does not decide the desktop host, final renderer, canvas engine, cloud architecture, or provider stack.
-- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must be removed before merge.
+- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must not remain on `main`.
 
 ## Not implemented
 
@@ -24,8 +24,8 @@ Target desktop host, final renderer framework, persisted target settings, identi
 
 ## Next five focused slices
 
-1. Require and inspect the shell foundation’s complete exact-head CI gate.
-2. Desktop/renderer and canvas/operation/outline measured spikes with ADRs.
+1. Desktop/renderer measured spike and ADR.
+2. Canvas/operation/structured-outline measured spike and ADR.
 3. Authentication, session expiry, recovery, and account-bound cache skeleton.
 4. Five-step onboarding with persisted appearance, accessibility, legal, and guidance preferences.
 5. Workspace creation/switching, reconnect, and draft recovery; then Cases/Story Field/Brief.

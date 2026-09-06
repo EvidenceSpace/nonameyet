@@ -17,7 +17,7 @@ The core loop is:
 
 **capture → preserve → organize → understand → decide → act → review**
 
-The design phase is approved. The user accepted the main design and idea while noting small bar/tab/connection errors that should be corrected during implementation. Do not reopen the entire visual direction because of those defects. Use the approved system and resolve the recorded debt through component contracts, route-state tests, visual regression, and Windows/macOS review.
+The design foundation approved on 30 August 2026 remains the implementation baseline. The user accepted the main design and idea while noting small bar/tab/connection errors that should be corrected during implementation. Do not reopen the entire visual direction because of those defects. Use the approved system and resolve the recorded debt through component contracts, route-state tests, visual regression, and Windows/macOS review.
 
 The canonical case lenses are:
 
@@ -124,25 +124,24 @@ Sharing, messaging, booking, payment, filing, retention changes, and deletion re
 
 ## Repository and CI snapshot
 
-Repository readiness was repaired and merged through PR #99. Its final diagnostic-free exact-head run `33973538762` passed dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. The connected prototype was preserved through PR #101; exact-head run `33973822119` passed the same four jobs. The durable workflow is `.github/workflows/quality.yml`, TypeScript is `5.8.3`, and no temporary diagnostic workflow remains.
+Repository readiness was repaired and merged through PR #99. Its final diagnostic-free exact-head run `33973538762` passed dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. The connected prototype was preserved through PR #101; exact-head run `33973822119` passed the same four jobs. The durable workflow is `.github/workflows/quality.yml`, TypeScript is `5.8.3`, and no temporary diagnostic workflow belongs on `main`.
 
 Closed without merge after selective extraction or supersession: PRs #87, #89, #90, #92, #97, #98, and #100. PR #86 remains open and predates the current storage schema and target architecture; review it for narrow value rather than merging the stale branch wholesale.
 
-Every later head—including the shell foundation—must pass its own exact-head checks. Do not reuse the green status of PR #99 or #101 as evidence for a changed commit.
+Every exact head must pass its own checks. Record the shell foundation’s final diagnostic-free run in PR #102 before merging; do not reuse the green status of PR #99 or #101 as evidence for a changed commit.
 
 ## Next-phase sequence
 
-1. **Shell gate:** complete and inspect the full strict CI gate for the shell foundation.
-2. **ADR spikes:** desktop shell, renderer framework, 2D canvas and operation model, encrypted cache/deep links, cloud/realtime skeleton.
-3. **First vertical slice:** authentication, recovery, five-page onboarding, persisted preferences, workspace switching, reconnect and draft recovery.
-4. **Cases and Brief:** Story Field, case lifecycle, jurisdiction confirmation, overall situation and disclosed organization progress.
-5. **Evidence:** immutable upload, processing, source viewer, derivatives, locators, library and search.
-6. **Space:** board domain, structured outline, core interactions, timeline/tasks, AI ghost proposals, then realtime.
-7. **AI and Research:** sourced Ask/Analyze/Plan/Research/Act, contrary material, citations, approval, audit, memory scope.
-8. **Work, Room and Notifications:** task ownership, human-first collaboration, shared AI, conversions, reconnect and revocation.
-9. **Reports and professional package:** review, redaction, versions, export, selective lawyer package.
-10. **Premium marketplace:** verification, conflict screening, booking, payment, refunds, reviews, operations.
-11. **Release hardening:** signed builds, accessibility/security audits, AI red-team, disaster recovery and staged launch.
+1. **ADR spikes:** desktop shell, renderer framework, 2D canvas and operation model, encrypted cache/deep links, cloud/realtime skeleton.
+2. **First vertical slice:** authentication, recovery, five-page onboarding, persisted preferences, workspace switching, reconnect and draft recovery.
+3. **Cases and Brief:** Story Field, case lifecycle, jurisdiction confirmation, overall situation and disclosed organization progress.
+4. **Evidence:** immutable upload, processing, source viewer, derivatives, locators, library and search.
+5. **Space:** board domain, structured outline, core interactions, timeline/tasks, AI ghost proposals, then realtime.
+6. **AI and Research:** sourced Ask/Analyze/Plan/Research/Act, contrary material, citations, approval, audit, memory scope.
+7. **Work, Room and Notifications:** task ownership, human-first collaboration, shared AI, conversions, reconnect and revocation.
+8. **Reports and professional package:** review, redaction, versions, export, selective lawyer package.
+9. **Premium marketplace:** verification, conflict screening, booking, payment, refunds, reviews, operations.
+10. **Release hardening:** signed builds, accessibility/security audits, AI red-team, disaster recovery and staged launch.
 
 ## Explicit V1 exclusions
 

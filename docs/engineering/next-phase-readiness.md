@@ -11,7 +11,7 @@ Repository readiness was repaired in PR #99 without merging the stale broad PR #
 3. strict Chromium lifecycle with CI flakes treated as failures; and
 4. an aggregate gate.
 
-PR #99 exact-head run `33973538762` passed all four jobs. PR #101 exact-head run `33973822119` independently passed the same gate for the preserved connected prototype. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` remains; temporary diagnostics were removed.
+PR #99 exact-head run `33973538762` passed all four jobs. PR #101 exact-head run `33973822119` independently passed the same gate for the preserved connected prototype. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
 
 These runs establish the last merged baselines only. Every changed exact head must pass the full gate before merge.
 
@@ -110,12 +110,13 @@ Cases Library + New Case Story Field + Brief with manual fallback. No dependence
 
 ## Focused pull-request sequence
 
-1. Accessible static shell foundation and exact-head quality gate.
-2. Desktop/renderer spike and ADR.
-3. Canvas/operation/outline spike and ADR.
-4. Authentication/session/recovery skeleton.
-5. Five-page onboarding with persisted preferences.
-6. Workspace switch/reconnect/draft recovery.
-7. Cases/Story Field/Brief.
+Completed: repository readiness repair, connected-prototype preservation, and the accessible static shell foundation.
+
+1. Desktop/renderer spike and ADR.
+2. Canvas/operation/outline spike and ADR.
+3. Authentication/session/recovery skeleton.
+4. Five-page onboarding with persisted preferences.
+5. Workspace switch/reconnect/draft recovery.
+6. Cases/Story Field/Brief.
 
 Prefer one observable user outcome per PR. Keep temporary spike diagnostics off `main`; keep durable automated tests with the code they protect.
