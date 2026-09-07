@@ -1,6 +1,6 @@
 # Next-phase engineering readiness
 
-**Status:** repository readiness and framework-neutral shell foundation complete; host-neutral desktop boundary implemented; packaged desktop and cloud architecture remain Decision required.
+**Status:** repository readiness and framework-neutral shell foundation complete; host-neutral desktop boundary and thin Electron adapter source implemented; packaged desktop and cloud architecture remain Decision required.
 
 ## Gate 1 — trustworthy CI: complete
 
@@ -11,7 +11,7 @@ Repository readiness was repaired in PR #99 without merging the stale broad PR #
 3. strict Chromium lifecycle with CI flakes treated as failures; and
 4. an aggregate gate.
 
-PR #99 exact-head run `33973538762`, PR #101 exact-head run `33973822119`, and PR #102 exact-head run `34016180978` each independently passed all four jobs. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
+PR #99 exact-head run `33973538762`, PR #101 exact-head run `33973822119`, PR #102 exact-head run `34016180978`, PR #103 exact-head run `34017257691`, and PR #104 exact-head run `34110882507` each independently passed all four jobs. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
 
 These runs establish merged baselines only. Every changed exact head must pass the full gate before merge.
 
@@ -32,11 +32,11 @@ Implemented:
 
 Not implemented by the shell: persisted settings, identity, cloud workspaces, case domain data, collaboration, research providers, production AI, report generation, marketplace behavior, desktop packaging, or signed releases.
 
-## Gate 2 — desktop boundary: implemented; runtime evidence pending
+## Gate 2 — desktop boundary and thin Electron adapter source: implemented; runtime evidence pending
 
 ADR 0003 establishes the contract and measurement order without selecting a production host.
 
-Implemented:
+Candidate-neutral work implemented:
 
 - protocol-v1 allowlisted native request envelopes;
 - capabilities discovery and native evidence-picker commands only;
@@ -47,7 +47,18 @@ Implemented:
 - exact commit and packaged-artifact binding; and
 - mandatory crash, deep-link, picker, accessibility-tree, signed-updater, and 16.7 ms Board-frame gates.
 
-The test observations are synthetic fixtures that prove assessor behavior. They do not establish package size, startup, memory, accessibility, security, update, or production support for either host.
+Thin Electron adapter source implemented:
+
+- isolated exact pins for Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3`;
+- a secure custom packaged-content protocol with a five-file allowlist and restrictive content policy;
+- sandboxed, context-isolated rendering without Node, webview, worker/subframe Node, external navigation/window, permission, or DevTools exposure;
+- command-specific preload and main-process sender/request validation;
+- a native PDF/image picker that returns opaque handles while absolute paths remain host-side;
+- global and synthetic Case C-03 deep-link activation only;
+- deterministic policy, wiring, and staging tests; and
+- a current-host Windows/macOS package path with ASAR integrity and restrictive fuse verification.
+
+The test observations are synthetic fixtures that prove assessor behavior. The package recipe has not produced a recorded Windows or macOS observation. Source, tests, staging, or an unsigned package command do not establish package size, startup, memory, accessibility, recovery, signed update, or production support.
 
 Electron is first in the packaged measurement order because it best matches the current web/Chromium foundation. Tauri remains the required comparator. React and every other final renderer choice remain Decision required.
 
@@ -55,7 +66,7 @@ Electron is first in the packaged measurement order because it best matches the 
 
 Create measured spikes, not preference essays:
 
-1. Packaged Electron adapter on Windows and macOS against ADR 0003.
+1. Complete packaged Electron Windows/macOS observations against ADR 0003.
 2. Equivalent packaged Tauri adapter and an evidence-based host decision.
 3. Renderer framework and state boundaries.
 4. Canvas engine, accessibility model, operation log and serialization.
@@ -67,7 +78,7 @@ Create measured spikes, not preference essays:
 10. Packaging, signing, update and rollback hardening.
 11. Marketplace identity/payment providers only before marketplace work.
 
-Every ADR includes context, measurable criteria, prototypes, Windows/macOS results, security/accessibility, cost/size, alternatives, migration, and rollback. The static shell and boundary are reusable evidence, not a silent renderer or production-host decision.
+Every ADR includes context, measurable criteria, prototypes, Windows/macOS results, security/accessibility, cost/size, alternatives, migration, and rollback. The static shell, boundary, and thin adapter are reusable evidence infrastructure, not a silent renderer or production-host decision.
 
 ## Recommended repository shape — decision required
 
@@ -130,9 +141,9 @@ Cases Library + New Case Story Field + Brief with manual fallback. No dependence
 
 ## Focused pull-request sequence
 
-Completed: repository readiness repair, connected-prototype preservation, accessible static shell foundation, and candidate-neutral desktop boundary/evidence harness.
+Completed: repository readiness repair, connected-prototype preservation, accessible static shell foundation, candidate-neutral desktop boundary/evidence harness, non-destructive cleanup audit, and thin Electron adapter source.
 
-1. Disposable packaged Electron candidate against protocol v1, with Windows/macOS observations.
+1. Complete the Electron synthetic fixture and exact Windows/macOS observations.
 2. Equivalent Tauri comparator, then record or defer the production-host decision.
 3. Renderer-framework and canvas/operation/structured-outline measured spikes.
 4. Authentication/session/recovery skeleton.
@@ -140,4 +151,4 @@ Completed: repository readiness repair, connected-prototype preservation, access
 6. Workspace switch/reconnect/draft recovery.
 7. Cases/Story Field/Brief.
 
-Prefer one observable user outcome per PR. Keep temporary spike diagnostics off `main`; keep durable automated tests with the code they protect.
+Prefer one observable user outcome per PR. Keep temporary spike diagnostics and generated packages off `main`; keep durable automated tests with the code they protect.

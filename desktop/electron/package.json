@@ -1,0 +1,17 @@
+{
+  "name": "@evidencespace/electron-spike",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Disposable Electron measurement candidate for ADR 0003.",
+  "type": "module",
+  "engines": { "node": ">=22 <25" },
+  "scripts": {
+    "start:staged": "electron ../../.desktop-build/electron/app",
+    "package:staged": "node package-electron-spike.mjs"
+  },
+  "devDependencies": {
+    "@electron/fuses": "2.1.3",
+    "@electron/packager": "20.3.0",
+    "electron": "44.2.0"
+  }
+}

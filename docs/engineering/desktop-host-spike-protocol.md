@@ -1,7 +1,9 @@
 # Desktop host spike protocol
 
-**Status:** executable boundary and evidence gate implemented; packaged candidate measurements not run  
-**Scope:** Electron and Tauri comparison for Windows and macOS  
+**Status:** protocol-v1 boundary and thin Electron candidate implemented; packaged Windows/macOS measurements not run
+
+**Scope:** Electron and Tauri comparison for Windows and macOS
+
 **Non-goals:** final renderer framework, Board engine, cloud provider, production signing keys, or release claim
 
 ## User outcome
@@ -26,6 +28,23 @@ The current contract exposes only:
 2. `desktop:select-evidence-files`
 
 Adding a command requires a versioned contract, authorization/permission model, failure taxonomy, privacy review, and tests in the same change.
+
+## Thin Electron candidate
+
+The isolated candidate under `desktop/electron` pins Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3`. The root dependency check validates both manifests.
+
+The candidate:
+
+- compiles and reuses the shared TypeScript boundary;
+- serves only the five required shell assets through a secure custom protocol;
+- applies a restrictive response content policy;
+- keeps context isolation, sandboxing, web security, and command-specific preload exposure enabled;
+- denies navigation, redirects, windows, webviews, permissions, raw Node access, and unapproved deep-link scope;
+- keeps selected absolute paths in main-process memory and returns only opaque handles;
+- packages into ASAR; and
+- enables and verifies every Electron fuse known to the pinned fuse tool, including ASAR integrity validation and disabling run-as-Node, Node options, CLI inspection, and file-protocol extra privileges.
+
+The candidate is disposable measurement infrastructure, not a production-host selection. Its deep-link authorization is intentionally limited to global routes and synthetic Case C-03 until a real authorization service exists. See `desktop/electron/README.md` for exact commands and remaining gaps.
 
 ## Evidence matrix
 
@@ -77,7 +96,7 @@ For each candidate and platform:
 6. Record idle private memory after the shell settles.
 7. Exercise the 1,000-object Board and record p95 frame time.
 8. Interrupt a draft write, restart, and verify deterministic recovery.
-9. send valid, foreign-origin, duplicate-parameter, unknown-route, malformed-case, and oversized deep links.
+9. Send valid, foreign-origin, duplicate-parameter, unknown-route, malformed-case, and oversized deep links.
 10. Use the native picker and verify no absolute path reaches renderer state or diagnostics.
 11. Inspect keyboard order and the operating-system accessibility tree.
 12. Verify a valid signed update, reject an invalid signature, and document rollback.
@@ -94,15 +113,24 @@ A candidate remains eligible only when:
 - the representative Board meets the frame budget; and
 - any package/startup/memory trade-off is supported by named hardware and exact observations.
 
-A browser-only run, development server, screenshot, framework description, or vendor claim is not packaged desktop evidence.
+A browser-only run, development server, screenshot, framework description, source review, successful staging command, or vendor claim is not packaged desktop evidence.
 
-## Current verification commands
+## Current verification and candidate commands
 
-The new boundary and evidence gate are covered by the existing repository commands:
+Boundary, evidence-gate, adapter-policy, and wiring tests use the durable repository commands:
 
 ```bash
 npm run typecheck
 npm test
+npm run desktop:electron:stage
 ```
 
-Do not document candidate package commands until the candidate projects and pinned dependencies exist.
+The candidate commands now exist:
+
+```bash
+npm run desktop:electron:install
+npm run desktop:electron:start
+npm run desktop:electron:package
+```
+
+`desktop:electron:package` intentionally rejects non-Windows/macOS and unsupported architectures. It emits an unsigned, ignored, current-host spike bundle only. A successful command still does not satisfy the evidence matrix without exact commit/artifact hashes and the complete procedure above.
