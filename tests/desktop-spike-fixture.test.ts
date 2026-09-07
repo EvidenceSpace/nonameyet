@@ -120,8 +120,8 @@ test("serialized fixture output is deterministic and contains no local paths or 
   const right = serializeDesktopSpikeFixture(await createDesktopSpikeFixture());
   assert.equal(left, right);
   assert.equal(createHash("sha256").update(left).digest("hex").length, 64);
+  assert.equal(/[A-Za-z]:\\/.test(left), false);
   for (const forbidden of [
-    "C:\\\\",
     "/Users/",
     "/home/",
     "deviceId",

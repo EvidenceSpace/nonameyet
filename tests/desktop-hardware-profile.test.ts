@@ -46,7 +46,7 @@ test("the accepted reference remains incomplete until OS build and storage kind 
 test("a complete sanitized profile can calibrate thresholds", () => {
   const assessment = assessDesktopHardwareProfile({
     ...WINDOWS_LOW_SPEC_REFERENCE_PROFILE,
-    osBuild: "26100.4946",
+    osBuild: "windows-test-build",
     storageKind: "ssd",
   });
   assert.equal(assessment.accepted, true);
