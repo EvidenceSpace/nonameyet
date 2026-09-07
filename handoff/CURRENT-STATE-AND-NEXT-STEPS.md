@@ -2,7 +2,7 @@
 
 **Last reconciled:** 7 September 2026
 
-**`main` baseline at fixture branch cut:** `0766837f3c853f5efd228e50d3cf928a1581c926`
+**`main` baseline before fixture work:** `0766837f3c853f5efd228e50d3cf928a1581c926`
 
 ## Current
 
@@ -17,7 +17,7 @@
 - The shell provides semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
 - The repository includes a disposable thin Electron adapter source and packaging path against protocol v1. It uses an allowlisted packaged-content protocol, restrictive BrowserWindow/preload settings, sender and shape validation, opaque picker handles, ASAR integrity, and verified Electron fuses.
 - Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3` are isolated and exactly pinned under `desktop/electron`.
-- A sanitized lower-spec Windows reference profile and deterministic 1,000-object/4,000-relation measurement fixture are implemented on the current fixture branch. The profile intentionally excludes machine and license identifiers; Windows build and storage kind remain to be recorded.
+- The desktop fixture slice adds a sanitized lower-spec Windows reference profile and deterministic 1,000-object/4,000-relation measurement input. The profile intentionally excludes machine and license identifiers; Windows build and storage kind remain to be recorded.
 - Electron remains the first packaged candidate; Tauri remains the mandatory comparator. No production host or renderer framework has been selected.
 - TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must not remain on `main`.
 
@@ -34,11 +34,11 @@ The evidence records and new 1,000-object fixture are synthetic validation input
 
 ## Next five focused slices
 
-1. Verify and merge the sanitized reference-hardware and deterministic fixture branch without retaining any device, product, account, or license identifiers.
-2. Connect the fixture to the packaged Electron measurement harness, complete operating-system deep-link registration, and implement safe observation capture.
-3. Build the Electron spike from an exact commit on the reference Windows profile and representative macOS hardware; hash it and record package, startup, memory, deep-link, picker, accessibility, recovery, updater, and Board evidence without committing private diagnostics.
-4. Run the equivalent Tauri comparator and make or explicitly defer the production-host decision.
-5. Measure renderer migration/bundle/accessibility/test cost plus canvas/operation/structured-outline behavior, then build authentication, session recovery, onboarding, persisted preferences, workspace switching, and Cases/Story Field/Brief.
+1. Connect the deterministic fixture to the packaged Electron measurement harness, complete operating-system deep-link registration, and implement safe observation capture.
+2. Build the Electron spike from an exact commit on the reference Windows profile and representative macOS hardware; hash it and record package, startup, memory, deep-link, picker, accessibility, recovery, updater, and Board evidence without committing private diagnostics.
+3. Run the equivalent Tauri comparator and make or explicitly defer the production-host decision.
+4. Measure renderer migration/bundle/accessibility/test cost plus canvas/operation/structured-outline behavior.
+5. Build authentication, session recovery, onboarding, persisted preferences, workspace switching, and Cases/Story Field/Brief.
 
 ## Verification expectation
 

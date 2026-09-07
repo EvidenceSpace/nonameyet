@@ -59,7 +59,7 @@ A host decision requires one valid observation for each pair:
 
 ## Representative fixture
 
-`createDesktopSpikeFixture()` produces synthetic and deterministic data:
+`createDesktopSpikeFixture()` produces synthetic and deterministic data for the approved EvidenceSpace shell:
 
 - Case C-03 route continuity;
 - one native evidence-picker request for PDF and image kinds;
