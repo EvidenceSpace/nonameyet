@@ -9,5 +9,10 @@
     "sourceMap": false,
     "incremental": false
   },
-  "include": ["../../src/desktop/boundary.ts"]
+  "include": [
+    "../../src/desktop/boundary.ts",
+    "../../src/desktop/spike-evidence.ts",
+    "../../src/desktop/spike-fixture.ts",
+    "../../src/desktop/spike-measurement.ts"
+  ]
 }

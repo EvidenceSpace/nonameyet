@@ -4,9 +4,12 @@
   "private": true,
   "description": "Disposable Electron measurement candidate for ADR 0003.",
   "type": "module",
-  "engines": { "node": ">=22 <25" },
+  "engines": {
+    "node": ">=22 <25"
+  },
   "scripts": {
     "start:staged": "electron ../../.desktop-build/electron/app",
+    "measure:staged": "electron ../../.desktop-build/electron/app --evidencespace-measure-board",
     "package:staged": "node package-electron-spike.mjs"
   },
   "devDependencies": {

@@ -4,7 +4,9 @@
   "private": true,
   "description": "Current CaseFind prototype and approved EvidenceSpace target foundation.",
   "type": "module",
-  "engines": { "node": ">=22 <25" },
+  "engines": {
+    "node": ">=22 <25"
+  },
   "scripts": {
     "sync:pdfjs": "node scripts/sync-pdfjs.mjs",
     "preview": "npm run sync:pdfjs && node scripts/serve-static.mjs",
@@ -18,13 +20,16 @@
     "desktop:electron:install": "npm install --prefix desktop/electron --no-audit --no-fund --package-lock=false",
     "desktop:electron:stage": "tsc -p desktop/electron/tsconfig.json && node scripts/stage-electron-spike.mjs",
     "desktop:electron:start": "npm run desktop:electron:stage && npm --prefix desktop/electron run start:staged",
+    "desktop:electron:measure": "npm run desktop:electron:stage && npm --prefix desktop/electron run measure:staged",
     "desktop:electron:package": "npm run desktop:electron:stage && npm --prefix desktop/electron run package:staged",
     "check:dependencies": "node scripts/check-dependency-policy.mjs",
     "check:workflow-actions": "node scripts/check-workflow-action-pins.mjs",
     "check:docs": "node scripts/check-canonical-docs.mjs",
     "check": "npm run check:dependencies && npm run check:workflow-actions && npm run check:docs && npm run typecheck && npm test"
   },
-  "dependencies": { "pdfjs-dist": "4.10.38" },
+  "dependencies": {
+    "pdfjs-dist": "4.10.38"
+  },
   "devDependencies": {
     "playwright": "1.54.1",
     "tsx": "4.20.0",
