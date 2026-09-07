@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../.desktop-build/electron/compiled",
+    "rootDir": "../../src/desktop",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "incremental": false
+  },
+  "include": ["../../src/desktop/boundary.ts"]
+}
