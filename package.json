@@ -14,6 +14,7 @@
     "test:browser": "playwright test",
     "benchmark:extraction": "tsx scripts/build-extraction-benchmark.ts",
     "benchmark:compare": "tsx scripts/compare-extraction-benchmarks.ts",
+    "desktop:fixture": "tsx scripts/build-desktop-spike-fixture.ts",
     "desktop:electron:install": "npm install --prefix desktop/electron --no-audit --no-fund --package-lock=false",
     "desktop:electron:stage": "tsc -p desktop/electron/tsconfig.json && node scripts/stage-electron-spike.mjs",
     "desktop:electron:start": "npm run desktop:electron:stage && npm --prefix desktop/electron run start:staged",
