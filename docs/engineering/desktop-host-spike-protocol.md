@@ -1,6 +1,6 @@
 # Desktop host spike protocol
 
-**Status:** protocol-v1 boundary and thin Electron candidate implemented; packaged Windows/macOS measurements not run
+**Status:** protocol-v1 boundary, thin Electron candidate, sanitized Windows reference profile, and deterministic measurement fixture implemented; packaged Windows/macOS measurements not run
 
 **Scope:** Electron and Tauri comparison for Windows and macOS
 
@@ -59,17 +59,25 @@ A host decision requires one valid observation for each pair:
 
 ## Representative fixture
 
-Use synthetic data:
+`createDesktopSpikeFixture()` produces synthetic and deterministic data:
 
-- the approved EvidenceSpace shell;
 - Case C-03 route continuity;
 - one native evidence-picker request for PDF and image kinds;
-- one valid and at least five invalid deep-link cases;
-- a 1,000-object Board model with dense typed connections;
-- an equivalent structured outline; and
-- a draft journal that can be interrupted before, during, and after commit.
+- one valid and six invalid deep-link cases;
+- exactly 1,000 Board objects;
+- exactly 4,000 typed relations across supports, contradicts, sequence, and dependency edges;
+- an equivalent ordered outline containing every object and relation; and
+- a SHA-256-bound draft journal that can be recovered before, during, and after commit.
 
-Do not include real case names, filenames, text, source quotes, user accounts, tokens, signing keys, or local paths in fixtures or artifacts.
+Run `npm run desktop:fixture` to write the ignored artifact to `.desktop-build/fixtures/desktop-spike-fixture.v1.json`. The command reports counts, bytes, and a SHA-256 without logging fixture content. Identical source and runtime inputs produce identical serialized output.
+
+The fixture contains no real case names, filenames, source text, user accounts, tokens, signing keys, local paths, or machine identifiers. It is measurement input, not proof that either packaged candidate renders, recovers, or meets the frame budget.
+
+## Reference hardware
+
+The sanitized `windows-low-spec-reference-v1` profile records Windows 11 x64, Intel Core i5-8365U, 8 GiB installed memory, Intel UHD Graphics 620, and no touch input. Windows build and storage kind remain unobserved. Device, product, license, account, and serial identifiers are intentionally excluded. See `docs/engineering/desktop-reference-hardware.md`.
+
+This profile is a practical lower-spec Windows target, not a minimum-support claim. Both candidates must be measured on the same profile and configuration before startup, memory, and package trade-offs are compared.
 
 ## Observation record
 
@@ -82,7 +90,7 @@ Each candidate/platform record contains:
 - cold start, warm start, idle private memory, and p95 Board frame time;
 - pass/fail for crash recovery, validated deep link, native picker, accessibility-tree inspection, and signed updater.
 
-The current Board frame gate is p95 at or below 16.7 ms for the representative fixture. Startup, memory, and package thresholds remain Decision required until representative minimum hardware is named and measured.
+The current Board frame gate is p95 at or below 16.7 ms for the representative fixture. Startup, memory, and package thresholds remain Decision required until the sanitized reference profile is complete and both candidates are measured.
 
 ## Test procedure
 
@@ -111,17 +119,18 @@ A candidate remains eligible only when:
 - navigation, new windows, external URLs, permissions, and deep links fail closed;
 - crash recovery, picker, accessibility, and updater gates pass on both platforms;
 - the representative Board meets the frame budget; and
-- any package/startup/memory trade-off is supported by named hardware and exact observations.
+- any package/startup/memory trade-off is supported by named sanitized hardware and exact observations.
 
 A browser-only run, development server, screenshot, framework description, source review, successful staging command, or vendor claim is not packaged desktop evidence.
 
 ## Current verification and candidate commands
 
-Boundary, evidence-gate, adapter-policy, and wiring tests use the durable repository commands:
+Boundary, evidence-gate, fixture, adapter-policy, and wiring tests use the durable repository commands:
 
 ```bash
 npm run typecheck
 npm test
+npm run desktop:fixture
 npm run desktop:electron:stage
 ```
 
