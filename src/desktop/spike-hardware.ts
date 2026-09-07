@@ -32,12 +32,12 @@ export const WINDOWS_LOW_SPEC_REFERENCE_PROFILE = Object.freeze({
   profileId: "windows-low-spec-reference-v1",
   platform: "windows",
   osFamily: "windows-11",
-  osBuild: null,
+  osBuild: "26200.9168",
   architecture: "x64",
   cpuModel: "Intel Core i5-8365U",
   installedMemoryBytes: 8 * 1024 * 1024 * 1024,
   gpuModel: "Intel UHD Graphics 620",
-  storageKind: "unknown",
+  storageKind: "ssd",
   touchInput: false,
 } as const satisfies DesktopHardwareProfile);
 
