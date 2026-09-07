@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Candidate-only EvidenceSpace desktop Board measurement surface."
+    />
+    <title>Board measurement — EvidenceSpace desktop spike</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="evidencespace-tokens.css" />
+    <link rel="stylesheet" href="desktop-spike-board.css" />
+    <script type="module" src="desktop-spike-board.js"></script>
+  </head>
+  <body class="es-measurement-app">
+    <a class="es-skip-link" href="#measurement-main">Skip to measurement</a>
+
+    <header class="es-measurement-header">
+      <div class="es-brand" aria-label="EvidenceSpace">
+        <span class="es-brand-mark" aria-hidden="true">ES</span>
+        <div>
+          <p class="es-kicker">Disposable Electron candidate</p>
+          <h1>Representative Board measurement</h1>
+          <p>
+            Synthetic Case C-03 only. This surface is measurement
+            infrastructure, not the production Board.
+          </p>
+        </div>
+      </div>
+      <div class="es-fixture-state">
+        <span id="fixture-status" role="status">Validating fixture…</span>
+        <strong id="fixture-counts">No fixture loaded</strong>
+        <span class="es-hash" id="fixture-hash">SHA-256 unavailable</span>
+      </div>
+    </header>
+
+    <main id="measurement-main" tabindex="-1">
+      <section class="es-measurement-card" aria-labelledby="measurement-title">
+        <header class="es-card-header">
+          <div>
+            <p class="es-kicker">Fixed 1280 × 720 workload</p>
+            <h2 id="measurement-title">Board and structured outline</h2>
+            <p>
+              The Board redraws every synthetic object and typed relationship.
+              The outline provides equivalent non-spatial semantics.
+            </p>
+          </div>
+          <button
+            id="run-measurement"
+            class="es-primary"
+            type="button"
+            disabled
+          >
+            Run 120-frame sample
+          </button>
+        </header>
+
+        <div class="es-view-switcher" role="tablist" aria-label="Fixture view">
+          <button
+            id="board-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="board-panel"
+          >
+            Board
+          </button>
+          <button
+            id="outline-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="outline-panel"
+            tabindex="-1"
+          >
+            Structured outline
+          </button>
+        </div>
+
+        <section
+          id="board-panel"
+          class="es-view-panel"
+          role="tabpanel"
+          aria-labelledby="board-tab"
+        >
+          <div class="es-canvas-frame">
+            <canvas
+              id="board-canvas"
+              width="1280"
+              height="720"
+              role="img"
+              aria-describedby="board-description"
+            ></canvas>
+          </div>
+          <p id="board-description" class="es-secondary-copy">
+            Loading the synthetic Board. Use Structured outline for every object
+            and relationship in a keyboard-readable table.
+          </p>
+
+          <dl class="es-metric-grid" aria-label="Frame sample summary">
+            <div>
+              <dt>Samples</dt>
+              <dd><output id="sample-count">—</output></dd>
+            </div>
+            <div>
+              <dt>Minimum</dt>
+              <dd><output id="sample-minimum">—</output></dd>
+            </div>
+            <div>
+              <dt>Maximum</dt>
+              <dd><output id="sample-maximum">—</output></dd>
+            </div>
+            <div class="es-primary-metric">
+              <dt>Board p95</dt>
+              <dd><output id="sample-p95">—</output></dd>
+            </div>
+          </dl>
+          <p id="measurement-status" class="es-run-status" aria-live="polite">
+            The frame sample starts after the validated fixture is rendered.
+          </p>
+        </section>
+
+        <section
+          id="outline-panel"
+          class="es-view-panel"
+          role="tabpanel"
+          aria-labelledby="outline-tab"
+          hidden
+        >
+          <p id="outline-status" class="es-secondary-copy" role="status">
+            The equivalent outline will be prepared when opened.
+          </p>
+          <div class="es-outline-table-frame">
+            <table>
+              <caption>
+                All synthetic Board objects with incoming counts and every
+                outgoing typed relationship
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Position</th>
+                  <th scope="col">Object</th>
+                  <th scope="col">Kind</th>
+                  <th scope="col">Incoming</th>
+                  <th scope="col">Outgoing relationships</th>
+                </tr>
+              </thead>
+              <tbody id="outline-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <aside class="es-scope-note" aria-labelledby="scope-title">
+        <div>
+          <p class="es-kicker">Evidence boundary</p>
+          <h2 id="scope-title">What this result does—and does not—mean</h2>
+        </div>
+        <p>
+          A result is a bounded renderer sample from synthetic data. It is not
+          packaged Windows or macOS evidence, a production-host decision, an
+          accessibility-tree inspection, or a claim about real case content.
+        </p>
+      </aside>
+    </main>
+  </body>
+</html>
