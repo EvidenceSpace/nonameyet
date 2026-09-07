@@ -2,7 +2,7 @@
 
 **Last reconciled:** 7 September 2026
 
-**`main` baseline before fixture work:** `0766837f3c853f5efd228e50d3cf928a1581c926`
+**`main` baseline before hardware-profile completion:** `b8cb311b312d30c5458fd3c7b096dc3db35b3c82`
 
 ## Current
 
@@ -13,11 +13,13 @@
 - PR #103 merged the protocol-v1 desktop boundary and evidence gate; exact-head run `34017257691` passed all four durable jobs.
 - PR #104 merged the non-destructive repository cleanup audit; exact-head run `34110882507` passed all four durable jobs. Historical refs have not been deleted and `main` protection has not been enabled.
 - PR #105 merged the secure thin Electron candidate at `0766837f3c853f5efd228e50d3cf928a1581c926`; the exact PR head reached GitHub's clean state before merge. Individual run and job URLs were unavailable through the connected interface.
+- PR #106 merged the deterministic desktop fixture and initial sanitized hardware profile at `b8cb311b312d30c5458fd3c7b096dc3db35b3c82`; exact-head run `34115720741` passed all four durable jobs.
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
 - The shell provides semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
 - The repository includes a disposable thin Electron adapter source and packaging path against protocol v1. It uses an allowlisted packaged-content protocol, restrictive BrowserWindow/preload settings, sender and shape validation, opaque picker handles, ASAR integrity, and verified Electron fuses.
 - Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3` are isolated and exactly pinned under `desktop/electron`.
-- The desktop fixture slice adds a sanitized lower-spec Windows reference profile and deterministic 1,000-object/4,000-relation measurement input. The profile intentionally excludes machine and license identifiers; Windows build and storage kind remain to be recorded.
+- The completed sanitized Windows reference profile records Windows 11 Pro 25H2 build 26200.9168, x64, Intel Core i5-8365U, 8 GiB memory, Intel UHD Graphics 620, and NVMe SSD storage. Machine and license identifiers remain excluded.
+- The deterministic measurement fixture contains 1,000 Board objects, 4,000 typed relations, an equivalent outline, deep-link cases, a picker request, and interruption-journal states.
 - Electron remains the first packaged candidate; Tauri remains the mandatory comparator. No production host or renderer framework has been selected.
 - TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must not remain on `main`.
 
@@ -25,7 +27,7 @@
 
 No signed or distributed Electron build, Windows/macOS packaged observation, production deep-link authorization or operating-system registration, renderer-integrated draft crash recovery, actual Board frame measurement, accessibility-tree inspection, signed updater/rollback, Tauri adapter, final renderer framework, persisted target settings, identity/recovery, cloud workspace, realtime collaboration, production case lenses, persistent copilot, research service, target reports, marketplace, booking/payment, or signed release is implemented or claimed.
 
-The evidence records and new 1,000-object fixture are synthetic validation inputs, not host measurements. The Electron package command creates only an unsigned spike bundle for the current Windows/macOS host and architecture; a command, fixture, or source file is not measurement evidence.
+The evidence records and 1,000-object fixture are synthetic validation inputs, not host measurements. The Electron package command creates only an unsigned spike bundle for the current Windows/macOS host and architecture; a command, fixture, or source file is not measurement evidence.
 
 ## Open PR disposition
 

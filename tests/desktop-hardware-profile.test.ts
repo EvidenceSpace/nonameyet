@@ -12,12 +12,12 @@ test("the Windows reference profile records only sanitized performance-relevant 
     profileId: "windows-low-spec-reference-v1",
     platform: "windows",
     osFamily: "windows-11",
-    osBuild: null,
+    osBuild: "26200.9168",
     architecture: "x64",
     cpuModel: "Intel Core i5-8365U",
     installedMemoryBytes: 8 * 1024 * 1024 * 1024,
     gpuModel: "Intel UHD Graphics 620",
-    storageKind: "unknown",
+    storageKind: "ssd",
     touchInput: false,
   });
 
@@ -33,25 +33,25 @@ test("the Windows reference profile records only sanitized performance-relevant 
   }
 });
 
-test("the accepted reference remains incomplete until OS build and storage kind are observed", () => {
+test("the completed reference profile is ready for threshold calibration", () => {
   const assessment = assessDesktopHardwareProfile(
     WINDOWS_LOW_SPEC_REFERENCE_PROFILE,
   );
   assert.equal(assessment.accepted, true);
-  assert.equal(assessment.readyForThresholdCalibration, false);
-  assert.deepEqual(assessment.missing, ["os_build", "storage_kind"]);
+  assert.equal(assessment.readyForThresholdCalibration, true);
+  assert.deepEqual(assessment.missing, []);
   assert.deepEqual(assessment.blockers, []);
 });
 
-test("a complete sanitized profile can calibrate thresholds", () => {
+test("missing build and storage observations remain explicit", () => {
   const assessment = assessDesktopHardwareProfile({
     ...WINDOWS_LOW_SPEC_REFERENCE_PROFILE,
-    osBuild: "windows-test-build",
-    storageKind: "ssd",
+    osBuild: null,
+    storageKind: "unknown",
   });
   assert.equal(assessment.accepted, true);
-  assert.equal(assessment.readyForThresholdCalibration, true);
-  assert.deepEqual(assessment.missing, []);
+  assert.equal(assessment.readyForThresholdCalibration, false);
+  assert.deepEqual(assessment.missing, ["os_build", "storage_kind"]);
 });
 
 test("unknown or identifying fields fail closed without echoing their values", () => {

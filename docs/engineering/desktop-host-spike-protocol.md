@@ -1,6 +1,6 @@
 # Desktop host spike protocol
 
-**Status:** protocol-v1 boundary, thin Electron candidate, sanitized Windows reference profile, and deterministic measurement fixture implemented; packaged Windows/macOS measurements not run
+**Status:** protocol-v1 boundary, thin Electron candidate, complete sanitized Windows reference profile, and deterministic measurement fixture implemented; packaged Windows/macOS measurements not run
 
 **Scope:** Electron and Tauri comparison for Windows and macOS
 
@@ -75,7 +75,7 @@ The fixture contains no real case names, filenames, source text, user accounts, 
 
 ## Reference hardware
 
-The sanitized `windows-low-spec-reference-v1` profile records Windows 11 x64, Intel Core i5-8365U, 8 GiB installed memory, Intel UHD Graphics 620, and no touch input. Windows build and storage kind remain unobserved. Device, product, license, account, and serial identifiers are intentionally excluded. See `docs/engineering/desktop-reference-hardware.md`.
+The complete sanitized `windows-low-spec-reference-v1` profile records Windows 11 Pro 25H2 build 26200.9168 on x64, Intel Core i5-8365U, 8 GiB installed memory, Intel UHD Graphics 620, an NVMe SSD, and no touch input. Device, product, license, account, and serial identifiers are intentionally excluded. See `docs/engineering/desktop-reference-hardware.md`.
 
 This profile is a practical lower-spec Windows target, not a minimum-support claim. Both candidates must be measured on the same profile and configuration before startup, memory, and package trade-offs are compared.
 
@@ -90,7 +90,7 @@ Each candidate/platform record contains:
 - cold start, warm start, idle private memory, and p95 Board frame time;
 - pass/fail for crash recovery, validated deep link, native picker, accessibility-tree inspection, and signed updater.
 
-The current Board frame gate is p95 at or below 16.7 ms for the representative fixture. Startup, memory, and package thresholds remain Decision required until the sanitized reference profile is complete and both candidates are measured.
+The current Board frame gate is p95 at or below 16.7 ms for the representative fixture. Startup, memory, and package thresholds remain Decision required until both candidates are measured on the complete reference profile.
 
 ## Test procedure
 
