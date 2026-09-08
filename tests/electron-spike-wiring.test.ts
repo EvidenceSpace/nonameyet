@@ -143,6 +143,8 @@ test("the observation command binds a clean commit and package digest without ec
     "dirty_worktree",
     "digestDesktopPackagedArtifact",
     "captureBoundDesktopHostObservation",
+    "ensureTrustedDirectoryChain",
+    "isSymbolicLink()",
     "mode: 0o600",
     'flag: "wx"',
     "artifact_changed_during_capture",

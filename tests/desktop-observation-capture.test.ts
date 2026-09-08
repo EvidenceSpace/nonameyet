@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { lstat, mkdir, mkdtemp, readdir, rm, symlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
+import { ensureTrustedDirectoryChain } from "../scripts/capture-desktop-host-observation.js";
 import {
   DESKTOP_ARTIFACT_DIGEST_ALGORITHM,
   DESKTOP_HOST_OBSERVATION_VERSION,
@@ -124,3 +128,66 @@ test("accepted records serialize canonically and invalid records do not serializ
   );
   assert.equal(serializeDesktopHostObservation({ deviceId: "secret" }), null);
 });
+
+test(
+  "capture roots reject symlink redirection before reading or writing outside the repository",
+  { skip: process.platform === "win32" },
+  async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "evidencespace-capture-"));
+    const repository = join(temporary, "repository");
+    const outside = join(temporary, "outside");
+    try {
+      await mkdir(repository);
+      await mkdir(outside);
+
+      const safeObservationRoot = join(
+        repository,
+        ".desktop-build",
+        "observations",
+      );
+      await ensureTrustedDirectoryChain(
+        repository,
+        safeObservationRoot,
+        true,
+        "unsafe_draft_path",
+      );
+      const safeMetadata = await lstat(safeObservationRoot);
+      assert.equal(safeMetadata.isDirectory(), true);
+      assert.equal(safeMetadata.isSymbolicLink(), false);
+
+      const redirectedParent = join(repository, "redirected");
+      await symlink(outside, redirectedParent, "dir");
+      await assert.rejects(
+        ensureTrustedDirectoryChain(
+          repository,
+          join(redirectedParent, "observations"),
+          true,
+          "unsafe_draft_path",
+        ),
+        (error: unknown) =>
+          error instanceof Error &&
+          error.message === "unsafe_draft_path" &&
+          !error.message.includes(temporary),
+      );
+
+      await mkdir(join(repository, "dist"));
+      const redirectedArtifactRoot = join(repository, "dist", "electron-spike");
+      await symlink(outside, redirectedArtifactRoot, "dir");
+      await assert.rejects(
+        ensureTrustedDirectoryChain(
+          repository,
+          redirectedArtifactRoot,
+          false,
+          "unsafe_artifact_path",
+        ),
+        (error: unknown) =>
+          error instanceof Error &&
+          error.message === "unsafe_artifact_path" &&
+          !error.message.includes(temporary),
+      );
+      assert.deepEqual(await readdir(outside), []);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  },
+);

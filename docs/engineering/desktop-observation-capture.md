@@ -9,6 +9,7 @@
 Run capture only from the exact clean checkout used to build and measure the candidate. The command:
 
 - accepts one draft below `.desktop-build/observations` and one package directory below `dist/electron-spike`;
+- rejects symlinks anywhere in either trusted root chain before changing permissions, reading a draft, or hashing a package;
 - rejects tracked or untracked non-ignored source changes before binding `HEAD`;
 - requires the draft platform and architecture to match the machine running capture;
 - computes the package digest twice and rejects a package that changes during capture;

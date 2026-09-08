@@ -8,7 +8,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 import { digestDesktopPackagedArtifact } from "./desktop-artifact-digest.mjs";
@@ -47,22 +47,64 @@ function isWithinRoot(root: string, target: string): boolean {
   );
 }
 
+type CapturePathErrorCode = "unsafe_draft_path" | "unsafe_artifact_path";
+
+export async function ensureTrustedDirectoryChain(
+  root: string,
+  target: string,
+  createMissing: boolean,
+  errorCode: CapturePathErrorCode,
+): Promise<void> {
+  if (!isWithinRoot(root, target)) return fail(errorCode);
+  const location = relative(root, target);
+  if (location === "") return;
+
+  let current = root;
+  for (const part of location.split(sep)) {
+    current = resolve(current, part);
+    const metadata = await lstat(current).catch(async () => {
+      if (!createMissing) return fail(errorCode);
+      try {
+        await mkdir(current, { mode: 0o700 });
+        return await lstat(current);
+      } catch {
+        return fail(errorCode);
+      }
+    });
+    if (!metadata.isDirectory() || metadata.isSymbolicLink()) {
+      return fail(errorCode);
+    }
+  }
+}
+
 async function resolveRegularDraft(input: string): Promise<string> {
   const path = resolve(REPOSITORY_ROOT, input);
-  if (!isWithinRoot(OBSERVATION_ROOT, path)) return fail("unsafe_draft_path");
+  if (!isWithinRoot(OBSERVATION_ROOT, path) || path === OBSERVATION_ROOT) {
+    return fail("unsafe_draft_path");
+  }
 
-  const metadata = await lstat(path);
+  await ensureTrustedDirectoryChain(
+    OBSERVATION_ROOT,
+    dirname(path),
+    false,
+    "unsafe_draft_path",
+  );
+  const metadata = await lstat(path).catch(() => fail("invalid_draft_file"));
+  if (metadata.isSymbolicLink()) return fail("unsafe_draft_path");
   if (
     !metadata.isFile() ||
-    metadata.isSymbolicLink() ||
     metadata.size === 0 ||
     metadata.size > MAXIMUM_DRAFT_BYTES
   ) {
     return fail("invalid_draft_file");
   }
 
-  const canonicalRoot = await realpath(OBSERVATION_ROOT);
-  const canonicalPath = await realpath(path);
+  const canonicalRoot = await realpath(OBSERVATION_ROOT).catch(() =>
+    fail("unsafe_draft_path"),
+  );
+  const canonicalPath = await realpath(path).catch(() =>
+    fail("unsafe_draft_path"),
+  );
   if (!isWithinRoot(canonicalRoot, canonicalPath)) {
     return fail("unsafe_draft_path");
   }
@@ -70,12 +112,28 @@ async function resolveRegularDraft(input: string): Promise<string> {
 }
 
 async function resolveArtifactRoot(input: string): Promise<string> {
+  await ensureTrustedDirectoryChain(
+    REPOSITORY_ROOT,
+    ARTIFACT_ROOT,
+    false,
+    "unsafe_artifact_path",
+  );
   const path = resolve(REPOSITORY_ROOT, input);
   if (!isWithinRoot(ARTIFACT_ROOT, path) || path === ARTIFACT_ROOT) {
     return fail("unsafe_artifact_path");
   }
-  const canonicalRoot = await realpath(ARTIFACT_ROOT);
-  const canonicalPath = await realpath(path);
+  await ensureTrustedDirectoryChain(
+    ARTIFACT_ROOT,
+    path,
+    false,
+    "unsafe_artifact_path",
+  );
+  const canonicalRoot = await realpath(ARTIFACT_ROOT).catch(() =>
+    fail("unsafe_artifact_path"),
+  );
+  const canonicalPath = await realpath(path).catch(() =>
+    fail("unsafe_artifact_path"),
+  );
   if (!isWithinRoot(canonicalRoot, canonicalPath)) {
     return fail("unsafe_artifact_path");
   }
@@ -124,7 +182,12 @@ async function capture(): Promise<void> {
     return fail("invalid_arguments");
   }
 
-  await mkdir(OBSERVATION_ROOT, { recursive: true, mode: 0o700 });
+  await ensureTrustedDirectoryChain(
+    REPOSITORY_ROOT,
+    OBSERVATION_ROOT,
+    true,
+    "unsafe_draft_path",
+  );
   if (process.platform !== "win32") await chmod(OBSERVATION_ROOT, 0o700);
   const draftPath = await resolveRegularDraft(draftInput);
   const artifactPath = await resolveArtifactRoot(artifactInput);
@@ -194,10 +257,17 @@ async function capture(): Promise<void> {
   );
 }
 
-try {
-  await capture();
-} catch (error) {
-  const code = error instanceof CaptureFailure ? error.code : "capture_failed";
-  console.error(JSON.stringify({ accepted: false, error: code }));
-  process.exitCode = 1;
+const entryPoint = process.argv[1];
+if (
+  typeof entryPoint === "string" &&
+  pathToFileURL(resolve(entryPoint)).href === import.meta.url
+) {
+  try {
+    await capture();
+  } catch (error) {
+    const code =
+      error instanceof CaptureFailure ? error.code : "capture_failed";
+    console.error(JSON.stringify({ accepted: false, error: code }));
+    process.exitCode = 1;
+  }
 }
