@@ -72,7 +72,9 @@ const fuseConfiguration = Object.freeze({
   [FuseV1Options.EnableNodeCliInspectArguments]: false,
   [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
   [FuseV1Options.OnlyLoadAppFromAsar]: true,
-  [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: true,
+  // No dedicated browser_v8_context_snapshot.bin is packaged. Enabling this
+  // fuse without that artifact aborts Electron before the main process starts.
+  [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
   [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
   [FuseV1Options.WasmTrapHandlers]: true,
 });
@@ -84,7 +86,7 @@ const expectedFuseStates = new Map([
   [FuseV1Options.EnableNodeCliInspectArguments, FuseState.DISABLE],
   [FuseV1Options.EnableEmbeddedAsarIntegrityValidation, FuseState.ENABLE],
   [FuseV1Options.OnlyLoadAppFromAsar, FuseState.ENABLE],
-  [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot, FuseState.ENABLE],
+  [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot, FuseState.DISABLE],
   [FuseV1Options.GrantFileProtocolExtraPrivileges, FuseState.DISABLE],
   [FuseV1Options.WasmTrapHandlers, FuseState.ENABLE],
 ]);
