@@ -188,11 +188,14 @@ test("the staging script copies explicit assets, compiled contracts, and generat
 
 test("the durable stage command emits only the expected app and measurement files", async () => {
   const repositoryRoot = new URL("..", import.meta.url);
-  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  const result = await execFileAsync(npm, ["run", "desktop:electron:stage"], {
-    cwd: repositoryRoot,
-    timeout: 30_000,
-  });
+  const result = await execFileAsync(
+    process.execPath,
+    ["--run", "desktop:electron:stage"],
+    {
+      cwd: repositoryRoot,
+      timeout: 30_000,
+    },
+  );
   assert.match(
     result.stdout,
     /Electron spike staged with 13 allowlisted web assets; fixture 1000 objects, 4000 relationships, sha256 [a-f0-9]{64}\./,
