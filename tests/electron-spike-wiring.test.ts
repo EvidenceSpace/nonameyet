@@ -210,6 +210,18 @@ test("the durable stage command emits only the expected app and measurement file
     "runtime-policy.mjs",
     "web",
   ]);
+  assert.deepEqual(
+    JSON.parse(await readFile(new URL("package.json", stageRoot), "utf8")),
+    {
+      name: "evidencespace-electron-spike-app",
+      productName: "EvidenceSpaceSpike",
+      version: "0.0.0",
+      author: { name: "EvidenceSpace" },
+      private: true,
+      type: "module",
+      main: "main.mjs",
+    },
+  );
   assert.deepEqual((await readdir(new URL("lib/", stageRoot))).sort(), [
     "boundary.js",
     "spike-evidence.js",

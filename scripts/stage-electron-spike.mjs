@@ -98,6 +98,7 @@ const appPackage = {
   name: "evidencespace-electron-spike-app",
   productName: "EvidenceSpaceSpike",
   version: "0.0.0",
+  author: { name: "EvidenceSpace" },
   private: true,
   type: "module",
   main: "main.mjs",
