@@ -2,17 +2,47 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { FuseState, FuseV1Options, FuseVersion, flipFuses, getCurrentFuseWire } from "@electron/fuses";
+import {
+  FuseState,
+  FuseV1Options,
+  FuseVersion,
+  flipFuses,
+  getCurrentFuseWire,
+} from "@electron/fuses";
 import { packager } from "@electron/packager";
 
-const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+import { ELECTRON_EXTERNAL_DEEP_LINK_SCHEME } from "./runtime-policy.mjs";
+
+const REPOSITORY_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const STAGE_ROOT = join(REPOSITORY_ROOT, ".desktop-build", "electron", "app");
 const OUTPUT_ROOT = join(REPOSITORY_ROOT, "dist", "electron-spike");
-const TARGETS = new Set(["darwin:arm64", "darwin:x64", "win32:arm64", "win32:x64"]);
+const TARGETS = new Set([
+  "darwin:arm64",
+  "darwin:x64",
+  "win32:arm64",
+  "win32:x64",
+]);
 const target = `${process.platform}:${process.arch}`;
+const protocolOptions =
+  process.platform === "darwin"
+    ? {
+        appBundleId: "space.evidencespace.spike",
+        protocols: [
+          {
+            name: "EvidenceSpace",
+            schemes: [ELECTRON_EXTERNAL_DEEP_LINK_SCHEME],
+          },
+        ],
+      }
+    : {};
 
 if (!TARGETS.has(target)) {
-  throw new Error("Electron spike packages must be built on Windows or macOS using x64 or arm64.");
+  throw new Error(
+    "Electron spike packages must be built on Windows or macOS using x64 or arm64.",
+  );
 }
 
 await mkdir(OUTPUT_ROOT, { recursive: true });
@@ -28,12 +58,14 @@ const outputPaths = await packager({
   prune: true,
   asar: true,
   asarIntegrityDigest: true,
+  ...protocolOptions,
 });
 
 const fuseConfiguration = Object.freeze({
   version: FuseVersion.V1,
   strictlyRequireAllFuses: true,
-  resetAdHocDarwinSignature: process.platform === "darwin" && process.arch === "arm64",
+  resetAdHocDarwinSignature:
+    process.platform === "darwin" && process.arch === "arm64",
   [FuseV1Options.RunAsNode]: false,
   [FuseV1Options.EnableCookieEncryption]: true,
   [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
@@ -65,8 +97,14 @@ for (const outputPath of outputPaths) {
   await flipFuses(executablePath, fuseConfiguration);
   const actualFuses = await getCurrentFuseWire(executablePath);
   for (const [option, expected] of expectedFuseStates) {
-    if (actualFuses[option] !== expected) throw new Error(`Electron fuse verification failed for option ${String(option)}.`);
+    if (actualFuses[option] !== expected) {
+      throw new Error(
+        `Electron fuse verification failed for option ${String(option)}.`,
+      );
+    }
   }
 }
 
-console.log(`Packaged and verified ${outputPaths.length} Electron spike bundle for ${target}.`);
+console.log(
+  `Packaged and verified ${outputPaths.length} Electron spike bundle for ${target}.`,
+);

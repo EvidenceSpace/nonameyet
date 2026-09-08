@@ -20,6 +20,7 @@ import {
 import {
   ELECTRON_APP_SCHEME,
   ELECTRON_BOARD_MEASUREMENT_FLAG,
+  ELECTRON_EXTERNAL_DEEP_LINK_SCHEME,
   ELECTRON_SPIKE_RUNTIME_VERSION,
   PACKAGED_CONTENT_SECURITY_POLICY,
   authorizeSyntheticSpikeTarget,
@@ -30,6 +31,7 @@ import {
   isBoardMeasurementUrl,
   resolvePackagedAsset,
   shellUrlToDesktopDeepLink,
+  shouldRegisterExternalDeepLinkClient,
 } from "./runtime-policy.mjs";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -40,8 +42,10 @@ const boardMeasurementMode = process.argv.includes(
   ELECTRON_BOARD_MEASUREMENT_FLAG,
 );
 let mainWindow = null;
-let pendingDeepLink =
-  process.argv.find((value) => value.startsWith("evidencespace://")) ?? null;
+let pendingDeepLink = boardMeasurementMode
+  ? null
+  : (process.argv.find((value) => value.startsWith("evidencespace://")) ??
+    null);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -208,8 +212,36 @@ function installBridgeHandler() {
   });
 }
 
+function registerExternalDeepLinkClient() {
+  if (
+    !shouldRegisterExternalDeepLinkClient({
+      isPackaged: app.isPackaged,
+      measurementMode: boardMeasurementMode,
+      platform: process.platform,
+    })
+  ) {
+    return;
+  }
+
+  try {
+    const registered = app.setAsDefaultProtocolClient(
+      ELECTRON_EXTERNAL_DEEP_LINK_SCHEME,
+    );
+    if (
+      !registered ||
+      !app.isDefaultProtocolClient(ELECTRON_EXTERNAL_DEEP_LINK_SCHEME)
+    ) {
+      console.error("Electron spike external deep-link registration failed.");
+    }
+  } catch {
+    console.error("Electron spike external deep-link registration failed.");
+  }
+}
+
 function handleDeepLink(input) {
-  if (!mainWindow || typeof input !== "string") return false;
+  if (boardMeasurementMode || !mainWindow || typeof input !== "string") {
+    return false;
+  }
   const parsed = parseDesktopDeepLink(input);
   if (!parsed.ok || !authorizeSyntheticSpikeTarget(parsed.value)) return false;
   const shellUrl = buildShellUrlFromHref(parsed.value.href);
@@ -278,7 +310,7 @@ if (!hasSingleInstanceLock) {
   });
   app.on("open-url", (event, url) => {
     event.preventDefault();
-    if (!handleDeepLink(url)) pendingDeepLink = url;
+    if (!handleDeepLink(url) && !boardMeasurementMode) pendingDeepLink = url;
   });
   app.on("web-contents-created", (_event, contents) =>
     hardenWebContents(contents),
@@ -291,6 +323,7 @@ if (!hasSingleInstanceLock) {
     if (BrowserWindow.getAllWindows().length === 0) void createWindow();
   });
 
+  registerExternalDeepLinkClient();
   app.whenReady().then(async () => {
     await registerPackagedContentProtocol();
     session.defaultSession.setPermissionCheckHandler(() => false);

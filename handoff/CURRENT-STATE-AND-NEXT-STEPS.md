@@ -1,8 +1,8 @@
 # Current state and next steps
 
-**Last reconciled:** 7 September 2026
+**Last reconciled:** 8 September 2026
 
-**`main` baseline before the Electron Board harness:** `79d52b5e0dd2e782fe08eb50179672eb04775425`
+**`main` baseline after the Electron Board harness:** `ebc22a6666619424cc38c86f4f00ac46c2a3adaf`
 
 ## Current
 
@@ -15,6 +15,7 @@
 - PR #105 merged the secure thin Electron candidate at `0766837f3c853f5efd228e50d3cf928a1581c926`; the exact PR head reached GitHub's clean state before merge. Individual run and job URLs were unavailable through the connected interface.
 - PR #106 merged the deterministic desktop fixture and initial sanitized hardware profile at `b8cb311b312d30c5458fd3c7b096dc3db35b3c82`; exact-head run `34115720741` passed all four durable jobs.
 - PR #107 merged the complete sanitized Windows profile at `79d52b5e0dd2e782fe08eb50179672eb04775425`; unchanged exact head `9c8199eefae9b89f2735f97ae4414b46a924c79d` passed all four jobs in run `34117918296`.
+- PR #108 merged the deterministic Electron Board measurement harness at `ebc22a6666619424cc38c86f4f00ac46c2a3adaf`; exact head `9b7364f72659d03e147e7a686d3fe98ce44039ab` passed all four jobs in run `34121283079`.
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
 - The shell provides semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
 - The repository includes a disposable thin Electron adapter source and packaging path against protocol v1. It uses an allowlisted packaged-content protocol, restrictive BrowserWindow/preload settings, sender and shape validation, opaque picker handles, ASAR integrity, and verified Electron fuses.
@@ -24,12 +25,14 @@
 - The Electron stage now compiles the fixture and exact-shaped measurement contract, regenerates and SHA-256-binds the synthetic artifact, and packages only an explicit local allowlist.
 - A candidate-only renderer draws every fixture object and relation, provides 1,000 structured outline rows containing all 4,000 relation labels, and produces a bounded 120-interval nearest-rank p95 summary after 20 warm-up intervals. Invalid, accessor-backed, partial, non-finite, oversized, and timed-out samples fail closed without retaining raw samples.
 - The measurement page is selected only by a dedicated command-line flag. It is not deep-linkable and remains outside native-bridge sender authorization.
+- Normal packaged Electron launches now declare the external scheme in macOS bundle metadata and register plus verify `evidencespace://` on Windows and macOS. Development and measurement launches do not change the operating-system handler, and measurement mode refuses deep-link navigation.
+- Observation schema v1 now requires a sanitized hardware profile identifier and named canonical package-tree digest. A dedicated command accepts only ignored drafts and packaged bundles under fixed repository roots, binds a clean Git `HEAD`, hashes the package twice, rejects unknown or identifying fields, and exclusively writes one ignored privacy-safe record.
 - Electron remains the first packaged candidate; Tauri remains the mandatory comparator. No production host or renderer framework has been selected.
 - TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must not remain on `main`.
 
 ## Not implemented or measured
 
-No signed or distributed Electron build, accepted Windows/macOS packaged observation, production deep-link authorization or operating-system registration, packaged startup or memory capture, renderer-integrated draft crash recovery, accepted packaged Board result, operating-system accessibility-tree inspection, signed updater/rollback, Tauri adapter, final renderer framework, persisted target settings, identity/recovery, cloud workspace, realtime collaboration, production case lenses, persistent copilot, research service, target reports, marketplace, booking/payment, or signed release is implemented or claimed.
+No signed or distributed Electron build, accepted Windows/macOS packaged observation, production deep-link authorization, operating-system registration verification, packaged startup or memory measurement, renderer-integrated draft crash recovery, accepted packaged Board result, operating-system accessibility-tree inspection, signed updater/rollback, Tauri adapter, final renderer framework, persisted target settings, identity/recovery, cloud workspace, realtime collaboration, production case lenses, persistent copilot, research service, target reports, marketplace, booking/payment, or signed release is implemented or claimed.
 
 The evidence records, deterministic fixture, development-mode Board sample, and browser render are synthetic diagnostics, not host observations. The Electron package command creates only an unsigned spike bundle for the current Windows/macOS host and architecture; a command, fixture, source file, or screenshot is not measurement evidence.
 
@@ -39,11 +42,11 @@ The evidence records, deterministic fixture, development-mode Board sample, and 
 
 ## Next five focused slices
 
-1. Complete real Windows/macOS `evidencespace://` registration and add privacy-safe packaged observation capture bound to exact commit, artifact hash, sanitized profile, and UTC instant.
-2. Build the unsigned Electron spike from an exact commit on the reference Windows profile and representative macOS hardware; hash it and record package, startup, memory, deep-link, picker, accessibility, recovery, updater, and Board evidence without committing private diagnostics.
-3. Implement and verify real interruption recovery, operating-system accessibility inspection, signed updater rejection, and rollback for the candidate.
-4. Run the equivalent Tauri comparator and make or explicitly defer the production-host decision.
-5. Measure renderer migration/bundle/accessibility/test cost plus canvas/operation behavior, then build authentication, session recovery, onboarding, persisted preferences, workspace switching, and Cases/Story Field/Brief.
+1. Build the unsigned Electron spike from an exact clean commit on the reference Windows profile and representative macOS hardware; verify real `evidencespace://` activation and capture package, startup, memory, picker, and Board results with the ignored observation recorder.
+2. Implement and verify interruption recovery, operating-system accessibility inspection, signed updater rejection, and rollback for the same exact candidate artifacts.
+3. Run the equivalent Tauri comparator and make or explicitly defer the production-host decision.
+4. Measure renderer migration, bundle, accessibility, test, canvas, and operation behavior against the approved prototype.
+5. Build authentication, session recovery, onboarding, persisted preferences, workspace switching, and Cases/Story Field/Brief only after the host decision is evidence-supported or explicitly deferred.
 
 ## Verification expectation
 

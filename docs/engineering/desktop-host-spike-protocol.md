@@ -1,6 +1,6 @@
 # Desktop host spike protocol
 
-**Status:** protocol-v1 boundary, thin Electron candidate, complete sanitized Windows reference profile, deterministic fixture, and candidate-only Board renderer harness implemented; packaged Windows/macOS measurements not run
+**Status:** protocol-v1 boundary, thin Electron candidate, complete sanitized Windows reference profile, deterministic fixture, candidate-only Board renderer, packaged deep-link registration path, and privacy-safe observation capture implemented; packaged Windows/macOS measurements not run
 
 **Scope:** Electron and Tauri comparison for Windows and macOS
 
@@ -42,6 +42,7 @@ The candidate:
 - keeps context isolation, sandboxing, web security, and command-specific preload exposure enabled;
 - denies navigation, redirects, windows, webviews, permissions, raw Node access, and unapproved deep-link scope;
 - keeps selected absolute paths in main-process memory and returns only opaque handles;
+- declares `evidencespace://` in packaged macOS metadata, registers and verifies it at runtime only for normal packaged Windows/macOS launches, and refuses deep-link handling in measurement mode;
 - packages into ASAR; and
 - enables and verifies every Electron fuse known to the pinned fuse tool, including ASAR integrity validation and disabling run-as-Node, Node options, CLI inspection, and file-protocol extra privileges.
 
@@ -88,8 +89,9 @@ This profile is a practical lower-spec Windows target, not a minimum-support cla
 
 Each candidate/platform record contains:
 
+- observation schema version and approved sanitized hardware profile identifier;
 - candidate, platform, architecture, host version, and OS version;
-- exact source commit and packaged artifact SHA-256;
+- exact source commit, canonical package-tree digest algorithm, and packaged artifact SHA-256;
 - UTC measurement instant;
 - packaged artifact bytes;
 - cold start, warm start, idle private memory, and p95 Board frame time;
@@ -97,12 +99,16 @@ Each candidate/platform record contains:
 
 The current Board frame gate is p95 at or below 16.7 ms for the representative fixture. Startup, memory, and package thresholds remain Decision required until both candidates are measured on the complete reference profile.
 
+`npm run desktop:observation:capture -- <draft> <package-directory>` accepts drafts only below `.desktop-build/observations` and packages only below `dist/electron-spike`. The draft cannot supply commit, digest algorithm, artifact hash, or package bytes. Capture requires a clean checkout, binds `HEAD`, verifies the actual host platform and architecture, computes the canonical package-tree SHA-256 twice, rejects unknown or identifying fields, and writes one new owner-only ignored record without echoing paths or input values. See `docs/engineering/desktop-observation-capture.md` for the exact draft and digest contract.
+
+Capture acceptance is not scenario evidence. Keep every boolean false until the exact packaged bundle passes the corresponding end-to-end procedure; in particular, an API registration result alone is not a validated operating-system deep link.
+
 ## Test procedure
 
 For each candidate and platform:
 
 1. Build a packaged, non-development artifact from the exact commit.
-2. Hash the artifact before installation.
+2. Compute and retain the canonical packaged-tree digest before use; capture must reproduce the same package identity.
 3. Launch from a signed or explicitly spike-only package with synthetic state.
 4. Record cold start from process request to shell `data-ready`.
 5. Record warm start after a clean shutdown.
@@ -146,6 +152,7 @@ npm run desktop:electron:install
 npm run desktop:electron:start
 npm run desktop:electron:measure
 npm run desktop:electron:package
+npm run desktop:observation:capture -- <ignored-draft.json> <packaged-bundle-directory>
 ```
 
-`desktop:electron:measure` is a development-mode renderer diagnostic. `desktop:electron:package` intentionally rejects non-Windows/macOS and unsupported architectures and emits an unsigned, ignored, current-host spike bundle only. Neither command satisfies the evidence matrix without exact commit/artifact hashes and the complete procedure above.
+`desktop:electron:measure` is a development-mode renderer diagnostic. `desktop:electron:package` intentionally rejects non-Windows/macOS and unsupported architectures and emits an unsigned, ignored, current-host spike bundle only. Observation capture intentionally rejects Linux, host mismatches, a dirty checkout, unsafe paths, changing packages, malformed drafts, and existing output records. None of these commands satisfies the evidence matrix without the complete packaged procedure and human review above.

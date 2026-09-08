@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ELECTRON_APP_ORIGIN,
   ELECTRON_BOARD_MEASUREMENT_FLAG,
+  ELECTRON_EXTERNAL_DEEP_LINK_SCHEME,
   ELECTRON_SPIKE_COMPILED_WEB_ASSETS,
   ELECTRON_SPIKE_GENERATED_FIXTURE_ASSET,
   ELECTRON_SPIKE_RENDERER_ASSETS,
@@ -18,6 +19,7 @@ import {
   isBoardMeasurementUrl,
   resolvePackagedAsset,
   shellUrlToDesktopDeepLink,
+  shouldRegisterExternalDeepLinkClient,
 } from "../desktop/electron/runtime-policy.mjs";
 
 test("the Electron content protocol serves only the explicit shell and measurement allowlist", () => {
@@ -62,6 +64,28 @@ test("the candidate-only Board route is exact and cannot be deep-linked with ext
     ELECTRON_BOARD_MEASUREMENT_FLAG,
     "--evidencespace-measure-board",
   );
+});
+
+test("external deep-link registration is packaged, platform-bound, and excluded from measurement mode", () => {
+  assert.equal(ELECTRON_EXTERNAL_DEEP_LINK_SCHEME, "evidencespace");
+  for (const platform of ["win32", "darwin"]) {
+    assert.equal(
+      shouldRegisterExternalDeepLinkClient({
+        isPackaged: true,
+        measurementMode: false,
+        platform,
+      }),
+      true,
+    );
+  }
+  for (const input of [
+    { isPackaged: false, measurementMode: false, platform: "win32" },
+    { isPackaged: true, measurementMode: true, platform: "win32" },
+    { isPackaged: true, measurementMode: false, platform: "linux" },
+    null,
+  ]) {
+    assert.equal(shouldRegisterExternalDeepLinkClient(input), false);
+  }
 });
 
 test("shell URLs map to the existing validated deep-link boundary", () => {

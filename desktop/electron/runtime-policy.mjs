@@ -7,6 +7,7 @@ export const ELECTRON_APP_ORIGIN = `${ELECTRON_APP_SCHEME}://${ELECTRON_APP_HOST
 export const ELECTRON_SHELL_PATH = "/evidencespace-shell.html";
 export const ELECTRON_BOARD_MEASUREMENT_PATH = "/desktop-spike-board.html";
 export const ELECTRON_BOARD_MEASUREMENT_FLAG = "--evidencespace-measure-board";
+export const ELECTRON_EXTERNAL_DEEP_LINK_SCHEME = "evidencespace";
 
 export const PACKAGED_SHELL_ASSETS = Object.freeze([
   "evidencespace-shell.html",
@@ -135,6 +136,15 @@ export function isBoardMeasurementUrl(input) {
   if (!asset || asset.fileName !== "desktop-spike-board.html") return false;
   const url = parseAppUrl(input);
   return url?.search === "";
+}
+
+export function shouldRegisterExternalDeepLinkClient(input) {
+  if (!input || typeof input !== "object") return false;
+  return (
+    input.isPackaged === true &&
+    input.measurementMode === false &&
+    (input.platform === "win32" || input.platform === "darwin")
+  );
 }
 
 export function buildPickerFilters(kinds) {

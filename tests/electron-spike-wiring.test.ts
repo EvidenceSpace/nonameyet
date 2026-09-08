@@ -49,8 +49,12 @@ test("the main process keeps isolation and separates measurement from bridge aut
     'request.payload.caseId !== "C-03"',
     "PACKAGED_CONTENT_SECURITY_POLICY",
     "ELECTRON_BOARD_MEASUREMENT_FLAG",
+    "ELECTRON_EXTERNAL_DEEP_LINK_SCHEME",
     "buildBoardMeasurementUrl",
     "isBoardMeasurementUrl",
+    "shouldRegisterExternalDeepLinkClient",
+    "app.setAsDefaultProtocolClient",
+    "app.isDefaultProtocolClient",
     "parseAuthorizedShellUrl(senderUrl)",
   ]) {
     assert.ok(main.includes(required), `missing Electron guard: ${required}`);
@@ -110,6 +114,9 @@ test("the package step enables and verifies the required Electron fuses", async 
     "WasmTrapHandlers",
     "asarIntegrityDigest: true",
     "getCurrentFuseWire",
+    "appBundleId:",
+    "protocols:",
+    "ELECTRON_EXTERNAL_DEEP_LINK_SCHEME",
   ]) {
     assert.ok(
       packaging.includes(required),
@@ -121,6 +128,44 @@ test("the package step enables and verifies the required Electron fuses", async 
       '["darwin:arm64", "darwin:x64", "win32:arm64", "win32:x64"]',
     ) || packaging.includes('"darwin:arm64",'),
   );
+});
+
+test("the observation command binds a clean commit and package digest without echoing host paths", async () => {
+  const rootManifest = JSON.parse(await source("package.json"));
+  assert.equal(
+    rootManifest.scripts["desktop:observation:capture"],
+    "tsx scripts/capture-desktop-host-observation.ts",
+  );
+
+  const capture = await source("scripts/capture-desktop-host-observation.ts");
+  for (const required of [
+    "--untracked-files=normal",
+    "dirty_worktree",
+    "digestDesktopPackagedArtifact",
+    "captureBoundDesktopHostObservation",
+    "ensureTrustedDirectoryChain",
+    "isSymbolicLink()",
+    "mode: 0o600",
+    'flag: "wx"',
+    "artifact_changed_during_capture",
+    ".desktop-build/observations",
+    "dist",
+    "electron-spike",
+  ]) {
+    assert.ok(capture.includes(required), `missing capture guard: ${required}`);
+  }
+  assert.equal(capture.includes("console.error(error"), false);
+
+  const digest = await source("scripts/desktop-artifact-digest.mjs");
+  for (const required of [
+    "DESKTOP_ARTIFACT_DIGEST_ALGORITHM",
+    "MAXIMUM_ARTIFACT_BYTES",
+    "MAXIMUM_ARTIFACT_ENTRIES",
+    "unsafe_artifact_symlink",
+    "artifact_changed_during_hash",
+  ]) {
+    assert.ok(digest.includes(required), `missing digest guard: ${required}`);
+  }
 });
 
 test("the staging script copies explicit assets, compiled contracts, and generated fixture", async () => {
