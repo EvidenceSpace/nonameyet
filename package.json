@@ -22,6 +22,7 @@
     "desktop:electron:start": "npm run desktop:electron:stage && npm --prefix desktop/electron run start:staged",
     "desktop:electron:measure": "npm run desktop:electron:stage && npm --prefix desktop/electron run measure:staged",
     "desktop:electron:package": "npm run desktop:electron:stage && npm --prefix desktop/electron run package:staged",
+    "desktop:observation:capture": "tsx scripts/capture-desktop-host-observation.ts",
     "check:dependencies": "node scripts/check-dependency-policy.mjs",
     "check:workflow-actions": "node scripts/check-workflow-action-pins.mjs",
     "check:docs": "node scripts/check-canonical-docs.mjs",
