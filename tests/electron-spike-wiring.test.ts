@@ -99,7 +99,7 @@ test("the Board renderer uses bounded samples and text-only outline construction
   assert.equal(renderer.includes("fetch("), false);
 });
 
-test("the package step enables and verifies the required Electron fuses", async () => {
+test("the package step configures and verifies the required Electron fuses", async () => {
   const packaging = await source("desktop/electron/package-electron-spike.mjs");
   for (const required of [
     "strictlyRequireAllFuses: true",
@@ -123,6 +123,22 @@ test("the package step enables and verifies the required Electron fuses", async 
       `missing package hardening: ${required}`,
     );
   }
+  assert.ok(
+    packaging.includes(
+      "[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false",
+    ),
+  );
+  assert.ok(
+    packaging.includes(
+      "[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot, FuseState.DISABLE]",
+    ),
+  );
+  assert.equal(
+    packaging.includes(
+      "[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: true",
+    ),
+    false,
+  );
   assert.ok(
     packaging.includes(
       '["darwin:arm64", "darwin:x64", "win32:arm64", "win32:x64"]',
