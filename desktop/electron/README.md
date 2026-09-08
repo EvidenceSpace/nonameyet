@@ -1,6 +1,6 @@
 # Electron desktop spike
 
-**Status:** disposable ADR 0003 measurement candidate with deterministic Board renderer harness; not a production-host decision or distributable release
+**Status:** disposable ADR 0003 measurement candidate with deterministic Board renderer harness, packaged deep-link registration path, and privacy-safe observation capture; not a production-host decision or distributable release
 
 **Supported measurement hosts:** Windows and macOS, x64 or arm64
 
@@ -26,6 +26,7 @@ All versions are exact and are checked by the repository dependency policy.
 - The main process validates the sender and exact request shape before execution.
 - Native picker paths stay in an in-memory main-process map. The renderer receives only opaque handles and evidence kinds.
 - Deep-link activation remains limited to global shell routes and synthetic Case `C-03` until production authorization exists.
+- Normal packaged launches declare `evidencespace://` in the macOS bundle and register plus verify the handler at runtime on Windows and macOS. Development and Board-measurement launches never mutate the operating-system handler, and measurement mode refuses deep-link navigation.
 - Packaging enables ASAR integrity and verifies every available Electron fuse explicitly. `ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, CLI inspection, and file-protocol extra privileges are disabled.
 
 ## Representative Board harness
@@ -48,7 +49,7 @@ The candidate-only renderer:
 - times out after 15 seconds without accepting a partial result; and
 - calculates nearest-rank p95 plus minimum and maximum while exposing only the aggregate summary.
 
-The current Board gate remains p95 at or below 16.7 ms. A browser or development-mode result is diagnostic only. It cannot become a host observation without a packaged artifact, exact commit and artifact hashes, sanitized hardware profile, UTC instant, and the complete procedure in `docs/engineering/desktop-host-spike-protocol.md`.
+The current Board gate remains p95 at or below 16.7 ms. A browser or development-mode result is diagnostic only. It cannot become a host observation without a packaged artifact, exact commit and artifact hashes, sanitized hardware profile, UTC instant, and the complete procedure in `docs/engineering/desktop-host-spike-protocol.md`. The capture trust boundary is specified in `docs/engineering/desktop-observation-capture.md`.
 
 ## Commands
 
@@ -60,6 +61,7 @@ npm run desktop:electron:stage
 npm run desktop:electron:start
 npm run desktop:electron:measure
 npm run desktop:electron:package
+npm run desktop:observation:capture -- <ignored-draft.json> <packaged-bundle-directory>
 ```
 
 - `install` installs only this isolated candidate's pinned tooling.
@@ -67,9 +69,10 @@ npm run desktop:electron:package
 - `start` is a local shell smoke path. It is not packaged evidence.
 - `measure` opens the candidate-only Board renderer and automatically runs one bounded frame sample. It is still a development smoke path, not packaged evidence.
 - `package` runs only on Windows or macOS x64/arm64, packages the current host/architecture, enables ASAR integrity and restrictive Electron fuses, verifies the resulting fuse wire, and writes ignored output under `dist/electron-spike`.
+- `desktop:observation:capture` runs only on Windows or macOS against a matching draft, clean Git `HEAD`, and package below `dist/electron-spike`. It computes the canonical package tree digest twice, injects commit/hash/byte bindings that the draft cannot supply, and exclusively writes a sanitized record below `.desktop-build/observations`.
 
-The output is unsigned and spike-only. Do not distribute it or treat it as Windows/macOS evidence until it is built from an exact commit, hashed, exercised through the full protocol, and recorded using `src/desktop/spike-evidence.ts`.
+The package output is unsigned and spike-only. Do not distribute it or treat it as Windows/macOS evidence until it is built from an exact commit, hashed, exercised through the full protocol, captured using `src/desktop/spike-evidence.ts`, and reviewed. Capture acceptance proves record shape and binding only; it does not prove that a metric or quality-gate claim is true.
 
 ## Still required
 
-No accepted packaged Board result exists yet. Draft crash recovery, operating-system protocol registration, packaged startup and memory capture, accessibility-tree inspection, signed update verification, rollback, and any Windows/macOS observation remain unimplemented or unverified. Tauri remains the mandatory comparator before a production-host decision.
+No accepted packaged Board result exists yet. The protocol declaration, runtime registration call, and observation recorder are implemented but have not been exercised on Windows or macOS. Draft crash recovery, packaged startup and memory measurement, end-to-end operating-system deep-link verification, accessibility-tree inspection, signed update verification, rollback, and every Windows/macOS observation remain unverified. Tauri remains the mandatory comparator before a production-host decision.
