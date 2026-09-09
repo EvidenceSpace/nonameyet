@@ -14,6 +14,20 @@ The current thin shell is a technical foundation and was explicitly rejected as 
 
 The 9 September 2026 design clarification is simple: **refine, do not redesign**. Preserve the approved app’s recognizable visual character, make underused areas useful, reduce copy and oversized headings, use familiar human language, and keep motion restrained and purposeful. Do not substitute generic dashboard cards, arbitrary gradients, glass-heavy styling, AI-generated decoration, or animation everywhere.
 
+## Human-made interface standard
+
+EvidenceSpace should look and read like a carefully crafted product made by people who understand the user’s work—not like a generated dashboard, an AI showcase, or a collection of fashionable effects.
+
+- Use familiar words and concrete actions. Keep legal precision where it matters, but never expose internal architecture, policy, or AI jargon as interface copy.
+- Every sentence must justify the space it occupies. Do not over-explain ordinary controls or repeat the same status across several cards.
+- Shorten or remove copy before shrinking it. Tiny helper text is not a fix for too much writing.
+- Headings show hierarchy; they are not billboards. Routine screens should give most of their space to the user’s work.
+- Make the design appealing through proportion, spacing, alignment, typography, useful content, and thoughtful states—not filler cards, generated imagery, excessive glass, arbitrary gradients, or effects without a job.
+- Use animation only when it explains cause, movement, continuity, or status. Keep it brief, restrained, performant, and optional through reduced-motion behavior.
+- Before accepting a screen, inspect it at delivery size and read its visible copy aloud. A user should quickly understand where they are, what matters, and what the primary action will do.
+
+The approved prototype is the baseline, not a pixel-perfect excuse to preserve its weaknesses. Improve real problems while keeping the result recognizably EvidenceSpace.
+
 The approved case navigation is:
 
 **Brief → Space → Evidence → Research → Work → Room → Reports**
