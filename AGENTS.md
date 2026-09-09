@@ -86,6 +86,19 @@ The current `main` branch is a local-first CaseFind browser prototype. The Evide
 
 Follow `docs/design/ux-quality-bar.md`.
 
+### Human-made language and visual restraint
+
+- The interface must feel intentionally designed by people for people—not generated from a dashboard template, filled by AI, or decorated to look “futuristic.”
+- Use words the intended user can understand on first reading. Prefer familiar verbs and concrete nouns; keep legal precision only where it prevents ambiguity or harm. Do not use internal architecture, policy, AI, or legal jargon as interface copy.
+- Every sentence must earn its space. Do not narrate obvious controls, repeat the same status in several regions, or add explanatory text because the layout is unclear.
+- Shorten or remove copy before reducing its font size. Body text and controls remain comfortably readable; tiny helper text is not a solution to excessive copy.
+- Headings express hierarchy rather than spectacle. Do not use billboard-sized headings for routine product screens, and do not let a heading crowd out the work the user came to do.
+- Create appeal through proportion, spacing, alignment, typography, useful content, and careful states—not through filler cards, arbitrary gradients, excessive glass, generated imagery, decorative effects, or animation everywhere.
+- Motion is limited, causal, and purposeful: it may explain what changed, where an object moved, or whether an action succeeded. It must not delay work, demand attention without cause, or become the product’s personality. Always provide reduced-motion behavior.
+- Do not use AI-generated images or ornamental AI motifs as product filler. A visual asset must be specific to EvidenceSpace, necessary for the user outcome, and explicitly reviewed before it becomes canonical.
+- Read visible copy aloud and inspect the screen at delivery size before accepting it. A user should quickly understand where they are, what matters now, and what the primary action will do without reading an instruction wall.
+- Preserve the approved prototype’s recognizable character. Improve a real defect or underused area with the smallest coherent change; reject work that merely looks polished but no longer looks like EvidenceSpace.
+
 - One dominant purpose and primary action per view.
 - Preserve user input through recoverable failure.
 - Design loading, empty, partial, read-only, permission-denied, reconnecting, stale, oversized, cancelled, and error states—not only the happy path.
