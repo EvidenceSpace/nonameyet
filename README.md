@@ -1,86 +1,158 @@
 # EvidenceSpace
 
-[![Quality](https://github.com/EvidenceSpace/nonameyet/actions/workflows/quality.yml/badge.svg)](https://github.com/EvidenceSpace/nonameyet/actions/workflows/quality.yml)
+EvidenceSpace is a source-backed case workspace for self-represented people,
+legal professionals, educators, students, and invited collaborators.
 
-EvidenceSpace is an online Windows and macOS case workspace for preserving evidence, connecting material on a controlled 2D board, collaborating with authorized members, receiving truthful source-backed AI assistance, producing reviewed reports, and—on Premium—finding and booking a verified lawyer.
+**Status:** private prototype and migration work. The repository now contains
+the first connected EvidenceSpace product slice alongside the older CaseFind
+implementation. Neither surface is a production legal service.
 
-## Status: foundations ready; recognizable product UI is next
+EvidenceSpace helps people:
 
-Repository readiness, trustworthy CI, the approved 37-screen connected prototype, the accessible route-state shell, the host-neutral desktop boundary, and an unsigned thin Electron candidate are in the repository.
+- preserve original source material and provenance;
+- organize evidence, research, questions, tasks, discussions, and reports around
+  one case;
+- keep contrary material and uncertainty visible;
+- use AI as a reviewable proposal, never as silent authority;
+- move through one stable workspace instead of disconnected tools.
 
-On the sanitized Windows reference device, Electron staging, x64 packaging, fuse verification, and normal executable startup succeeded after PR #112 fixed the V8 snapshot-fuse abort. This proves only that the current unsigned candidate can start on that device. It does not prove production desktop support, accepted design, deep-link restoration, native picker behavior, packaged Board performance, accessibility, signing/updating, macOS, or Tauri.
+## Current runnable surfaces
 
-The current thin shell is a technical foundation and was explicitly rejected as final product UI. A later standalone visual exploration also drifted from EvidenceSpace and was rejected before any repository commit. The approved [`design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`](design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html) remains the visual and workflow source of truth.
+### Connected EvidenceSpace slice
 
-The 9 September 2026 design clarification is simple: **refine, do not redesign**. Preserve the approved app’s recognizable visual character, make underused areas useful, reduce copy and oversized headings, use familiar human language, and keep motion restrained and purposeful. Do not substitute generic dashboard cards, arbitrary gradients, glass-heavy styling, AI-generated decoration, or animation everywhere.
-
-## Human-made interface standard
-
-EvidenceSpace should look and read like a carefully crafted product made by people who understand the user’s work—not like a generated dashboard, an AI showcase, or a collection of fashionable effects.
-
-- Use familiar words and concrete actions. Keep legal precision where it matters, but never expose internal architecture, policy, or AI jargon as interface copy.
-- Every sentence must justify the space it occupies. Do not over-explain ordinary controls or repeat the same status across several cards.
-- Shorten or remove copy before shrinking it. Tiny helper text is not a fix for too much writing.
-- Headings show hierarchy; they are not billboards. Routine screens should give most of their space to the user’s work.
-- Make the design appealing through proportion, spacing, alignment, typography, useful content, and thoughtful states—not filler cards, generated imagery, excessive glass, arbitrary gradients, or effects without a job.
-- Use animation only when it explains cause, movement, continuity, or status. Keep it brief, restrained, performant, and optional through reduced-motion behavior.
-- Before accepting a screen, inspect it at delivery size and read its visible copy aloud. A user should quickly understand where they are, what matters, and what the primary action will do.
-
-The approved prototype is the baseline, not a pixel-perfect excuse to preserve its weaknesses. Improve real problems while keeping the result recognizably EvidenceSpace.
-
-The approved case navigation is:
-
-**Brief → Space → Evidence → Research → Work → Room → Reports**
-
-This repository is **not yet the complete EvidenceSpace application**. It still contains the substantial local-first browser prototype named **CaseFind**, focused on unpaid freelance payment disputes. Its immutable originals, hashing, provenance, local PDF/image processing, review states, conflict handling, backup/recovery, report logic, and deterministic/browser tests are migration assets—not proof that desktop, cloud, realtime, marketplace, or full-copilot behavior exists.
-
-## Start here
-
-- [`AGENTS.md`](AGENTS.md) — repository-wide operating and trust rules.
-- [`AGENT.md`](AGENT.md) — compatibility entry point and required read order.
-- [`handoff/00-START-HERE.md`](handoff/00-START-HERE.md) — exact takeover sequence.
-- [`HANDOFF.md`](HANDOFF.md) — current consolidated handoff report.
-- [`handoff/README.md`](handoff/README.md) — handoff archive index.
-- [`handoff/IMPLEMENTATION-COMPENDIUM.md`](handoff/IMPLEMENTATION-COMPENDIUM.md) — page, section, build, V1, and future map.
-- [`handoff/APPROVED-SCREEN-CATALOG.md`](handoff/APPROVED-SCREEN-CATALOG.md) — exact 37-screen visual catalog.
-- [`handoff/REPOSITORY-CONTINUITY-PROTOCOL.md`](handoff/REPOSITORY-CONTINUITY-PROTOCOL.md) — mandatory living-documentation rule.
-- [`docs/design/approved-application-system.md`](docs/design/approved-application-system.md) — approved application system and fidelity clarification.
-- [`docs/product/page-specifications.md`](docs/product/page-specifications.md) — canonical page behavior.
-- [`docs/product/page-and-feature-matrix.md`](docs/product/page-and-feature-matrix.md) — page placement, states, data, AI, V1, and future boundaries.
-- [`docs/engineering/quality-standard.md`](docs/engineering/quality-standard.md) — professional quality standard.
-
-## Repository truth
-
-| Area | Current in the repository | Accepted target |
-| --- | --- | --- |
-| Client | CaseFind browser prototype plus isolated EvidenceSpace route-state shell | Online Windows/macOS desktop app |
-| Visual UI | Approved 37-screen reference; no accepted production screen | Prototype-faithful tokenized product UI |
-| Desktop | Unsigned thin Electron candidate starts on one Windows reference device | Signed and measured Windows/macOS host after Electron/Tauri comparison |
-| Storage | Browser-local IndexedDB for CaseFind | Permissioned cloud workspace plus encrypted recovery cache |
-| Core workflow | Narrow payment-dispute organizer | Adaptive case workspace for real and educational matters |
-| AI | Extraction/review suggestions in CaseFind | Source-backed copilot with approval-gated actions |
-| Collaboration | Not implemented | Room, comments, presence, tasks, shared Case AI |
-| Professional help | Not implemented | Premium lawyer discovery, booking, payment, selective sharing |
-
-Never describe a target capability as implemented.
-
-## Immediate work
-
-1. Build one bounded prototype-faithful slice: Global Home, Cases, Case C-03 Brief, Evidence E-04, and Context Lens continuity.
-2. Compare each changed view directly with its approved source screen at Windows-like, narrow, light/dark/System, focus, loading, empty, error, and recovery states.
-3. Keep copy short and understandable; preserve the approved composition while fixing real defects.
-4. Resume Electron host observations, build the required Tauri comparator, and decide or explicitly defer the production host.
-5. Continue through identity/onboarding, Cases/Story Field/Brief, Evidence, Space, AI/Research, Work/Room/Notifications, Reports, and the Premium marketplace.
-6. Keep CaseFind runnable until target replacements prove and migrate its trust-critical behavior.
-
-The application comes before the promotional website.
-
-## Development
-
-Requirements: Node.js 22–24 and Python 3 for static preview commands.
+Run:
 
 ```bash
-npm install
+npm run preview
+```
+
+Open `web/evidencespace-shell.html?route=home` from the preview server.
+
+The connected slice currently implements:
+
+- Home;
+- the Cases library;
+- Case `C-03` Brief;
+- Evidence `E-04` and its original-source review surface;
+- the shared Context Lens;
+- exact-object Back/Forward continuity;
+- loading, empty, denied, error, narrow-window, dark, reduced-motion, and
+  forced-colors behavior.
+
+The route shell also exposes honest foundations for the remaining global pages
+and case lenses. Those foundations are navigation contracts, not finished
+product pages.
+
+This slice uses synthetic fixtures. It does **not** provide production
+authentication, persistence, collaboration, evidence ingestion, AI execution, or
+legal advice. Preview confirm/correct controls change only the browser session
+and say so in the interface.
+
+### CaseFind migration asset
+
+Run:
+
+```bash
+npm start
+```
+
+CaseFind remains runnable because it contains trust-critical behavior that the
+new interface has not replaced yet, including local case persistence,
+original-byte integrity checks, processing integrity, review transitions,
+timeline behavior, export/report work, deletion, and recovery paths.
+
+Do not delete CaseFind merely because it uses the earlier product name. Migrate
+its proven invariants deliberately, with tests and rollback.
+
+## Canonical design baseline
+
+The connected prototype remains preserved at:
+
+- [`design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`](design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html)
+- [`design-prototypes/prototype-routes.json`](design-prototypes/prototype-routes.json)
+
+It contains 37 named 1920×1080 source screens. The first connected slice is
+visually anchored to screens 7, 8, 10, 11, and 12. Only eight source screens
+have received individual route-level review so far; do not claim full visual QA
+for the other 29.
+
+Preservation references:
+
+- repository blob: `abcc8e2b5c5e56ba1cfdaf07182b6633c7b03199`;
+- normalized SHA-256:
+  `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`.
+
+Do not reformat or casually replace the canonical HTML.
+
+## Repository map
+
+- `web/evidencespace-shell.*` — persistent application shell, route model,
+  tokens, and responsive presentation.
+- `web/evidencespace-pages/` — lazy-loaded page modules and synthetic fixtures
+  for the connected slice.
+- `web/` — CaseFind browser implementation and migration assets.
+- `src/` — domain, AI, processing, report, and supporting TypeScript modules.
+- `tests/` — deterministic, browser, security, contract, and migration-oriented
+  checks.
+- `design-prototypes/` — canonical visual source material.
+- `docs/` — product, architecture, security, privacy, accessibility, operations,
+  and decision records.
+- `handoff/` — current state, next steps, and durable session history.
+- `AGENTS.md` — mandatory repository instructions for contributors and agents.
+
+## Product direction
+
+The accepted structure is one connected application with addressable pages:
+
+- global: Home → Cases → New case → Lawyers → Notifications → Settings →
+  Security and help → Account;
+- inside a case: Brief → Space → Evidence → Research → Work → Room → Reports;
+- core loop: capture → preserve → organize → understand → decide → act → review.
+
+Current and Target V1 behavior must stay separate. Future ideas belong in
+future-state documentation, not in current-product claims.
+
+## Interface quality
+
+EvidenceSpace must feel intentionally made for the work:
+
+- use familiar, human vocabulary;
+- remove or shorten copy before shrinking type;
+- keep headings proportional and helper text readable;
+- create hierarchy through proportion, spacing, alignment, typography, and
+  meaningful states;
+- prefer a few clear actions over card density;
+- keep motion restrained, causal, performant, and compatible with reduced
+  motion;
+- avoid ornamental AI imagery, arbitrary gradients, glass everywhere, filler
+  cards, and animation for its own sake.
+
+Refine the approved prototype. Do not replace it with a generic dashboard
+aesthetic.
+
+## Trust rules
+
+Treat the repository as a private prototype:
+
+- do not commit real client material, credentials, transcripts, private
+  screenshots, or identifying fixtures;
+- do not claim legal certainty, security guarantees, accessibility conformance,
+  performance, platform support, or production readiness without evidence;
+- keep sources, contrary material, uncertainty, freshness, jurisdiction,
+  provenance, visibility, approval, and recovery visible;
+- keep AI output distinguishable from user-accepted material;
+- do not publish GitHub Pages or another public deployment without explicit
+  visibility approval.
+
+See [`SECURITY.md`](SECURITY.md),
+[`docs/privacy-security.md`](docs/privacy-security.md), and
+[`docs/ai-safety-and-evaluation.md`](docs/ai-safety-and-evaluation.md).
+
+## Quality commands
+
+Run the checks that apply to your change and report what actually ran:
+
+```bash
 npm run check:dependencies
 npm run check:workflow-actions
 npm run sync:pdfjs
@@ -89,11 +161,22 @@ npm run typecheck
 npm test
 npm run test:browser
 npm run check
-npm run preview
 ```
 
-The durable workflow separates dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. Required checks must pass on the exact commit being merged; an earlier green run is not evidence for a later head.
+`tsconfig.json` covers `src/**/*.ts`; it does not prove the browser shell,
+tests, scripts, or server are typechecked.
 
-## Product boundary
+## Continuity
 
-EvidenceSpace organizes case material and provides source-backed assistance. It does not authenticate evidence, decide guilt or liability, promise an outcome, impersonate a licensed lawyer, or silently mutate a workspace. Jurisdiction, contrary material, uncertainty, sources, visibility, and approval state must remain visible.
+Start with:
+
+- [`HANDOFF.md`](HANDOFF.md)
+- [`handoff/CURRENT-STATE-AND-NEXT-STEPS.md`](handoff/CURRENT-STATE-AND-NEXT-STEPS.md)
+- [`handoff/SESSION-LEDGER.md`](handoff/SESSION-LEDGER.md)
+
+Update continuity documents whenever implementation truth, evidence, or the next
+weakest area changes.
+
+## License
+
+[MIT](LICENSE)

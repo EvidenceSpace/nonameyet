@@ -3,97 +3,85 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="EvidenceSpace accessible application-shell foundation.">
+    <meta name="description" content="EvidenceSpace connected case workspace preview.">
     <title>EvidenceSpace</title>
+    <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">
     <link rel="stylesheet" href="evidencespace-shell.css">
     <script type="module" src="evidencespace-shell.js"></script>
   </head>
-  <body class="es-app">
+  <body class="es-app" data-ready="false">
     <a class="es-skip-link" href="#main-content">Skip to main content</a>
 
     <svg class="es-icon-sprite" aria-hidden="true" focusable="false">
-      <symbol id="es-i-mark" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"></circle><circle cx="17" cy="7" r="3"></circle><circle cx="12" cy="17" r="3"></circle><path d="M9.5 8.8 11 14M14.5 8.8 13 14M10 7h4"></path></symbol>
+      <symbol id="es-i-mark" viewBox="0 0 24 24"><rect x="3.5" y="4" width="10" height="10" rx="2.5"></rect><rect x="10.5" y="10" width="10" height="10" rx="2.5"></rect></symbol>
       <symbol id="es-i-home" viewBox="0 0 24 24"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"></path></symbol>
-      <symbol id="es-i-cases" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="13" rx="2"></rect><path d="M8 6V4h8v2M4 11h16"></path></symbol>
-      <symbol id="es-i-new" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v8M8 12h8"></path></symbol>
+      <symbol id="es-i-cases" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></symbol>
+      <symbol id="es-i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
       <symbol id="es-i-lawyers" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2"></circle><path d="M3.5 19c.7-3.2 2.5-5 5.5-5s4.8 1.8 5.5 5M14.5 15c2.8-.8 5 .5 6 3"></path></symbol>
       <symbol id="es-i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"></path><path d="M10 20h4"></path></symbol>
       <symbol id="es-i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.7 2.7 0 1 1 4 2.4c-1 .6-1.5 1.2-1.5 2.1M12 17h.01"></path></symbol>
       <symbol id="es-i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></symbol>
       <symbol id="es-i-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6"></path></symbol>
-      <symbol id="es-i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></symbol>
+      <symbol id="es-i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></symbol>
+      <symbol id="es-i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+      <symbol id="es-i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v5h5M9 12h6M9 16h6"></path></symbol>
+      <symbol id="es-i-comment" viewBox="0 0 24 24"><path d="M5 5h14v11H9l-4 4z"></path></symbol>
+      <symbol id="es-i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.7 8 7 10 4.3-2 7-5.3 7-10V6z"></path></symbol>
+      <symbol id="es-i-spark" viewBox="0 0 24 24"><path d="m13 2-7 11h6l-1 9 7-12h-6z"></path></symbol>
+      <symbol id="es-i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path></symbol>
+      <symbol id="es-i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+      <symbol id="es-i-sort" viewBox="0 0 24 24"><path d="M8 6h12M8 12h8M8 18h4M4 4v16"></path></symbol>
+      <symbol id="es-i-arrow-left" viewBox="0 0 24 24"><path d="m10 6-6 6 6 6M4 12h16"></path></symbol>
+      <symbol id="es-i-warning" viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4z"></path><path d="M12 9v5M12 17h.01"></path></symbol>
       <symbol id="es-i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></symbol>
-      <symbol id="es-i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"></path></symbol>
+      <symbol id="es-i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></symbol>
+      <symbol id="es-i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></symbol>
+      <symbol id="es-i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"></path></symbol>
+      <symbol id="es-i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></symbol>
     </svg>
 
     <aside class="es-global-rail" aria-label="Global navigation">
-      <a class="es-brand-mark" href="/evidencespace-shell.html?route=home" aria-label="EvidenceSpace home">
+      <a class="es-brand-mark" data-route-link href="?route=home" aria-label="EvidenceSpace home">
         <svg class="es-icon" aria-hidden="true"><use href="#es-i-mark"></use></svg>
       </a>
       <nav class="es-global-nav" aria-label="Primary destinations">
-        <a class="es-nav-link" data-global-route="home" href="/evidencespace-shell.html?route=home"><svg class="es-icon" aria-hidden="true"><use href="#es-i-home"></use></svg><span>Home</span></a>
-        <a class="es-nav-link" data-global-route="cases" href="/evidencespace-shell.html?route=cases"><svg class="es-icon" aria-hidden="true"><use href="#es-i-cases"></use></svg><span>Cases</span></a>
-        <a class="es-nav-link" data-global-route="new-case" href="/evidencespace-shell.html?route=new-case"><svg class="es-icon" aria-hidden="true"><use href="#es-i-new"></use></svg><span>New case</span></a>
-        <a class="es-nav-link" data-global-route="lawyers" href="/evidencespace-shell.html?route=lawyers"><svg class="es-icon" aria-hidden="true"><use href="#es-i-lawyers"></use></svg><span>Lawyers</span></a>
-        <a class="es-nav-link" data-global-route="notifications" href="/evidencespace-shell.html?route=notifications" aria-label="Notifications, 3 unread"><svg class="es-icon" aria-hidden="true"><use href="#es-i-bell"></use></svg><span>Notifications</span><span class="es-nav-count" aria-hidden="true">3</span></a>
-        <a class="es-nav-link" data-global-route="support" href="/evidencespace-shell.html?route=support" aria-label="Security and help"><svg class="es-icon" aria-hidden="true"><use href="#es-i-help"></use></svg><span>Help</span></a>
-        <a class="es-nav-link" data-global-route="settings" href="/evidencespace-shell.html?route=settings"><svg class="es-icon" aria-hidden="true"><use href="#es-i-settings"></use></svg><span>Settings</span></a>
-        <a class="es-nav-link" data-global-route="account" href="/evidencespace-shell.html?route=account"><svg class="es-icon" aria-hidden="true"><use href="#es-i-account"></use></svg><span>Account</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="home" href="?route=home" aria-label="Home"><svg class="es-icon" aria-hidden="true"><use href="#es-i-home"></use></svg><span class="es-nav-label">Home</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="cases" href="?route=cases" aria-label="Cases"><svg class="es-icon" aria-hidden="true"><use href="#es-i-cases"></use></svg><span class="es-nav-label">Cases</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="new-case" href="?route=new-case" aria-label="New case"><svg class="es-icon" aria-hidden="true"><use href="#es-i-plus"></use></svg><span class="es-nav-label">New case</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="lawyers" href="?route=lawyers" aria-label="Lawyers"><svg class="es-icon" aria-hidden="true"><use href="#es-i-lawyers"></use></svg><span class="es-nav-label">Lawyers</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="notifications" href="?route=notifications" aria-label="Notifications, 3 unread"><svg class="es-icon" aria-hidden="true"><use href="#es-i-bell"></use></svg><span class="es-nav-count" aria-hidden="true">3</span><span class="es-nav-label">Notifications</span></a>
+      </nav>
+      <nav class="es-global-nav es-global-nav-bottom" aria-label="Support and account">
+        <a class="es-nav-link" data-route-link data-global-route="support" href="?route=support" aria-label="Security and help"><svg class="es-icon" aria-hidden="true"><use href="#es-i-shield"></use></svg><span class="es-nav-label">Help</span></a>
+        <a class="es-nav-link" data-route-link data-global-route="settings" href="?route=settings" aria-label="Settings"><svg class="es-icon" aria-hidden="true"><use href="#es-i-settings"></use></svg><span class="es-nav-label">Settings</span></a>
+        <a class="es-nav-link es-account-link" data-route-link data-global-route="account" href="?route=account" aria-label="Account"><span>NA</span><span class="es-nav-label">Account</span></a>
       </nav>
     </aside>
 
     <header class="es-topbar">
-      <div class="es-topbar-context">
-        <span class="es-context-mark" aria-hidden="true"><svg class="es-icon"><use href="#es-i-mark"></use></svg></span>
-        <div class="es-context-copy">
-          <p class="es-context-kicker" id="topbar-kicker">Workspace</p>
-          <strong class="es-topbar-title" id="topbar-title">Your workspace</strong>
-        </div>
-      </div>
+      <a class="es-topbar-context" data-route-link href="?route=home" aria-label="Open workspace home">
+        <span class="es-context-mark" aria-hidden="true"><svg class="es-icon"><use href="#es-i-cases"></use></svg></span>
+        <span class="es-context-copy"><strong id="topbar-title">Alder Workspace</strong><small id="topbar-subtitle">Personal workspace</small></span>
+      </a>
+      <nav class="es-topbar-nav" id="topbar-nav" aria-label="Current area"></nav>
       <div class="es-topbar-actions">
-        <span class="es-sync-status" role="status"><svg class="es-icon" aria-hidden="true"><use href="#es-i-check"></use></svg><span>Shell ready</span></span>
-        <a class="es-topbar-link" data-topbar-route="notifications" href="/evidencespace-shell.html?route=notifications" aria-label="Notifications, 3 unread" title="Notifications"><svg class="es-icon" aria-hidden="true"><use href="#es-i-bell"></use></svg><span class="es-notification-count" aria-hidden="true">3</span></a>
-        <a class="es-topbar-link es-account-shortcut" data-topbar-route="account" href="/evidencespace-shell.html?route=account" aria-label="Account" title="Account">NP</a>
+        <button class="es-search-shortcut" type="button" aria-label="Search this area"><svg class="es-icon" aria-hidden="true"><use href="#es-i-search"></use></svg><span>Search</span><kbd>⌘K</kbd></button>
+        <span id="case-members"></span>
+        <button class="es-icon-button" type="button" aria-label="More options"><svg class="es-icon" aria-hidden="true"><use href="#es-i-more"></use></svg></button>
       </div>
     </header>
 
     <main class="es-main-frame" id="main-content" tabindex="-1">
-      <div class="es-case-context" id="case-context" hidden>
-        <div class="es-case-identity"><span>Case</span><strong id="case-id">C-03</strong></div>
-        <nav class="es-case-lenses" aria-label="Case lenses">
-          <a class="es-case-lens-link" data-case-route="brief" href="/evidencespace-shell.html?route=brief&amp;case=C-03">Brief</a>
-          <a class="es-case-lens-link" data-case-route="space" href="/evidencespace-shell.html?route=space&amp;case=C-03">Space</a>
-          <a class="es-case-lens-link" data-case-route="evidence" href="/evidencespace-shell.html?route=evidence&amp;case=C-03">Evidence</a>
-          <a class="es-case-lens-link" data-case-route="research" href="/evidencespace-shell.html?route=research&amp;case=C-03">Research</a>
-          <a class="es-case-lens-link" data-case-route="work" href="/evidencespace-shell.html?route=work&amp;case=C-03">Work</a>
-          <a class="es-case-lens-link" data-case-route="room" href="/evidencespace-shell.html?route=room&amp;case=C-03">Room</a>
-          <a class="es-case-lens-link" data-case-route="reports" href="/evidencespace-shell.html?route=reports&amp;case=C-03">Reports</a>
-        </nav>
-      </div>
-
-      <section class="es-page" aria-labelledby="page-title">
-        <header class="es-page-header">
-          <div class="es-page-heading">
-            <p class="es-page-eyebrow" id="page-eyebrow">Workspace</p>
-            <h1 id="page-title">Your workspace</h1>
-            <p class="es-page-description" id="page-description">Loading the EvidenceSpace shell.</p>
-          </div>
-          <a class="es-primary-action" id="primary-action" href="/evidencespace-shell.html?route=cases">Open cases</a>
-        </header>
-
-        <div class="es-foundation-grid">
-          <article class="es-foundation-card" data-card-index="0"><p class="es-card-meta" data-card-meta>Continuity</p><h2 data-card-title>Return to exact context</h2><p data-card-body>Route context remains explicit.</p></article>
-          <article class="es-foundation-card" data-card-index="1"><p class="es-card-meta" data-card-meta>Attention</p><h2 data-card-title>Review, do not predict</h2><p data-card-body>Attention remains calm and honest.</p></article>
-          <article class="es-foundation-card" data-card-index="2"><p class="es-card-meta" data-card-meta>Privacy</p><h2 data-card-title>Scope stays visible</h2><p data-card-body>Authorization boundaries remain visible.</p></article>
-        </div>
-
-        <aside class="es-foundation-scope" aria-labelledby="foundation-title">
-          <span class="es-scope-icon" aria-hidden="true"><svg class="es-icon"><use href="#es-i-info"></use></svg></span>
-          <div><strong id="foundation-title">Foundation scope</strong><p id="foundation-description">This first slice implements the shell and route ownership only.</p></div>
-        </aside>
-      </section>
+      <div class="es-page-loading" id="page-loading" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div id="page-content"></div>
     </main>
 
-    <p class="es-sr-only" id="route-status" aria-live="polite"></p>
+    <div class="es-context-scrim" id="context-scrim" hidden></div>
+    <aside class="es-context-lens" id="context-lens" aria-labelledby="context-title" hidden></aside>
+
+    <div class="es-toast" id="toast" role="status" aria-live="polite" hidden><span class="es-toast-icon"><svg class="es-icon" aria-hidden="true"><use href="#es-i-check"></use></svg></span><div><strong id="toast-title"></strong><p id="toast-message"></p></div></div>
+    <p class="es-sr-only" id="route-status" aria-live="polite" aria-atomic="true"></p>
+
+    <noscript><p class="es-noscript">EvidenceSpace needs JavaScript for connected page navigation. No case data was changed.</p></noscript>
   </body>
 </html>
