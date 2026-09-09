@@ -110,6 +110,7 @@ Tests:
 
 - `tests/evidencespace-shell.test.ts`
 - `tests/browser/evidencespace-shell.spec.ts`
+- `tests/browser/evidencespace-map-layout.spec.ts`
 
 ### Routes
 
@@ -271,8 +272,15 @@ Signature patterns:
 shell, exact-object context, and working return paths—not disconnected
 mini-apps.
 
+### Trust boundaries
+
+- Workspace membership does not grant case access.
+- Payment does not grant case access.
+- AI proposes; an authorized person decides.
+
 ## Human-made interface requirements
 
+- Keep the result recognizably human-designed rather than generated.
 - Use vocabulary a person understands on first reading.
 - Remove or shorten copy before shrinking typography.
 - Avoid billboard headings and tiny helper text.
@@ -286,8 +294,8 @@ mini-apps.
 - Test empty, loading, denied, error, offline/retry, stale, reconnect, deletion,
   and recovery states appropriate to each slice.
 
-Refine the approved prototype; do not redesign EvidenceSpace into a generic
-dashboard.
+**Refine, do not redesign.** Improve the approved prototype without turning
+EvidenceSpace into a generic dashboard.
 
 ## Delivery and branch posture
 
