@@ -33,18 +33,24 @@ An online Windows/macOS EvidenceSpace application with adaptive onboarding, Case
 
 ## Latest design decision
 
-On 9 September 2026 the user corrected the visual direction:
+On 9 September 2026 the user corrected and then explicitly reaffirmed the visual direction:
 
 - the approved HTML is the best design reference;
 - improve it rather than replacing it;
 - preserve its recognizable color scheme, atmosphere, geometry, navigation, and page composition;
 - make blank areas engaging through purposeful content, progress, layout, and restrained interaction;
-- make the interface feel human-made with familiar vocabulary;
-- reduce copy and heading size;
-- avoid generic cards, arbitrary gradients, AI-generated imagery, and animation everywhere; and
-- use motion only when it is designed for the interaction and helps the user understand state.
+- make the interface feel intentionally human-made rather than generated or assembled from a generic dashboard template;
+- use vocabulary that the intended user understands on first reading, while keeping legal precision where it prevents ambiguity or harm;
+- remove or shorten unnecessary copy before shrinking typography;
+- keep headings proportional to the task instead of using oversized promotional display text on routine screens;
+- do not narrate obvious controls or repeat the same status across several regions;
+- create appeal through proportion, spacing, alignment, typography, useful content, and carefully designed states—not visual noise;
+- avoid generic cards, arbitrary gradients, excessive glass, AI-generated imagery, ornamental AI motifs, and animation everywhere; and
+- use motion only when it explains cause, object movement, continuity, or status, with restrained timing and a reduced-motion path.
 
-The governing rule is **Refine, do not redesign**. See [`docs/design/approved-application-system.md`](docs/design/approved-application-system.md).
+These are acceptance criteria, not optional polish. Before a UI change is accepted, read its visible copy aloud and inspect the screen at delivery size. A user should quickly understand where they are, what matters now, and what the primary action will do without reading an instruction wall. Shorten before shrinking; a design does not become simpler by making excessive text tiny.
+
+The governing rule remains **Refine, do not redesign**. See [`docs/design/approved-application-system.md`](docs/design/approved-application-system.md) and the repository-wide human-interface rules in [`AGENTS.md`](AGENTS.md).
 
 ## Approved prototype integrity
 
@@ -147,6 +153,8 @@ Build one prototype-faithful vertical slice:
 - Context Lens and exact-object continuity.
 
 Before coding each surface, inspect its exact approved screenshot. Preserve recognizable structure and state, identify the real defect, implement the smallest improvement, use concise human copy, and compare before/after at Windows-like and constrained widths. Include focus, keyboard, reduced motion, forced colors, System/Light/Dark, loading, empty, denied, stale, error, and recovery states where relevant.
+
+The slice also requires a human-interface review: visible copy read aloud, repeated/explanatory text removed, heading scale checked at delivery size, body copy kept comfortably readable, primary action understood without extra instructions, and every animation tied to a useful cause or state. Do not use tiny type to disguise excessive text.
 
 Do not scale to all 37 surfaces until this visual and interaction direction is internally reviewed and recognized as the approved app.
 
