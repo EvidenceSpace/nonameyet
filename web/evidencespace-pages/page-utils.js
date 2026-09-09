@@ -41,7 +41,7 @@ export function miniCaseMap({ caseId = caseFixture.id, compact = false, selected
       <a class="es-map-node is-contrary ${selected === "E-04" ? "is-selected" : ""}" data-route-link href="${selected === "E-04" ? evidenceHref : contextHref}" style="--x:67%;--y:7%"><span>E-04 · Contrary</span><strong>Quality concern</strong></a>
       <a class="es-map-node is-focus" data-route-link href="${briefHref}" style="--x:35%;--y:35%"><span>Reviewed understanding</span><strong>Acceptance timing</strong></a>
       <a class="es-map-node is-research" data-route-link href="${buildShellHref("research", caseId)}" style="--x:64%;--y:64%"><span>R-02 · Research</span><strong>Pre-action guidance</strong></a>
-      <a class="es-map-node is-proposal" data-route-link href="${buildShellHref("work", caseId)}" style="--x:38%;--y:74%"><span>AI proposal · Not applied</span><strong>Request change log</strong></a>
+      <a class="es-map-node is-proposal" data-route-link href="${buildShellHref("work", caseId)}" style="--x:38%;--y:68%"><span>AI proposal · Not applied</span><strong>Request change log</strong></a>
     </div>`;
 }
 
