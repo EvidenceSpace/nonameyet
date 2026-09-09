@@ -22,6 +22,17 @@ What can the user do or understand after this change that they could not before?
 - [ ] Shared/private visibility, external recipients, and approval boundaries were considered.
 - [ ] No restricted case content enters logs, analytics, notifications, fixtures, traces, screenshots, or CI artifacts.
 
+## Approved-design fidelity
+
+Use `N/A` with a reason for non-visual work.
+
+- [ ] The exact approved prototype screen and canonical page contract were inspected before implementation.
+- [ ] The change refines the approved system rather than replacing it with a generic dashboard or new aesthetic.
+- [ ] Copy is short, familiar, human, and necessary; headings and helper text are not oversized or excessive.
+- [ ] Blank space is made useful through hierarchy, content, state, or interaction—not filler cards or decoration.
+- [ ] Motion explains cause or state, is restrained, performs well, and has a reduced-motion equivalent.
+- [ ] Before/after visual comparison covered the relevant Windows-like, narrow, light, dark, focus, and failure states.
+
 ## Data, authorization, and recovery
 
 - State transitions/invariants:
@@ -67,6 +78,7 @@ Mandatory. List environments, checks, claims, and states not observed in this wo
 ## Documentation and delivery
 
 - [ ] Canonical page/domain/architecture/ADR documentation matches behavior.
+- [ ] `HANDOFF.md` and `handoff/CURRENT-STATE-AND-NEXT-STEPS.md` were updated, or this PR explains why no material continuity fact changed.
 - [ ] Migration and rollback are documented where needed.
 - [ ] Remote commit and changed-file list were inspected.
 - [ ] Required CI passed, or the PR remains explicitly blocked.

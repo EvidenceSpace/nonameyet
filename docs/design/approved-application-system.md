@@ -1,12 +1,28 @@
 # Approved EvidenceSpace application system
 
-**Status:** approved design foundation, 30 August 2026  
+**Status:** approved design foundation, clarified 9 September 2026  
 **Scope:** target application placement, continuity, behavior, visual language, and implementation debt  
 **Not evidence of:** implemented desktop, cloud, AI, collaboration, payment, or marketplace behavior
 
 ## Approval interpretation
 
 The user approved the main design and idea after a page-by-page review and a connected end-to-end prototype. Small errors remain in some bars, tabs, active states, and route connections. Fix them during component implementation and visual QA; do not use them to reopen the product into a generic dashboard or a different aesthetic.
+
+## 9 September 2026 fidelity clarification
+
+The approved [`../../design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`](../../design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html) is the visual and workflow source of truth. **Refine, do not redesign.** A technically clean replacement shell is still wrong if it no longer looks and feels like this approved system.
+
+Required interpretation:
+
+- preserve the recognizable palette, light atmospheric background, floating geometry, navigation model, page composition, density, and connected-object behavior;
+- improve blank or underused areas with purposeful hierarchy, progress, source-linked content, stronger composition, and restrained interaction—not generic explanatory cards;
+- use simple, familiar, human language; remove copy before adding helper text;
+- avoid oversized headings, long introductions, repeated explanations, decorative gradients, excessive glass treatment, generic AI sparkle motifs, AI-generated imagery, and animation everywhere;
+- use motion only to explain origin, destination, state, continuity, or recovery;
+- inspect the exact source screen before coding and compare the implementation beside it before review; and
+- record any intentional visual departure with the user or accessibility/performance evidence that justified it.
+
+The goal is an intentionally human-designed professional product, not a template-like dashboard and not an imitation of a competitor.
 
 ## Experience principles
 
@@ -18,6 +34,8 @@ The user approved the main design and idea after a page-by-page review and a con
 6. AI proposes; people decide.
 7. Engaging through progress, craft, recovery, and useful collaboration—not streaks or artificial urgency.
 8. Every spatial interaction has a keyboard/structured equivalent.
+9. Prefer visual communication and concise labels over explanatory prose.
+10. Preserve the approved character while resolving measurable usability defects.
 
 ## Shell
 
@@ -62,7 +80,7 @@ Semantic state never relies on color alone. Avoid platform emoji as core iconogr
 - Notification lifecycle
 - Complete Settings system
 
-See `../product/page-and-feature-matrix.md` for implementation detail.
+See `../product/page-and-feature-matrix.md` for implementation detail and `../../handoff/APPROVED-SCREEN-CATALOG.md` for the exact screenshot routes.
 
 ## Signature patterns
 
@@ -95,7 +113,7 @@ Approval, rejection, execution, failure and undo are separate attributable event
 - selected object and right inspector agree;
 - source-backed assessment separates support, contrary material and unknowns;
 - AI ghost retains Reject, Edit, Approve and safe Undo where possible;
-- target animation is 60 FPS; drag lift 120ms, pin snap 140ms, focus 160ms, connector draw 180ms;
+- target animation is 60 FPS; drag lift 120ms, pin snap 140ms, focus 160ms, connector draw 180ms; and
 - reduced motion uses immediate/opacity state changes while preserving causality.
 
 ## Notification contract
@@ -114,14 +132,16 @@ The review uses C-03, E-04, R-02, F-03, W-01, Thread 15, RP-01 and B-07 to prove
 
 - unify global/case top-bar ownership;
 - normalize active rail/tab state and spacing;
-- repair a few inaccurate hotspot/return connections from the review artifact;
+- repair inaccurate hotspot/return connections from the review artifact;
 - validate overlays vs dedicated routes;
+- reduce copy and heading scale where the prototype feels dense;
+- make underused areas useful without adding filler;
 - finish Board and notification motion studies;
 - inspect high-DPI, narrow, maximized, restored, System, Light and Dark states;
 - create tokenized components instead of copying screenshot coordinates;
-- replace fixture values with domain selectors;
+- replace fixture values with domain selectors; and
 - complete accessibility/assistive-technology review.
 
 ## Change control
 
-A scoped design adjustment is allowed when usability research, accessibility, platform behavior, performance, security, legal safety, or implementation evidence supports it. Record the reason, alternatives, affected surfaces, migration and visual-regression update. “Another app does it” or “vibecoded apps look like this” is not sufficient.
+A scoped design adjustment is allowed when user feedback, usability research, accessibility, platform behavior, performance, security, legal safety, or implementation evidence supports it. Record the reason, alternatives, affected surfaces, migration, and visual-regression update. “Another app does it” or “vibecoded apps look like this” is not sufficient.
