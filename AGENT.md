@@ -22,4 +22,6 @@ Before changing anything, read in this order:
 - Treat documentation as living continuity. Every material decision, changed contract, merged slice, newly observed limitation, or reordered next step updates the canonical document and handoff in the same pull request.
 - Durable tests belong with the code on `main`. Temporary packages, recordings, traces, observations, private screenshots, and machine-specific output do not.
 
+The connected application design foundation approved on 30 August 2026 remains the baseline; the 9 September fidelity clarification governs how it is refined.
+
 Do not duplicate or weaken the rules in `AGENTS.md`. The approved design system is a target until implemented and verified.
