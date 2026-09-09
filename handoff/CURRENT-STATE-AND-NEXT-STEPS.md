@@ -1,53 +1,99 @@
 # Current state and next steps
 
-**Last reconciled:** 8 September 2026
-
-**`main` baseline after the Electron Board harness:** `ebc22a6666619424cc38c86f4f00ac46c2a3adaf`
+**Last reconciled:** 9 September 2026  
+**Last code-bearing `main` baseline:** `fd22c47e3d6f6353636604ad108be3bca963819a` after PR #112
 
 ## Current
 
-- The application design foundation approved on 30 August 2026 remains the implementation baseline; recorded debt does not reopen the overall direction.
-- Repository readiness is complete. PR #99 restored the durable four-part quality gate; exact-head run `33973538762` passed.
-- The approved 37-screen connected EvidenceSpace prototype is preserved on `main` through PR #101; exact-head run `33973822119` passed.
-- PR #102 merged the isolated EvidenceSpace static shell foundation; exact-head run `34016180978` passed all four durable jobs.
-- PR #103 merged the protocol-v1 desktop boundary and evidence gate; exact-head run `34017257691` passed all four durable jobs.
-- PR #104 merged the non-destructive repository cleanup audit; exact-head run `34110882507` passed all four durable jobs. Historical refs have not been deleted and `main` protection has not been enabled.
-- PR #105 merged the secure thin Electron candidate at `0766837f3c853f5efd228e50d3cf928a1581c926`; the exact PR head reached GitHub's clean state before merge. Individual run and job URLs were unavailable through the connected interface.
-- PR #106 merged the deterministic desktop fixture and initial sanitized hardware profile at `b8cb311b312d30c5458fd3c7b096dc3db35b3c82`; exact-head run `34115720741` passed all four durable jobs.
-- PR #107 merged the complete sanitized Windows profile at `79d52b5e0dd2e782fe08eb50179672eb04775425`; unchanged exact head `9c8199eefae9b89f2735f97ae4414b46a924c79d` passed all four jobs in run `34117918296`.
-- PR #108 merged the deterministic Electron Board measurement harness at `ebc22a6666619424cc38c86f4f00ac46c2a3adaf`; exact head `9b7364f72659d03e147e7a686d3fe98ce44039ab` passed all four jobs in run `34121283079`.
+- The approved 37-screen EvidenceSpace prototype is preserved and reverified. The user reaffirmed it as the visual/workflow baseline.
+- Repository readiness and the durable four-job quality gate are complete.
+- PR #102 merged the accessible route-state shell foundation.
+- PR #103 merged the protocol-v1 desktop boundary and evidence gate.
+- PR #104 merged the non-destructive cleanup audit; historical refs remain and `main` protection is still unconfigured.
+- PRs #105–#108 merged the thin Electron candidate, deterministic fixture/reference profile, and Board measurement harness.
+- PR #109 merged external deep-link plumbing and privacy-safe observation capture.
+- PRs #110–#112 fixed Windows staging, package author metadata, and the V8 snapshot fuse.
+- PR #112 exact-head run `34261834685` passed dependency/docs/assets/typecheck, deterministic tests, Chromium lifecycle, and aggregate quality.
+- On the sanitized Windows reference device, staging, unsigned x64 packaging, fuse verification, and normal startup succeeded.
 - CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, report, and test foundations.
-- The shell provides semantic tokens, approved geometry, eight global destinations, seven canonical case lenses, safe route state, responsive reflow, accessibility behavior, and focused tests.
-- The repository includes a disposable thin Electron adapter source and packaging path against protocol v1. It uses an allowlisted packaged-content protocol, restrictive BrowserWindow/preload settings, sender and shape validation, opaque picker handles, ASAR integrity, and verified Electron fuses.
-- Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3` are isolated and exactly pinned under `desktop/electron`.
-- The completed sanitized Windows reference profile records Windows 11 Pro 25H2 build 26200.9168, x64, Intel Core i5-8365U, 8 GiB memory, Intel UHD Graphics 620, and NVMe SSD storage. Machine and license identifiers remain excluded.
-- The deterministic fixture contains 1,000 Board objects, 4,000 typed relations, an equivalent outline, deep-link cases, a picker request, and interruption-journal states.
-- The Electron stage now compiles the fixture and exact-shaped measurement contract, regenerates and SHA-256-binds the synthetic artifact, and packages only an explicit local allowlist.
-- A candidate-only renderer draws every fixture object and relation, provides 1,000 structured outline rows containing all 4,000 relation labels, and produces a bounded 120-interval nearest-rank p95 summary after 20 warm-up intervals. Invalid, accessor-backed, partial, non-finite, oversized, and timed-out samples fail closed without retaining raw samples.
-- The measurement page is selected only by a dedicated command-line flag. It is not deep-linkable and remains outside native-bridge sender authorization.
-- Normal packaged Electron launches now declare the external scheme in macOS bundle metadata and register plus verify `evidencespace://` on Windows and macOS. Development and measurement launches do not change the operating-system handler, and measurement mode refuses deep-link navigation.
-- Observation schema v1 now requires a sanitized hardware profile identifier and named canonical package-tree digest. A dedicated command accepts only ignored drafts and packaged bundles under fixed repository roots, binds a clean Git `HEAD`, hashes the package twice, rejects unknown or identifying fields, and exclusively writes one ignored privacy-safe record.
-- Electron remains the first packaged candidate; Tauri remains the mandatory comparator. No production host or renderer framework has been selected.
-- TypeScript is `5.8.3`; `.github/workflows/quality.yml` is the only durable workflow; temporary diagnostics must not remain on `main`.
+- The product-shell branch `feat/product-shell-foundation-20260909` exists at the PR #112 baseline and contains no product commit or pull request.
 
-## Not implemented or measured
+## Design status
 
-No signed or distributed Electron build, accepted Windows/macOS packaged observation, production deep-link authorization, operating-system registration verification, packaged startup or memory measurement, renderer-integrated draft crash recovery, accepted packaged Board result, operating-system accessibility-tree inspection, signed updater/rollback, Tauri adapter, final renderer framework, persisted target settings, identity/recovery, cloud workspace, realtime collaboration, production case lenses, persistent copilot, research service, target reports, marketplace, booking/payment, or signed release is implemented or claimed.
+Accepted:
 
-The evidence records, deterministic fixture, development-mode Board sample, and browser render are synthetic diagnostics, not host observations. The Electron package command creates only an unsigned spike bundle for the current Windows/macOS host and architecture; a command, fixture, source file, or screenshot is not measurement evidence.
+- the 37-screen connected HTML prototype;
+- its light blue/lilac atmosphere, floating frame, rail/top-bar geometry, compact hierarchy, semantic accents, connected object flow, and page-specific composition;
+- simple human language, less copy, restrained heading scale, purposeful space, and limited causal motion; and
+- Brief → Space → Evidence → Research → Work → Room → Reports.
 
-## Open PR disposition
+Rejected:
 
-- #86 is the only pre-existing open pull request. It predates the current IndexedDB schema version 6 and approved target/operation model. Review for narrow still-useful timeline/provenance behavior; do not merge the stale branch wholesale.
+- the generic diagnostic shell as product design;
+- a later standalone six-route redesign that changed the visual identity and added excessive copy; and
+- generic dashboard cards, new arbitrary palette/background systems, AI-generated decoration, and animation everywhere.
 
-## Next five focused slices
+The rejected standalone design was never committed or pushed.
 
-1. Build the unsigned Electron spike from an exact clean commit on the reference Windows profile and representative macOS hardware; verify real `evidencespace://` activation and capture package, startup, memory, picker, and Board results with the ignored observation recorder.
-2. Implement and verify interruption recovery, operating-system accessibility inspection, signed updater rejection, and rollback for the same exact candidate artifacts.
-3. Run the equivalent Tauri comparator and make or explicitly defer the production-host decision.
-4. Measure renderer migration, bundle, accessibility, test, canvas, and operation behavior against the approved prototype.
-5. Build authentication, session recovery, onboarding, persisted preferences, workspace switching, and Cases/Story Field/Brief only after the host decision is evidence-supported or explicitly deferred.
+## Prototype verification
+
+- 37 unique WebP screenshots at 1920×1080.
+- Repository LF size: `5,226,405` bytes.
+- Canonical SHA-256: `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`.
+- The user’s CRLF attachment normalizes exactly to the repository source.
+- Exact routes and source filenames: `handoff/APPROVED-SCREEN-CATALOG.md`.
+
+## Partial
+
+- The shell has route/accessibility mechanics but not accepted product visual fidelity.
+- Electron has source, packaging, and one normal Windows startup observation, but not complete host evidence.
+- Deep-link parsing and registration exist, but a real URL did not visibly restore Evidence E-04; do not claim it passed.
+- The deterministic Board assessor exists, but the browser diagnostic p95 was above the target and no accepted packaged result exists.
+- Product/design specs are broad and approved; implementation has not reached the target routes.
+
+## Not implemented or not verified
+
+No production identity/session/recovery, cloud workspace, realtime collaboration, target case domain, persistent copilot, legal research service, production reports, marketplace, booking/payment, signed release, Tauri adapter, or complete CaseFind migration exists.
+
+Not verified: cold/existing-instance deep links, native picker, packaged Board threshold, startup timing, memory, interruption recovery, OS accessibility tree, signing/updater/rollback, representative macOS, or production-host selection.
+
+## Open work
+
+- PR #86 is open/on hold and stale. Mine only narrow current value.
+- Historical branches have not been deleted.
+- `main` protection is unconfigured.
+- Cross-platform memory semantics still require definition.
+
+## Active slice
+
+Implement a recognizable, prototype-faithful route set:
+
+1. Global Home — screenshot 7.
+2. Cases Library — screenshot 8.
+3. Case Brief — screenshot 10.
+4. Evidence E-04 — screenshot 12.
+5. Context Lens and canonical object continuity across those routes.
+
+For each surface:
+
+- preserve the approved shell and composition;
+- reduce unnecessary text and heading size;
+- use familiar vocabulary;
+- make blank space useful through state/content, not filler;
+- implement real route state and synthetic data selectors;
+- include loading, empty, denied, stale, error, reconnect, and recovery as relevant;
+- cover keyboard, focus, forced colors, reduced motion, narrow width, and System/Light/Dark; and
+- inspect side by side with the approved screenshot before publication.
+
+## Next sequence
+
+1. Merge the faithful slice only after applicable local checks, staging, visual inspection, committed-diff review, exact-head CI, and handoff update.
+2. Resume Windows/macOS Electron observations and build the Tauri comparator.
+3. Decide or explicitly defer host, renderer, and canvas/operation choices through measured ADRs.
+4. Build identity/recovery, onboarding, workspace switching, and draft recovery.
+5. Continue through Cases/Story Field/Brief, Evidence, Space, AI/Research, Work/Room/Notifications, Reports, and marketplace.
+6. Complete signing/updater, release, audits, operations, migration, and staged launch.
 
 ## Verification expectation
 
-Every pull request records exact commands, versions, platforms, states, counts, results, unverified areas, migration/rollback, remote SHA, and CI. “Expected to pass” is not evidence. Keep CaseFind runnable until replacements prove and migrate its trust-critical behavior.
+Every pull request records exact commands, versions, platforms, states, counts, results, unverified areas, migration/rollback, remote SHA, and CI. A screenshot, source file, fixture, browser preview, or passing unit test is not evidence of unobserved production behavior. Keep canonical docs and living handoff current in the same pull request.

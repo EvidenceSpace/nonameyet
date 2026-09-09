@@ -2,7 +2,14 @@
 
 All assets are synthetic and contain no real case or account data.
 
-## Committed visual snapshots
+## Pixel-level approved reference
+
+- `../../design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html` — canonical connected review with 37 embedded 1920×1080 screenshots.
+- `../APPROVED-SCREEN-CATALOG.md` — exact route, screenshot index, and embedded source filename.
+
+The HTML already preserves the approved images; do not duplicate its 37 raster screens into this folder without a specific reviewed need.
+
+## Committed visual summaries
 
 - `application-map.svg` — complete connected flow.
 - `shell-and-lenses.svg` — global shell and seven case lenses.
@@ -12,12 +19,12 @@ All assets are synthetic and contain no real case or account data.
 - `settings-system.svg` — durable Settings information architecture.
 - `marketplace-booking.svg` — discovery/profile/booking/selective sharing.
 
-These are lightweight repository summaries, not pixel-perfect production assets. The interactive connected map is in `design-prototypes/evidencespace-connected-application-map.html` and the exact route contract is in `design-prototypes/connected-navigation.json`.
+These lightweight SVGs summarize contracts; they are not pixel-perfect product assets and do not replace the approved prototype.
 
 ## Motion
 
-See `MOTION-STATUS.md`. No motion video is marked approved yet. Do not commit the rejected 30 FPS study as the target.
+See `MOTION-STATUS.md`. No motion video is marked approved. Do not commit rejected or decorative motion as the target. Motion must explain continuity, state, origin/destination, or recovery and provide a reduced-motion equivalent.
 
 ## Asset rule
 
-Future screenshots/videos must be synthetic, privacy-reviewed, labeled with status and source commit, optimized, and never used as proof that product behavior is implemented.
+Future screenshots/videos must be synthetic, privacy-reviewed, labeled with approval status, source commit and date, optimized, and never used as proof that product behavior is implemented. Personal desktop screenshots, machine identifiers, real case content, raw traces, and generated package output stay out of the repository.

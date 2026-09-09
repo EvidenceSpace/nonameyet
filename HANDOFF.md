@@ -1,177 +1,170 @@
 # EvidenceSpace master handoff report
 
-**Status:** repository readiness and accessible shell foundation complete; desktop boundary implemented; packaged candidate measurements pending  
-**Last reconciled:** 6 September 2026  
-**`main` baseline for this implementation slice:** `d4996d37df1f6b3b0e3e3f1fa8bca96a674eda1c`  
+**Status:** repository/CI foundations complete; unsigned Electron startup observed on one Windows reference device; approved product UI implementation is the active priority  
+**Last reconciled:** 9 September 2026  
+**Last code-bearing `main` baseline:** `fd22c47e3d6f6353636604ad108be3bca963819a` (PR #112)  
 **Audience:** a new human maintainer or advanced coding agent with no access to the prior conversation
 
 ## Takeover
 
-Read [`handoff/00-START-HERE.md`](handoff/00-START-HERE.md), then the complete [`handoff/README.md`](handoff/README.md) index. Do not ask the user to repeat decisions already recorded there.
+Read [`handoff/00-START-HERE.md`](handoff/00-START-HERE.md), then [`handoff/README.md`](handoff/README.md). Do not ask the user to repeat decisions already recorded there.
 
-## What has been decided
+The repository is the continuity source. After every material decision or merged slice, update the relevant canonical contract and handoff in the same pull request using [`handoff/REPOSITORY-CONTINUITY-PROTOCOL.md`](handoff/REPOSITORY-CONTINUITY-PROTOCOL.md).
 
-EvidenceSpace will be an online desktop application for Windows and macOS. It welcomes individuals, professionals, investigators, students, and educators through adaptive language and templates without weakening truth, provenance, permissions, or safety.
+## Current, target, and rejected work
 
-The core loop is:
+### Current
+
+- CaseFind remains a runnable browser/local-first implementation with substantial provenance, processing, review, recovery, deletion, backup/restore, reporting, and test foundations.
+- The EvidenceSpace route-state shell provides navigation/accessibility scaffolding but is not accepted final product UI.
+- The protocol-v1 desktop boundary and secure thin Electron adapter are implemented.
+- The unsigned Electron candidate stages, packages, verifies fuses, and starts normally on the sanitized Windows reference device.
+- The approved 37-screen prototype is preserved on `main` and was reverified from the user’s original attachment.
+
+### Target V1
+
+An online Windows/macOS EvidenceSpace application with adaptive onboarding, Cases and Story Field, Brief, Space, Evidence, Research, Work, Room, Reports, source-backed approval-gated AI, authorized collaboration, reviewed exports, and Premium lawyer discovery/booking/payment/selective sharing.
+
+### Rejected
+
+- The generic thin shell as final product design.
+- A standalone six-route visual exploration created after the shell. It changed the palette, background, composition, copy density, and overall character too far from the approved app. It was never committed, pushed, or opened as a pull request.
+- Disconnected or impossible screens, overly dark/congested boards, Threaded Casebook, generic chat intake, coding-competition/game concepts, outcome prediction, and decorative AI-heavy styling.
+
+## Latest design decision
+
+On 9 September 2026 the user corrected the visual direction:
+
+- the approved HTML is the best design reference;
+- improve it rather than replacing it;
+- preserve its recognizable color scheme, atmosphere, geometry, navigation, and page composition;
+- make blank areas engaging through purposeful content, progress, layout, and restrained interaction;
+- make the interface feel human-made with familiar vocabulary;
+- reduce copy and heading size;
+- avoid generic cards, arbitrary gradients, AI-generated imagery, and animation everywhere; and
+- use motion only when it is designed for the interaction and helps the user understand state.
+
+The governing rule is **Refine, do not redesign**. See [`docs/design/approved-application-system.md`](docs/design/approved-application-system.md).
+
+## Approved prototype integrity
+
+Canonical file: [`design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`](design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html)
+
+- Repository LF size: `5,226,405` bytes
+- Git blob: `abcc8e2b5c5e56ba1cfdaf07182b6633c7b03199`
+- Canonical normalized SHA-256: `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`
+- Embedded images: 37 unique WebP screenshots
+- Dimensions: 1920×1080 each
+
+The user’s reattached file was `5,226,610` bytes with `205` CRLF endings and raw SHA-256 `114d1e96debe2b6dda13a76782c55085ab6f479543a56a2c6f5071a921134c72`. CRLF-to-LF normalization exactly reproduced the canonical repository size and SHA-256. The prototype content is confirmed; do not replace or reformat it.
+
+The HTML route structure is cataloged in [`handoff/APPROVED-SCREEN-CATALOG.md`](handoff/APPROVED-SCREEN-CATALOG.md). It uses one connected auth surface, five onboarding screens, three workspace screens, seven case screens, three professional-support screens, four attention states, and fourteen Settings screens.
+
+## Product system
+
+Core loop:
 
 **capture → preserve → organize → understand → decide → act → review**
 
-The design foundation approved on 30 August 2026 remains the implementation baseline. The user accepted the main design and idea while noting small bar/tab/connection errors that should be corrected during implementation. Do not reopen the entire visual direction because of those defects. Use the approved system and resolve the recorded debt through component contracts, route-state tests, visual regression, and Windows/macOS review.
+Canonical case lenses:
 
-The canonical case lenses are:
+**Brief → Space → Evidence → Research → Work → Room → Reports**
 
-1. Brief
-2. Space
-3. Evidence
-4. Research
-5. Work
-6. Room
-7. Reports
+Global destinations: Home, Cases, New case, Lawyers, Notifications, Security/help, Settings, and Account.
 
-The global rail owns Home, Cases, New case, Lawyers, Notifications, Security/help, Settings, and Account. Unread counts belong to the global Bell only. AI remains contextual and does not become an eighth case lens.
+Signature patterns:
 
-## Approved signature system
+1. Case Spine
+2. Provenance Rail
+3. Context Lens
+4. Ghost Proposal
+5. Workspace receipt
 
-- Light-first, calm, high-clarity EvidenceSpace visual language with explicit System/Light/Dark appearance controls.
-- A stable floating global rail, context-aware top bar, focused main frame, and contextual side panels.
-- Seven connected case lenses rather than concentrating all functions on one page.
-- Case Spine, provenance links, Context Lens, and AI Ghost Proposal patterns.
-- Exact-object continuity across Case C-03, Evidence E-04, Research R-02, relation F-03, task W-01, Thread 15, report RP-01, and Booking B-07 in the synthetic review fixture.
-- No platform emoji as primary product iconography.
-- Motion explains cause and state; target interactive motion is 60 FPS with reduced-motion equivalents.
+Synthetic continuity fixture: Case C-03, Evidence E-04, Research R-02, Space relation F-03, task W-01, Thread 15, report RP-01, and booking B-07.
 
-## Current repository reality
+Non-negotiable boundaries:
 
-The existing CaseFind browser/local-first prototype remains runnable and preserves substantial provenance, processing, review, storage-failure, deletion-race, backup/restore, reporting, and test coverage. Its IndexedDB runtime is currently schema version 6. Preserve or deliberately migrate:
+- preserve original bytes and derivative lineage;
+- every material AI claim and accepted derived object retains reachable sources;
+- contrary material, uncertainty, jurisdiction, freshness, visibility, and AI state remain visible;
+- AI proposes; authorized people decide;
+- workspace membership does not grant case access;
+- payment does not grant case access;
+- private AI does not silently become shared;
+- report export and external actions receive fresh permission/source checks; and
+- Undo reverses effects without erasing receipts.
 
-- immutable original bytes and SHA-256 identity;
-- IndexedDB schemas and migrations;
+## Current implementation reality
+
+### CaseFind
+
+Preserve or deliberately migrate:
+
+- IndexedDB schema version 6 and migrations;
+- immutable originals and SHA-256 identity;
 - local PDF extraction and image OCR;
-- typed extraction and AI contracts;
-- source-linked facts and timeline events;
+- typed extraction/AI contracts;
+- source-linked facts and timeline;
 - suggested, confirmed, corrected, dismissed, and uncertain states;
 - deterministic consistency review;
-- retry, cancellation, malformed-input, and recovery paths;
+- retry, cancellation, malformed-input, storage-failure, and recovery paths;
 - encrypted backup/restore concepts;
-- report provenance and export checks; and
+- report provenance/export checks; and
 - deterministic and Playwright coverage.
 
-The approved 37-screen connected design prototype is preserved at [`design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`](design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html).
+### EvidenceSpace shell
 
-The first target implementation slice is an isolated, browser-rendered shell at [`web/evidencespace-shell.html`](web/evidencespace-shell.html). It provides:
+Implemented: semantic tokens, eight global destinations, seven lenses, allowlisted routes, bounded case IDs, parent/child active state, one main landmark/H1, skip navigation, focus, forced colors, reduced motion, and narrow reflow.
 
-- semantic light/dark design tokens;
-- approved large-window rail, top-bar, and main-frame geometry;
-- all eight global destinations and seven canonical case lenses;
-- context-aware parent/child active states and case-ID continuity;
-- allowlisted route resolution and bounded case identifiers;
-- one main landmark, one H1, skip navigation, visible focus, practical targets, forced-colors support, reduced motion, and narrow bottom-navigation reflow; and
-- deterministic model tests plus focused Chromium coverage.
+Not accepted: visual fidelity, final page composition, production data/services, and final renderer/host.
 
-The route content is deliberately honest foundation copy. It does not invent production data or imply that cloud, authentication, collaboration, AI, research, reports, or marketplace services are connected.
+### Electron candidate
 
-The first architecture-spike slice adds a host-neutral boundary and evidence gate:
+Implemented: secure packaged-content protocol, restrictive BrowserWindow/preload boundary, sender/shape validation, opaque picker handles, external scheme plumbing, deterministic Board fixture/assessor, observation capture, explicit package allowlist, ASAR integrity, fuse verification, and Windows-compatible staging/package metadata.
 
-- [`src/desktop/boundary.ts`](src/desktop/boundary.ts) defines protocol v1, safe canonical deep links, capabilities discovery, a native evidence-picker request, and a deny-by-default desktop security baseline;
-- [`src/desktop/spike-evidence.ts`](src/desktop/spike-evidence.ts) blocks a production-host decision until Electron and Tauri each have one valid Windows and one valid macOS observation;
-- observation records bind exact source and artifact hashes to package, startup, memory, frame, recovery, deep-link, picker, accessibility, and updater checks; and
-- ADR 0003 prioritizes Electron as the first packaged candidate while retaining Tauri as the required comparator.
+Observed on Windows: staging, x64 packaging, fuse verification, and normal startup without the previous V8 snapshot abort.
 
-The passing unit fixtures prove validation and decision-gate behavior only. They are not packaged-host measurements and must never be reported as Electron/Tauri results.
+Not observed or not accepted: actual deep-link arrival at Evidence E-04, native picker boundary, packaged Board threshold, startup/memory numbers, interruption recovery, OS accessibility tree, signing/updater/rollback, macOS, Tauri, and production-host selection.
 
-## Architecture boundary
+## Repository and pull-request snapshot
 
-The static shell and desktop contract do **not** decide:
+Merged foundations include PRs #99–#112. PR #112 merged as `fd22c47e3d6f6353636604ad108be3bca963819a`; exact-head quality run `34261834685` passed all four durable jobs.
 
-- the production choice between Electron and Tauri;
-- the final renderer framework;
-- the canvas engine or collaboration operation model;
-- cache, cloud, database, object-storage, realtime, identity, AI, research, payment, or marketplace providers; or
-- packaging, signing, updater, and rollback implementation.
+PR #86 remains open/on hold. It predates current storage and target architecture; mine only narrow proven value and never merge the stale branch wholesale.
 
-Electron is first in the measurement order because it aligns with the current web/Chromium foundation; Tauri remains mandatory comparative evidence. React also remains Decision required. Production selection needs packaged Windows/macOS, accessibility, security, performance, package-size, migration, and rollback evidence.
+`feat/product-shell-foundation-20260909` exists at the PR #112 baseline with no product commit and no pull request. Use it only after reconciling with current `main`; do not assume rejected local work exists there.
 
-## Approved onboarding and Settings mapping
+Historical branches have not been deleted. `main` protection remains unconfigured.
 
-Account creation precedes onboarding. The onboarding pages are Profile, Legal context, Guidance, Accessibility, and First case. The first story is entered in New Case, not stored as a Settings preference.
+## Active next slice
 
-Settings preserves durable onboarding choices and adds Profile & identity, Legal & regional defaults, Personalization, AI & guidance, notification delivery, Privacy & sharing, Security, Workspace & members, Connections, Workspace history, Billing, and Help & support.
+Build one prototype-faithful vertical slice:
 
-System appearance follows the operating-system theme automatically. Explicit Light or Dark disables automatic switching.
+- Global Home;
+- Cases;
+- Case C-03 Brief;
+- Evidence E-04;
+- Context Lens and exact-object continuity.
 
-## Notification lifecycle
+Before coding each surface, inspect its exact approved screenshot. Preserve recognizable structure and state, identify the real defect, implement the smallest improvement, use concise human copy, and compare before/after at Windows-like and constrained widths. Include focus, keyboard, reduced motion, forced colors, System/Light/Dark, loading, empty, denied, stale, error, and recovery states where relevant.
 
-1. Bell badge count.
-2. Compact in-app toast when the app is focused.
-3. Privacy-safe Windows/macOS system notification when unfocused.
-4. Click opens the in-app drawer while preserving the originating page.
-5. “View all notifications” opens a dedicated route.
-6. Selecting a notification returns to the exact authorized object with a backlink.
+Do not scale to all 37 surfaces until this visual and interaction direction is internally reviewed and recognized as the approved app.
 
-Only the shell-owned Bell and placeholder route exist today; durable notifications and operating-system delivery are target behavior.
+## Later sequence
 
-## AI contract
-
-The AI is a calm, professionally skeptical, source-backed case copilot—not a lawyer and not a hidden decision-maker. It must show reasoning, exact case sources, relevant legal/research sources, contrary material, assumptions, unknowns, qualitative uncertainty, and a justified next step.
-
-AI actions begin as **NOT APPLIED** proposals. A material action follows:
-
-**proposal → affected-object/source preview → authorization and revision checks → user edit/approval/rejection → idempotent execution → verification → audit → safe undo when possible**
-
-Sharing, messaging, booking, payment, filing, retention changes, and deletion require dedicated confirmation. Undo can reverse an effect but cannot erase the receipt.
-
-## Permissions and payment boundaries
-
-- Workspace membership does not grant case access.
-- Case access does not grant every object or private thread.
-- Board placement does not grant source access.
-- Private AI stays private until the user selects content, destination, and visibility.
-- Payment does not grant case access.
-- Lawyer sharing uses a recipient-specific package of selected, reviewed objects with permission, expiry, download policy, and audit.
-- Consultation, engagement, and formal representation are separate states.
-
-## Repository and CI snapshot
-
-Repository readiness was repaired and merged through PR #99. Its final diagnostic-free exact-head run `33973538762` passed dependency/docs/assets/typecheck, deterministic tests, strict Chromium lifecycle, and the aggregate gate. The connected prototype was preserved through PR #101; exact-head run `33973822119` passed the same four jobs. The accessible shell foundation was merged through PR #102; final diagnostic-free exact-head run `34016180978` passed all four jobs and produced current baseline `d4996d37df1f6b3b0e3e3f1fa8bca96a674eda1c`.
-
-The durable workflow is `.github/workflows/quality.yml`, TypeScript is `5.8.3`, and no temporary diagnostic workflow belongs on `main`.
-
-Closed without merge after selective extraction or supersession: PRs #87, #89, #90, #92, #97, #98, and #100. PR #86 remains open and predates the current storage schema and target architecture; review it for narrow value rather than merging the stale branch wholesale.
-
-Every exact head must pass its own checks. Record the desktop-boundary slice’s final diagnostic-free run in PR #103 before merging; do not reuse an earlier green commit as evidence for a changed head.
-
-## Next-phase sequence
-
-1. **Electron packaged candidate:** implement only the host adapter needed by ADR 0003; measure Windows/macOS package, startup, memory, Board frame time, crash recovery, deep links, picker, accessibility tree, and signed updater.
-2. **Tauri comparator and host decision:** run the same fixture and protocol; compare exact observations and record the production-host decision or the reason both remain blocked.
-3. **Renderer and canvas ADRs:** measure framework migration/bundle/accessibility/test cost, then canvas/operation/structured-outline performance, keyboard equivalence, serialization, replay, convergence, and undo.
-4. **First vertical slice:** authentication, recovery, five-page onboarding, persisted preferences, workspace switching, reconnect and draft recovery.
-5. **Cases and Brief:** Story Field, case lifecycle, jurisdiction confirmation, overall situation and disclosed organization progress.
-6. **Evidence:** immutable upload, processing, source viewer, derivatives, locators, library and search.
-7. **Space:** board domain, structured outline, core interactions, timeline/tasks, AI ghost proposals, then realtime.
-8. **AI and Research:** sourced Ask/Analyze/Plan/Research/Act, contrary material, citations, approval, audit, memory scope.
-9. **Work, Room and Notifications:** task ownership, human-first collaboration, shared AI, conversions, reconnect and revocation.
-10. **Reports and professional package:** review, redaction, versions, export, selective lawyer package.
-11. **Premium marketplace and release:** verification, conflict screening, booking/payment/refunds/reviews, then signed builds, audits, disaster recovery, and staged launch.
+1. Resume cold/existing deep links, picker, packaged Board, startup, memory, accessibility, recovery, signing/updater, and macOS Electron evidence.
+2. Build the equivalent Tauri comparator and decide or defer the production host.
+3. Measure renderer and canvas/operation/structured-outline options.
+4. Build identity, recovery, five-page onboarding, workspace switching, and draft recovery.
+5. Build Cases/Story Field/Brief, Evidence, Space, AI/Research, Work/Room/Notifications, Reports, and marketplace in vertical slices.
+6. Complete signing, release, security/accessibility audits, disaster recovery, legal/operational review, beta migration, and staged launch.
 
 ## Explicit V1 exclusions
 
-No broad private connectors, 3D case mode, required sound design, mobile app, background surveillance, autonomous filing/messaging/booking/payment/deletion, outcome prediction, or unqualified worldwide legal coverage.
-
-## Design debt accepted for implementation
-
-- normalize top-bar ownership and active tab states;
-- remove residual cross-screen rail inconsistencies;
-- verify overlay drawers preserve origin while dedicated routes change context;
-- align case-lens spacing and responsive collapse;
-- complete the 60 FPS Board interaction study and reduced-motion equivalent;
-- polish notification motion and minor copy/alignment defects;
-- validate screens at normal, narrow, high-DPI, light, System, and Dark states; and
-- replace synthetic fixture counts with domain-driven values.
-
-The shell foundation covers route ownership and baseline responsive/accessibility behavior but does not close the later desktop, board, visual-regression, or persisted-preference work.
+No broad private connectors, native voice/video, background collection, 3D case mode, required sound, mobile app, autonomous filing/messaging/booking/payment/deletion, outcome prediction, or unqualified worldwide legal coverage.
 
 ## Continuity rule
 
-After every material decision or merged vertical slice, update the canonical contract and relevant handoff status in the same PR. Record exact verification and unverified areas. A future agent must be able to answer: what exists, what is target, what is future, what is blocked, what must never be compromised, and what should be built next.
+Everything durable needed to build and operate the product belongs in the repository and ultimately on `main`: code, durable tests, specifications, ADRs, diagrams, runbooks, quality gates, and current handoff. Temporary packages, private screenshots, raw traces/observations, rejected explorations, personal paths, identifiers, and secrets stay out.
+
+A future maintainer must be able to answer from the repository: what exists, what is partial, what is target, what is future, what was rejected, what is blocked, what must never be compromised, and what should be built next.

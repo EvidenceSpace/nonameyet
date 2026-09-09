@@ -1,122 +1,97 @@
 # Next-phase engineering readiness
 
-**Status:** repository readiness and framework-neutral shell foundation complete; host-neutral desktop boundary and thin Electron adapter source implemented; packaged desktop and cloud architecture remain Decision required.
+**Status:** repository and CI readiness complete; approved design preserved; thin Electron candidate starts on the sanitized Windows reference device; prototype-faithful product UI and complete host evidence remain pending.
 
-## Gate 1 — trustworthy CI: complete
+## Current verified baseline
 
-Repository readiness was repaired in PR #99 without merging the stale broad PR #87. The durable workflow now separates:
+- `main`: `fd22c47e3d6f6353636604ad108be3bca963819a` after PR #112.
+- Durable CI: dependency/docs/assets/typecheck, deterministic tests, Chromium lifecycle, and aggregate quality.
+- Approved connected prototype: 37 embedded 1920×1080 synthetic screens, preserved unchanged.
+- Electron: secure thin candidate, deterministic fixture/measurement contracts, staging, packaging, fuse verification, and normal Windows startup observed.
+- Product UI: the current thin shell is a route/accessibility foundation, not accepted visual product work.
+- Production host, renderer, canvas engine, cloud stack, and providers: Decision required.
 
-1. dependency, workflow-policy, documentation, generated-asset, and typecheck verification;
-2. deterministic tests;
-3. strict Chromium lifecycle with CI flakes treated as failures; and
-4. an aggregate gate.
+## Design gate before the next product implementation
 
-PR #99 exact-head run `33973538762`, PR #101 exact-head run `33973822119`, PR #102 exact-head run `34016180978`, PR #103 exact-head run `34017257691`, and PR #104 exact-head run `34110882507` each independently passed all four jobs. TypeScript is `5.8.3`; only `.github/workflows/quality.yml` belongs on `main`; temporary diagnostics must be removed before merge.
+The user reaffirmed on 9 September 2026 that the approved prototype is the best visual baseline. A standalone alternative direction was rejected and was never committed.
 
-These runs establish merged baselines only. Every changed exact head must pass the full gate before merge.
+Before coding a changed surface:
 
-## Current implementation slice — accessible shell foundation
+1. inspect its exact screenshot in the canonical prototype;
+2. identify what stays, the actual defect, and the smallest improvement;
+3. preserve recognizable palette, geometry, navigation, density, and composition;
+4. shorten copy, reduce oversized hierarchy, and use familiar vocabulary;
+5. make blank areas useful without generic cards or decorative filler;
+6. specify focus, keyboard, reduced motion, narrow, dark/System, empty, loading, denied, error, and recovery behavior; and
+7. compare the implementation beside the source screen before publication.
 
-The repository includes an isolated browser-rendered EvidenceSpace shell at `web/evidencespace-shell.html`. It does not replace the CaseFind entry point and does not choose a desktop host or renderer framework.
+## Desktop boundary and Electron evidence
 
-Implemented:
+Implemented foundations:
 
-- semantic tokens with System/Light/Dark behavior;
-- approved 22px/68px/108px large-window shell geometry;
-- eight global destinations;
-- Brief → Space → Evidence → Research → Work → Room → Reports;
-- context-aware global parent and case-lens active states;
-- stable case-ID continuity and allowlisted route recovery;
-- one main landmark and H1, skip navigation, visible focus, practical targets, forced-colors support, reduced motion, and narrow bottom-navigation reflow; and
-- deterministic model and focused Chromium tests.
+- protocol-v1 allowlisted native envelopes;
+- capabilities discovery and evidence-picker request;
+- privacy-safe deep-link grammar;
+- deny-by-default desktop security baseline;
+- Electron/Tauri × Windows/macOS evidence matrix;
+- exact source/artifact binding;
+- secure packaged-content protocol and restrictive BrowserWindow/preload settings;
+- deterministic Board fixture and bounded p95 assessor;
+- observation capture with privacy-safe schema;
+- Windows-compatible staging and package metadata; and
+- V8 snapshot fuse configuration consistent with packaged assets.
 
-Not implemented by the shell: persisted settings, identity, cloud workspaces, case domain data, collaboration, research providers, production AI, report generation, marketplace behavior, desktop packaging, or signed releases.
+Observed:
 
-## Gate 2 — desktop boundary and thin Electron adapter source: implemented; runtime evidence pending
+- Windows staging completed;
+- unsigned Windows x64 package completed;
+- configured fuses verified;
+- normal executable opened without the prior V8 snapshot abort.
 
-ADR 0003 establishes the contract and measurement order without selecting a production host.
+Not observed or not accepted:
 
-Candidate-neutral work implemented:
+- cold or existing-instance deep link reaching Evidence E-04;
+- native picker boundary;
+- accepted packaged Board frame result;
+- startup timing or memory;
+- renderer interruption recovery;
+- operating-system accessibility tree;
+- signed updater rejection and rollback;
+- representative macOS behavior;
+- Tauri comparator; and
+- production host selection.
 
-- protocol-v1 allowlisted native request envelopes;
-- capabilities discovery and native evidence-picker commands only;
-- exact data-key validation and rejection of raw renderer paths;
-- bounded privacy-safe EvidenceSpace deep links with case/object continuity;
-- a deny-by-default candidate-neutral desktop security baseline;
-- a four-cell Electron/Tauri × Windows/macOS evidence matrix;
-- exact commit and packaged-artifact binding; and
-- mandatory crash, deep-link, picker, accessibility-tree, signed-updater, and 16.7 ms Board-frame gates.
+The user redirected immediate work from more thin-shell validation to recognizable product design. Resume remaining host evidence after the first faithful slice unless it blocks that slice.
 
-Thin Electron adapter source implemented:
+## Active implementation slice
 
-- isolated exact pins for Electron `44.2.0`, `@electron/packager` `20.3.0`, and `@electron/fuses` `2.1.3`;
-- a secure custom packaged-content protocol with a five-file allowlist and restrictive content policy;
-- sandboxed, context-isolated rendering without Node, webview, worker/subframe Node, external navigation/window, permission, or DevTools exposure;
-- command-specific preload and main-process sender/request validation;
-- a native PDF/image picker that returns opaque handles while absolute paths remain host-side;
-- global and synthetic Case C-03 deep-link activation only;
-- deterministic policy, wiring, and staging tests; and
-- a current-host Windows/macOS package path with ASAR integrity and restrictive fuse verification.
+User outcome: recognize and navigate a useful EvidenceSpace product surface that remains faithful to the approved app rather than a generic placeholder shell.
 
-The test observations are synthetic fixtures that prove assessor behavior. The package recipe has not produced a recorded Windows or macOS observation. Source, tests, staging, or an unsigned package command do not establish package size, startup, memory, accessibility, recovery, signed update, or production support.
+Initial route set:
 
-Electron is first in the packaged measurement order because it best matches the current web/Chromium foundation. Tauri remains the required comparator. React and every other final renderer choice remain Decision required.
+- Global Home;
+- Cases;
+- Case C-03 Brief;
+- Evidence E-04;
+- Context Lens and exact-object continuity.
+
+Non-goals for this slice: cloud identity, real evidence ingestion, production AI, realtime collaboration, marketplace payment, host selection, and complete 37-route implementation.
+
+Acceptance includes concise human copy, source-linked synthetic fixture data, no visual drift, real route state, keyboard/focus behavior, responsive collapse, System/Light/Dark, reduced motion, forced colors, local tests, side-by-side visual inspection, staging, remote diff inspection, exact-head CI, and updated handoff.
 
 ## Remaining ADR queue
 
-Create measured spikes, not preference essays:
-
-1. Complete packaged Electron Windows/macOS observations against ADR 0003.
-2. Equivalent packaged Tauri adapter and an evidence-based host decision.
-3. Renderer framework and state boundaries.
-4. Canvas engine, accessibility model, operation log and serialization.
-5. Encrypted account-bound local cache and recovery.
-6. Modular-monolith API, PostgreSQL, object storage, outbox/worker.
-7. Realtime replay, deduplication, convergence and revocation.
-8. AI provider/tool boundary, schema validation and citation verifier.
-9. Legal research provider/source registry.
-10. Packaging, signing, update and rollback hardening.
-11. Marketplace identity/payment providers only before marketplace work.
-
-Every ADR includes context, measurable criteria, prototypes, Windows/macOS results, security/accessibility, cost/size, alternatives, migration, and rollback. The static shell, boundary, and thin adapter are reusable evidence infrastructure, not a silent renderer or production-host decision.
-
-## Recommended repository shape — decision required
-
-Do not assume a monorepo tool before the ADR. The target boundaries should support:
-
-- desktop host;
-- renderer/design system;
-- domain and runtime schemas;
-- API modular monolith;
-- worker/processing;
-- shared authorization/provenance contracts;
-- database migrations;
-- tests/evaluations; and
-- design artifacts and docs.
-
-Domain objects must not depend on the canvas vendor or desktop bridge.
-
-## First target vertical slice
-
-User outcome: a new user installs/opens the supported desktop build, creates or recovers an account, completes five-page onboarding, enters an authorized workspace, closes/reopens, and recovers from interrupted connectivity without losing progress.
-
-Include:
-
-- secure session and sign-out;
-- profile, legal defaults, guidance, accessibility, first-case readiness;
-- persisted System/Light/Dark behavior;
-- encrypted minimal cache and draft recovery;
-- workspace creation/switching;
-- loading, offline-temporary, reconnecting, denied, expired, update-required, and fatal recovery states;
-- keyboard/focus/screen-reader path;
-- privacy-safe telemetry; and
-- synthetic tests and signed-build smoke path when available.
-
-Non-goals: evidence upload, case AI, realtime Room, marketplace, marketing site.
-
-## Second target vertical slice
-
-Cases Library + New Case Story Field + Brief with manual fallback. No dependence on AI availability. Confirm case classification and jurisdiction. Organization progress must expose its inputs and must not imply outcome probability.
+1. Complete packaged Electron Windows/macOS observations.
+2. Build equivalent Tauri adapter and make or defer the host decision.
+3. Measure renderer framework and state boundaries.
+4. Measure canvas engine, structured outline, operation log, serialization, replay, convergence, and undo.
+5. Specify encrypted account-bound local cache and recovery.
+6. Specify modular-monolith API, PostgreSQL, object storage, and outbox/worker.
+7. Specify realtime replay, deduplication, convergence, and revocation.
+8. Specify AI provider/tool boundary, schema validation, and citation verifier.
+9. Specify legal research provider/source registry.
+10. Harden packaging, signing, update, and rollback.
+11. Select marketplace identity/payment providers only before marketplace implementation.
 
 ## Migration strategy
 
@@ -126,29 +101,6 @@ Cases Library + New Case Story Field + Brief with manual fallback. No dependence
 - Produce an import report and unchanged-source backup.
 - Never silently promote old suggestions into accepted facts.
 
-## Architecture invariants
+## Repository rule
 
-- default-deny server authorization for reads, writes, subscriptions, downloads, AI retrieval, exports, and lawyer sharing;
-- immutable original plus separate derivatives;
-- current-revision checks inside writes;
-- idempotency for retried commands and provider/webhook events;
-- transactional multi-record invariants and outbox;
-- prompt/tool output treated as untrusted;
-- no cross-case retrieval by default;
-- AI cannot execute material actions without deterministic policy and user approval;
-- delete/revoke propagates to cache, search, embeddings, realtime, downloads, and derivatives; and
-- no E2EE claim while server processing needs plaintext.
-
-## Focused pull-request sequence
-
-Completed: repository readiness repair, connected-prototype preservation, accessible static shell foundation, candidate-neutral desktop boundary/evidence harness, non-destructive cleanup audit, and thin Electron adapter source.
-
-1. Complete the Electron synthetic fixture and exact Windows/macOS observations.
-2. Equivalent Tauri comparator, then record or defer the production-host decision.
-3. Renderer-framework and canvas/operation/structured-outline measured spikes.
-4. Authentication/session/recovery skeleton.
-5. Five-page onboarding with persisted preferences.
-6. Workspace switch/reconnect/draft recovery.
-7. Cases/Story Field/Brief.
-
-Prefer one observable user outcome per PR. Keep temporary spike diagnostics and generated packages off `main`; keep durable automated tests with the code they protect.
+Durable code, tests, contracts, ADRs, page specifications, and handoff updates merge to `main` after applicable gates pass. Temporary packages, raw observations, screenshots, recordings, traces, generated diagnostic output, private data, and machine-specific paths stay out. See `../../handoff/REPOSITORY-CONTINUITY-PROTOCOL.md`.

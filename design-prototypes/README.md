@@ -10,17 +10,20 @@ Baseline metadata:
 
 - Title: `EvidenceSpace — Connected End-to-End Prototype v1`
 - Repository path: `design-prototypes/EvidenceSpace-connected-end-to-end-prototype-v1.html`
-- Size: `5,226,405` bytes
+- Size with repository LF endings: `5,226,405` bytes
 - Git blob: `abcc8e2b5c5e56ba1cfdaf07182b6633c7b03199`
-- Reviewed source-attachment SHA-256: `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`
+- Canonical normalized SHA-256: `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`
 - Embedded screenshots: `37`
-- Connected routes: `37`
+- Screenshot dimensions: `1920×1080`
+- Connected screenshot routes: `37`
 
-The repository connection cannot download files over 1 MB, so the remote file's SHA-256 has not been recomputed after upload. Its exact size and Git blob are recorded; do not silently replace it. Recompute and update the checksum when a full Git client is available.
+### 9 September 2026 source re-verification
 
-Route coverage:
+The user reattached the original prototype. The attachment was `5,226,610` bytes with `205` CRLF line endings and raw SHA-256 `114d1e96debe2b6dda13a76782c55085ab6f479543a56a2c6f5071a921134c72`. Normalizing CRLF to LF produced exactly `5,226,405` bytes and SHA-256 `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`, matching the recorded canonical source. The content difference is newline encoding only; the repository prototype must not be replaced.
 
-- Access: 1
+Route coverage in the HTML:
+
+- Access: 1 connected welcome/authentication/recovery surface
 - Onboarding: 5
 - Workspace: 3
 - Case C-03: 7
@@ -28,16 +31,22 @@ Route coverage:
 - Attention and notifications: 4
 - Settings: 14
 
+The exact route-to-image catalog is in [`../handoff/APPROVED-SCREEN-CATALOG.md`](../handoff/APPROVED-SCREEN-CATALOG.md). `prototype-routes.json` mirrors the HTML route IDs rather than a different conceptual decomposition.
+
 Known prototype limitations:
 
 - The initial 1920×1080 authentication view contains a clipped horizontal stage region.
-- Some flows and details require correction during implementation.
+- Some bars, tabs, active states, hotspot returns, copy density, and blank areas need scoped correction during implementation.
 - The artifact is a design/workflow baseline, not an accessibility, responsiveness, performance, security, or production-readiness sign-off.
-- Implementations must follow the canonical product, design, engineering, security, and AI-governance documents when they conflict with a prototype detail.
+- Implementations must follow canonical product, design, engineering, security, and AI-governance documents when they conflict with a prototype detail.
+
+## Fidelity rule
+
+Refine, do not redesign. Preserve the prototype’s recognizable visual character and workflow. Use the 9 September clarification in `../docs/design/approved-application-system.md`: simpler human copy, smaller hierarchy where needed, purposeful use of blank space, and restrained interaction without generic dashboard filler or decorative AI effects.
 
 ## Approved connected map
 
-Open `evidencespace-connected-application-map.html`. It is self-contained and shows authentication, five-step onboarding, Global Home, Cases, Story Field, all seven case lenses, marketplace/booking/selective sharing, notifications, Settings and exact-object continuity.
+Open `evidencespace-connected-application-map.html`. It is self-contained and shows authentication, five-step onboarding, Global Home, Cases, Story Field, all seven case lenses, marketplace/booking/selective sharing, notifications, Settings, and exact-object continuity.
 
 Supporting files:
 
@@ -49,8 +58,8 @@ Supporting files:
 
 ## Earlier core concept
 
-`evidencespace-core-experience.html` remains historical design exploration. Where it conflicts with the approved connected system—especially case navigation, Settings, onboarding or notifications—the newer approved system wins.
+`evidencespace-core-experience.html` remains historical design exploration. Where it conflicts with the approved connected system—especially visual language, case navigation, Settings, onboarding, or notifications—the newer approved system wins.
 
 ## Boundaries
 
-No real evidence, legal analysis, authentication, storage, AI, collaboration, payment or marketplace service is connected. Layout/motion values remain hypotheses until implemented and verified on Windows/macOS with accessibility and performance evidence.
+No real evidence, legal analysis, authentication, storage, AI, collaboration, payment, or marketplace service is connected. Layout and motion values remain hypotheses until implemented and verified on Windows/macOS with accessibility and performance evidence.
