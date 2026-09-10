@@ -31,6 +31,7 @@ const pageLoaders = Object.freeze({
 const foundationLoader = () => import("./evidencespace-pages/foundation.js");
 
 let cleanupPage;
+let contextReturnFocus;
 let renderVersion = 0;
 let toastTimer;
 window.__evidenceSpaceBootId ||= `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -128,10 +129,10 @@ function bindContextTabs() {
       }
     });
     tab.addEventListener("keydown", (event) => {
-      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
       event.preventDefault();
       const index = tabs.indexOf(tab);
-      const next = tabs[(index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+      const next = tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
       next.click();
       next.focus();
     });
@@ -152,6 +153,33 @@ function renderContext(location, shouldFocus) {
   if (shouldFocus) contextLens.querySelector("[data-context-close]")?.focus({ preventScroll: true });
 }
 
+function routeLinkLabel(link) {
+  return (link.getAttribute("aria-label") || link.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function rememberContextOrigin(link) {
+  const url = new URL(link.href, window.location.href);
+  const destination = parseShellLocation(url.search);
+  if (!destination.contextId || link.hasAttribute("data-context-close")) return;
+  contextReturnFocus = {
+    routeId: destination.route.id,
+    href: link.getAttribute("href") || `${url.search}${url.hash}`,
+    label: routeLinkLabel(link),
+  };
+}
+
+function restoreContextOrigin(location) {
+  const target = contextReturnFocus;
+  contextReturnFocus = undefined;
+  if (!target || target.routeId !== location.route.id) return false;
+  const origin = [...pageContent.querySelectorAll("a[data-route-link]")].find((link) =>
+    link.getAttribute("href") === target.href && routeLinkLabel(link) === target.label,
+  );
+  if (!origin) return false;
+  origin.focus({ preventScroll: true });
+  return true;
+}
+
 function notFoundMarkup() {
   return `<section class="es-state-page" aria-labelledby="page-title"><div class="es-state-icon">${icon("warning")}</div><p class="es-eyebrow">Navigation</p><h1 id="page-title" tabindex="-1">Page not found</h1><p>That address is not part of EvidenceSpace. Nothing changed.</p><a class="es-button is-primary" data-route-link href="${buildShellHref("home", "C-03")}">Return home</a></section>`;
 }
@@ -163,6 +191,7 @@ async function renderPage({ focus = false } = {}) {
   cleanupPage = undefined;
   renderRail(location);
   renderTopbar(location);
+  main.removeAttribute("aria-labelledby");
   pageLoading.setAttribute("aria-hidden", "false");
   pageContent.setAttribute("aria-busy", "true");
   pageContent.innerHTML = "";
@@ -180,11 +209,17 @@ async function renderPage({ focus = false } = {}) {
     document.title = `${location.route.title} — EvidenceSpace`;
     main.dataset.route = location.route.id;
     main.scrollTo({ top: 0, behavior: "auto" });
+    const pageTitle = pageContent.querySelector("#page-title");
+    if (pageTitle) main.setAttribute("aria-labelledby", "page-title");
     renderContext(location, focus && Boolean(location.contextId));
-    if (focus && !location.contextId) pageContent.querySelector("#page-title")?.focus({ preventScroll: true });
+    if (focus && !location.contextId && !restoreContextOrigin(location)) {
+      pageTitle?.focus({ preventScroll: true });
+    }
     announce(`${location.route.title} page loaded.`);
   } catch {
+    contextReturnFocus = undefined;
     pageContent.innerHTML = `<section class="es-state-page" aria-labelledby="page-title"><div class="es-state-icon">${icon("warning")}</div><p class="es-eyebrow">${escapeHtml(location.route.title)}</p><h1 id="page-title" tabindex="-1">This page couldn’t load</h1><p>Nothing changed. Reload the page or return home.</p><a class="es-button is-primary" data-route-link href="${buildShellHref("home", location.caseId)}">Return home</a></section>`;
+    main.setAttribute("aria-labelledby", "page-title");
     announce(`${location.route.title} could not load. Nothing changed.`);
   } finally {
     if (version === renderVersion) {
@@ -209,6 +244,7 @@ function navigate(href, { replace = false, focus = true } = {}) {
 document.addEventListener("click", (event) => {
   const link = event.target.closest("a[data-route-link]");
   if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  rememberContextOrigin(link);
   event.preventDefault();
   navigate(link.href, { replace: link.hasAttribute("data-route-replace"), focus: true });
 });
