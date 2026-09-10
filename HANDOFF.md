@@ -28,6 +28,7 @@ original-source protection or honest state handling.
 - The connected shell has a stable rail, quiet top bar, global routes, seven
   case lenses, query-addressable URLs, History API navigation, Back/Forward
   support, page-level lazy loading, route teardown, stale-render protection,
+  page-labelled main landmarks, exact Context Lens origin-focus restoration,
   titles, focus movement, and live announcements.
 - Product pages exist for Home, Cases, Brief, and Evidence.
 - The shared Context Lens works from Brief and Evidence.
@@ -111,6 +112,7 @@ Tests:
 - `tests/evidencespace-shell.test.ts`
 - `tests/browser/evidencespace-shell.spec.ts`
 - `tests/browser/evidencespace-map-layout.spec.ts`
+- `tests/browser/evidencespace-page-navigation.spec.ts`
 
 ### Routes
 
@@ -124,6 +126,11 @@ Tests:
 Query-addressable routes are intentional for static and packaged-host
 compatibility. Native ES modules are an incremental no-framework decision for
 this slice, not a permanent renderer commitment.
+
+The route structure implements “webapps as pages” as one application: each page
+has its own address, title, main heading, lazy module, state boundary, and return
+path while the shell stays mounted. It is not a collection of disconnected HTML
+mini-apps.
 
 ### Implemented product behavior
 
@@ -164,12 +171,13 @@ Context Lens:
 - has keyboard-operable Details, Comments, and Activity tabs;
 - labels the Ghost Proposal `AI proposal · Not applied`;
 - routes to Work for later review instead of silently mutating state;
-- closes through its control, scrim, or Escape while preserving route
-  continuity.
+- closes through its control, scrim, Escape, or browser history while preserving
+  route continuity and returning focus to the exact opening object or control;
+- falls back to the page heading when the opening origin no longer exists.
 
 ## Verification evidence
 
-Observed locally for the final production files:
+Baseline local evidence for the first connected slice:
 
 - `node --check` passed for all new JavaScript modules.
 - Deterministic suite: 7 tests, 7 passed, 0 failed.
@@ -186,8 +194,20 @@ Observed locally for the final production files:
 - No page-level horizontal overflow, console errors, or failed product resources
   remained in the final browser run.
 
-Keep exact-head GitHub Actions evidence in the pull request. Do not convert
-local evidence into a claim that packaged desktop, production data, or
+Additional observed evidence for page-focus continuity:
+
+- local `node --check` passed for the changed JavaScript and TypeScript test
+  source;
+- three focused browser regressions cover page-labelled main landmarks, exact
+  Brief object focus return, and exact Evidence control focus return when more
+  than one link opens the same Context Lens;
+- exact-head GitHub Actions passed dependency/docs/assets/typecheck,
+  deterministic tests, Chromium browser lifecycle, and the aggregate quality
+  check for behavior commit `723bcf6d8c6bf9403ba5ce582ba972dccec12ce2`;
+- the committed remote diff was inspected.
+
+Keep final-head GitHub Actions evidence in the pull request. Do not convert
+these observations into a claim that packaged desktop, production data, or real
 assistive-technology combinations were tested.
 
 ## CaseFind migration asset
@@ -270,7 +290,9 @@ Signature patterns:
 
 “Webapps as pages” means one connected app with addressable routes, a shared
 shell, exact-object context, and working return paths—not disconnected
-mini-apps.
+mini-apps. Separate HTML documents do not automatically improve performance;
+page modules should load on demand inside the stable shell and preload only on
+clear user intent.
 
 ### Trust boundaries
 

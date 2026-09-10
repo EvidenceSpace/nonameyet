@@ -78,3 +78,41 @@ material, recovery, and rollback have contract coverage.
 - Branch cleanup remains separate.
 - Public GitHub Pages or another public deployment remains deferred pending
   explicit visibility approval.
+
+## 2026-09-10 — Connected-page focus continuity
+
+### Outcome
+
+Strengthened the existing “webapps as pages” architecture without splitting the
+product into separate mini-apps. Addressable query routes still share one shell
+and lazy page modules, while each rendered page now gives the main landmark its
+visible page heading.
+
+Closing the Context Lens through Escape, its close control, the scrim, or browser
+history returns keyboard focus to the exact object or control that opened it.
+If that origin no longer exists, focus falls back to the page heading.
+
+### Verification observed
+
+- Local `node --check` passed for the changed JavaScript and TypeScript test
+  source.
+- Exact-head GitHub Actions passed dependency/docs/assets/typecheck,
+  deterministic tests, Chromium browser lifecycle, and the aggregate quality
+  check for commit `723bcf6d8c6bf9403ba5ce582ba972dccec12ce2`.
+- Three browser regressions cover page-labelled main landmarks, Brief object
+  focus return, and exact Evidence control return when duplicate Context Lens
+  links exist.
+- The committed remote diff contains only the shell behavior and focused browser
+  coverage; the canonical prototype is unchanged.
+
+### Not verified
+
+Packaged Windows/macOS behavior and real VoiceOver, NVDA, or other assistive-
+technology combinations were not exercised. This change does not prove public
+deployment, production data, persistence, collaboration, or backend behavior.
+
+### Next weakest area
+
+The next product slice remains the trust-preserving, read-only C-03/E-04 data
+adapter. Public GitHub Pages deployment remains deferred until repository
+visibility and prototype exposure are explicitly approved.

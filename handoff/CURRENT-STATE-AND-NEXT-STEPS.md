@@ -1,8 +1,8 @@
 # Current State and Next Steps
 
-**Snapshot:** 2026-09-09  
+**Snapshot:** 2026-09-10  
 **Scope:** EvidenceSpace repository takeover, canonical prototype preservation,
-and first connected product slice
+first connected product slice, and accessible page-focus continuity
 
 ## Current truth
 
@@ -14,7 +14,8 @@ EvidenceSpace now has two runnable surfaces with different roles:
      Lens.
    - Uses one persistent shell with addressable query routes, History API
      navigation, Back/Forward support, native module lazy loading, exact-object
-     context, focus movement, titles, and live announcements.
+     context, page-labelled main landmarks, focus movement with exact Context
+     Lens origin return, titles, and live announcements.
    - Includes loading, empty, denied, error, compact, dark, reduced-motion, and
      forced-colors behavior.
    - Uses synthetic fixtures and session-only preview controls.
@@ -58,7 +59,9 @@ connected slice is visually anchored to screens 7, 8, 10, 11, and 12. The other
 - Evidence keeps the original email visually distinct, exposes provenance and
   review state, selects E-04, and returns to the exact Brief.
 - Context Lens exposes details, comments, activity, and an
-  `AI proposal · Not applied` without silent mutation.
+  `AI proposal · Not applied` without silent mutation. Its close control, Escape,
+  scrim, and browser-history dismissal return keyboard focus to the exact
+  opening object or control when that origin still exists.
 - Unsupported destinations remain honest foundations inside the same shell.
 
 ## Architecture decisions
@@ -70,13 +73,17 @@ connected slice is visually anchored to screens 7, 8, 10, 11, and 12. The other
 - Route parsing bounds case/evidence/context identifiers before display or
   linking.
 - Denied case views fail closed and do not expose the case title.
-- The shell owns route loading, History API changes, cleanup, title/focus
-  updates, live announcements, and Context Lens continuity.
+- The shell owns route loading, History API changes, cleanup, page-landmark
+  labelling, title/focus updates, live announcements, and Context Lens
+  continuity.
+- Context focus restoration identifies the opening route, link, and accessible
+  label. If the origin is unavailable after render, focus falls back to the page
+  heading instead of disappearing.
 - The page modules own product content and local interaction setup.
 
 ## Observed verification
 
-Final local evidence:
+Baseline local evidence for the first connected slice:
 
 - JavaScript syntax checks passed.
 - Deterministic suite: 7/7 passed.
@@ -93,7 +100,19 @@ Final local evidence:
 - No page-level horizontal overflow, console errors, or failed product resources
   remained in the final browser pass.
 
-Keep exact-head GitHub Actions results in the pull request. Do not extend these
+Additional evidence for connected-page focus continuity:
+
+- Local `node --check` passed for the changed JavaScript and TypeScript test
+  source.
+- Three focused Playwright regressions cover the page-labelled main landmark,
+  exact Brief object focus return, and exact Evidence control focus return when
+  duplicate Context Lens links exist.
+- Exact-head GitHub Actions passed dependency/docs/assets/typecheck,
+  deterministic tests, Chromium browser lifecycle, and the aggregate quality
+  check for behavior commit `723bcf6d8c6bf9403ba5ce582ba972dccec12ce2`.
+- The remote commit and changed-file diff were inspected.
+
+Keep final-head GitHub Actions results in the pull request. Do not extend these
 observations to packaged desktop, production data, real concurrency, or
 assistive-technology combinations.
 
