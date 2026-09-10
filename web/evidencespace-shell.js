@@ -1,11 +1,15 @@
 import {
   CASE_LENSES,
   GLOBAL_DESTINATIONS,
-  ROUTES,
   buildShellHref,
   parseShellLocation,
 } from "./evidencespace-shell-model.js";
-import { caseFixture, selectedEvidenceFixture, workspaceFixture } from "./evidencespace-pages/fixtures.js";
+import { loadEvidenceRecord } from "./evidencespace-pages/evidence-record-adapter.js";
+import {
+  caseFixture,
+  selectedEvidenceSourceFixture,
+  workspaceFixture,
+} from "./evidencespace-pages/fixtures.js";
 import { escapeHtml, icon, membersMarkup, pill } from "./evidencespace-pages/page-utils.js";
 
 const pageContent = document.querySelector("#page-content");
@@ -71,7 +75,7 @@ function renderRail(location) {
   }
 }
 
-function navLink(item, location, kind) {
+function navLink(item, location) {
   const current = item.id === location.route.id;
   return `<a data-route-link href="${buildShellHref(item.id, location.caseId)}" ${current ? 'aria-current="page"' : ""}>${escapeHtml(item.label)}</a>`;
 }
@@ -83,20 +87,45 @@ function renderTopbar(location) {
   topbarSubtitle.textContent = isRestricted ? "Access required" : isCase ? `${caseFixture.type} · ${caseFixture.jurisdiction}` : "Personal workspace";
   caseMembers.innerHTML = isCase && !isRestricted ? membersMarkup() : "";
   const links = isCase ? CASE_LENSES : GLOBAL_DESTINATIONS.filter(({ id }) => ["home", "cases", "lawyers"].includes(id));
-  topbarNav.innerHTML = links.map((item) => navLink(item, location, isCase ? "case" : "global")).join("");
+  topbarNav.innerHTML = links.map((item) => navLink(item, location)).join("");
   document.querySelector(".es-topbar-context").href = isCase ? buildShellHref("brief", location.caseId) : buildShellHref("home", location.caseId);
 }
 
-function contextMarkup(location) {
+function contextUnavailableCopy(status) {
+  return ({
+    denied: ["Source access required", "Nothing private was shown."],
+    missing: ["Source not found", "Demo data was not substituted."],
+    deleted: ["Source removed", "An older copy was not reused."],
+    stale: ["Source needs checking", "Its processing identity no longer matches the original."],
+    changed: ["Source changed", "Its stored identity or source links no longer match."],
+    error: ["Source unavailable", "Nothing changed. Try again when the source is available."],
+  })[status] || ["Source unavailable", "Nothing changed. Try again when the source is available."];
+}
+
+function contextMarkup(location, evidenceResult) {
   const closeHref = buildShellHref(location.route.id, location.caseId, {
     evidenceId: location.route.id === "evidence" ? location.evidenceId : undefined,
     from: location.from,
     viewState: location.viewState,
   });
-  const sourceHref = buildShellHref("evidence", location.caseId, { evidenceId: "E-04", from: location.route.id });
+  if (evidenceResult?.status !== "ready") {
+    const copy = contextUnavailableCopy(evidenceResult?.status);
+    return `
+      <header class="es-context-header">
+        <div><p class="es-eyebrow">Evidence</p><h2 id="context-title">${escapeHtml(copy[0])}</h2></div>
+        <a class="es-icon-button" data-route-link data-route-replace data-context-close href="${closeHref}" aria-label="Close Context Lens">×</a>
+      </header>
+      <div class="es-context-body"><p>${escapeHtml(copy[1])}</p></div>`;
+  }
+
+  const evidence = evidenceResult.record;
+  const sourceHref = buildShellHref("evidence", location.caseId, {
+    evidenceId: evidence.evidenceId,
+    from: location.route.id,
+  });
   return `
     <header class="es-context-header">
-      <div><p class="es-eyebrow is-contrary">Selected · E-04</p><h2 id="context-title">${escapeHtml(selectedEvidenceFixture.title)}</h2></div>
+      <div><p class="es-eyebrow is-contrary">Selected · ${escapeHtml(evidence.evidenceId)}</p><h2 id="context-title">${escapeHtml(evidence.title)}</h2></div>
       <a class="es-icon-button" data-route-link data-route-replace data-context-close href="${closeHref}" aria-label="Close Context Lens">×</a>
     </header>
     <div class="es-context-tabs" role="tablist" aria-label="Context Lens sections">
@@ -107,13 +136,13 @@ function contextMarkup(location) {
     <div class="es-context-body">
       <section role="tabpanel" id="context-panel-details" aria-labelledby="context-tab-details">
         ${pill("Contrary · unresolved", "contrary")}
-        <dl class="es-context-list"><div><dt>Source</dt><dd>${escapeHtml(selectedEvidenceFixture.source)}</dd></div><div><dt>Date</dt><dd>2 August</dd></div><div><dt>Original</dt><dd>Headers preserved</dd></div><div><dt>Visibility</dt><dd>${escapeHtml(selectedEvidenceFixture.visibility)}</dd></div><div><dt>Backlinks</dt><dd>${selectedEvidenceFixture.backlinks} connected objects</dd></div></dl>
-        <div class="es-context-assessment"><p class="es-record-label">Source-backed assessment</p><p>${escapeHtml(selectedEvidenceFixture.assessment)}</p></div>
+        <dl class="es-context-list"><div><dt>Source</dt><dd>${escapeHtml(evidence.source)}</dd></div><div><dt>Date</dt><dd>${escapeHtml(evidence.date)}</dd></div><div><dt>Original</dt><dd>${escapeHtml(evidence.integrity)}</dd></div><div><dt>Visibility</dt><dd>${escapeHtml(evidence.visibility)}</dd></div><div><dt>Backlinks</dt><dd>${evidence.backlinks} connected objects</dd></div></dl>
+        <div class="es-context-assessment"><p class="es-record-label">Source-backed assessment</p><p>${escapeHtml(evidence.assessment)}</p></div>
         <div class="es-proposal-card"><p class="es-eyebrow">${icon("spark")} AI proposal · Not applied</p><h3>Request the complete change log</h3><p>Create one proposed task linked to the unresolved timing question.</p><div>${pill("3 sources")}${pill("Reversible")}</div><a class="es-button is-primary" data-route-link href="${buildShellHref("work", location.caseId)}">Review in Work</a></div>
-        <a class="es-button es-context-source-link" data-route-link href="${sourceHref}">${icon("file")} Open Evidence E-04</a>
+        <a class="es-button es-context-source-link" data-route-link href="${sourceHref}">${icon("file")} Open Evidence ${escapeHtml(evidence.evidenceId)}</a>
       </section>
       <section role="tabpanel" id="context-panel-comments" aria-labelledby="context-tab-comments" hidden><h3>Two comments</h3><p>Riley asked whether the concern came before the delivery acknowledgement.</p><p>Jordan linked the email to the current understanding.</p></section>
-      <section role="tabpanel" id="context-panel-activity" aria-labelledby="context-tab-activity" hidden><h3>Recent activity</h3><p>10:22 · Source imported by Riley.</p><p>10:24 · Two statements detected.</p></section>
+      <section role="tabpanel" id="context-panel-activity" aria-labelledby="context-tab-activity" hidden><h3>Recent activity</h3><p>${escapeHtml(evidence.imported)} · Source record imported.</p><p>Two source-linked statements are ready for review.</p></section>
     </div>`;
 }
 
@@ -139,7 +168,7 @@ function bindContextTabs() {
   }
 }
 
-function renderContext(location, shouldFocus) {
+function renderContext(location, shouldFocus, evidenceResult) {
   const open = location.contextId === "E-04";
   contextLens.hidden = !open;
   contextScrim.hidden = !open;
@@ -148,7 +177,7 @@ function renderContext(location, shouldFocus) {
     contextLens.innerHTML = "";
     return;
   }
-  contextLens.innerHTML = contextMarkup(location);
+  contextLens.innerHTML = contextMarkup(location, evidenceResult);
   bindContextTabs();
   if (shouldFocus) contextLens.querySelector("[data-context-close]")?.focus({ preventScroll: true });
 }
@@ -184,6 +213,18 @@ function notFoundMarkup() {
   return `<section class="es-state-page" aria-labelledby="page-title"><div class="es-state-icon">${icon("warning")}</div><p class="es-eyebrow">Navigation</p><h1 id="page-title" tabindex="-1">Page not found</h1><p>That address is not part of EvidenceSpace. Nothing changed.</p><a class="es-button is-primary" data-route-link href="${buildShellHref("home", "C-03")}">Return home</a></section>`;
 }
 
+async function readRouteEvidence(location) {
+  if (location.viewState !== "ready") return undefined;
+  const evidenceId = location.route.id === "evidence" ? location.evidenceId : location.contextId;
+  if (!evidenceId) return undefined;
+  return loadEvidenceRecord({
+    caseId: location.caseId,
+    evidenceId,
+    provider: globalThis.__evidenceSpaceEvidenceProvider,
+    fallbackRecord: selectedEvidenceSourceFixture,
+  });
+}
+
 async function renderPage({ focus = false } = {}) {
   const version = ++renderVersion;
   const location = parseShellLocation(window.location.search);
@@ -198,12 +239,18 @@ async function renderPage({ focus = false } = {}) {
 
   try {
     let module;
+    let evidenceResult;
     if (location.route.id === "not-found") {
       pageContent.innerHTML = notFoundMarkup();
     } else {
-      module = await (pageLoaders[location.route.id] || foundationLoader)();
+      [module, evidenceResult] = await Promise.all([
+        (pageLoaders[location.route.id] || foundationLoader)(),
+        readRouteEvidence(location),
+      ]);
       if (version !== renderVersion) return;
-      pageContent.innerHTML = module.renderPage(location);
+      const markup = await module.renderPage({ ...location, evidenceResult });
+      if (version !== renderVersion) return;
+      pageContent.innerHTML = markup;
       cleanupPage = module.mountPage?.({ root: pageContent, location, announce, toast });
     }
     document.title = `${location.route.title} — EvidenceSpace`;
@@ -211,7 +258,7 @@ async function renderPage({ focus = false } = {}) {
     main.scrollTo({ top: 0, behavior: "auto" });
     const pageTitle = pageContent.querySelector("#page-title");
     if (pageTitle) main.setAttribute("aria-labelledby", "page-title");
-    renderContext(location, focus && Boolean(location.contextId));
+    renderContext(location, focus && Boolean(location.contextId), evidenceResult);
     if (focus && !location.contextId && !restoreContextOrigin(location)) {
       pageTitle?.focus({ preventScroll: true });
     }

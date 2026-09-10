@@ -1,5 +1,11 @@
 const freezeList = (items) => Object.freeze(items.map((item) => Object.freeze(item)));
 
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
 export const workspaceFixture = Object.freeze({
   id: "W-01",
   name: "Alder Workspace",
@@ -121,6 +127,96 @@ export const selectedEvidenceFixture = Object.freeze({
     { id: "A1", label: "Receipt", quote: "We received the final package on Friday.", tone: "confirmed", state: "Ready" },
     { id: "A2", label: "Concern", quote: "I do have concerns about some of the mobile layouts.", tone: "contrary", state: "Contrary" },
   ]),
+});
+
+const selectedSourceHash = "4".repeat(64);
+const selectedSourceReference = () => ({
+  fileId: "file_e04_preview",
+  sha256: selectedSourceHash,
+  locator: { kind: "whole_file" },
+});
+
+export const selectedEvidenceSourceFixture = deepFreeze({
+  caseId: "C-03",
+  evidenceId: "E-04",
+  file: {
+    id: "file_e04_preview",
+    caseId: "C-03",
+    name: "2-August-email.eml",
+    type: "message/rfc822",
+    size: 24 * 1024,
+    sha256: selectedSourceHash,
+    createdAt: "2026-08-02T09:22:00.000Z",
+    original: {
+      name: "2-August-email.eml",
+      type: "message/rfc822",
+      size: 24 * 1024,
+      lastModified: 1785662040000,
+    },
+  },
+  processing: {
+    fileId: "file_e04_preview",
+    caseId: "C-03",
+    fileHash: selectedSourceHash,
+    status: "ready_for_ai",
+    message: "Source-linked text ready for review.",
+  },
+  facts: [],
+  suggestions: [
+    {
+      id: "A1",
+      caseId: "C-03",
+      fileId: "file_e04_preview",
+      label: "Receipt",
+      value: "We received the final package on Friday.",
+      relation: "supports",
+      status: "suggested",
+      aiSuggested: true,
+      decidedByUser: false,
+      sourceReference: selectedSourceReference(),
+    },
+    {
+      id: "A2",
+      caseId: "C-03",
+      fileId: "file_e04_preview",
+      label: "Concern",
+      value: "I do have concerns about some of the mobile layouts.",
+      relation: "contrary",
+      status: "uncertain",
+      aiSuggested: true,
+      decidedByUser: false,
+      sourceReference: selectedSourceReference(),
+    },
+  ],
+  record: {
+    title: selectedEvidenceFixture.title,
+    filename: selectedEvidenceFixture.filename,
+    kind: selectedEvidenceFixture.kind,
+    source: selectedEvidenceFixture.source,
+    date: selectedEvidenceFixture.date,
+    imported: selectedEvidenceFixture.imported,
+    addedBy: selectedEvidenceFixture.addedBy,
+    integrity: selectedEvidenceFixture.integrity,
+    visibility: selectedEvidenceFixture.visibility,
+    backlinks: selectedEvidenceFixture.backlinks,
+    assessment: selectedEvidenceFixture.assessment,
+    preview: {
+      from: "Mia Collins <mia@harborstudio.co.uk>",
+      to: "Alex Morgan <alex@alder.design>",
+      date: "2 August 2026 · 10:14",
+      subject: "Re: final delivery and invoice",
+      body: [
+        "Hi Alex,",
+        "We received the final package on Friday and have started preparing the launch materials. We will send payment once the launch is complete.",
+        "I do have concerns about some of the mobile layouts, and the team may send a list of changes next week.",
+      ],
+      receipt: "We received the final package on Friday",
+      concern: "I do have concerns about some of the mobile layouts",
+      closing: "Thanks,\nMia",
+      footerLeft: "Message ID preserved",
+      footerRight: "Page 1 of 1",
+    },
+  },
 });
 
 export const briefAttentionFixture = freezeList([
