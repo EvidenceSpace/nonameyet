@@ -116,3 +116,42 @@ deployment, production data, persistence, collaboration, or backend behavior.
 The next product slice remains the trust-preserving, read-only C-03/E-04 data
 adapter. Public GitHub Pages deployment remains deferred until repository
 visibility and prototype exposure are explicitly approved.
+
+## 2026-09-10 — Public synthetic demo
+
+### Outcome
+
+Published the connected synthetic slice at
+<https://evidencespace.github.io/nonameyet/> through a manual GitHub Pages
+workflow after explicit public-visibility approval. The entry states that all
+data is fictional, warns against entering real case information, and says that
+accounts, secure storage, payments, and AI actions are not connected.
+
+The deployment artifact is rebuilt from an explicit 15-file allowlist. It
+excludes the canonical prototype, CaseFind, documents, backend code, and
+repository history. No-index controls reduce accidental discovery but do not
+make the public site private.
+
+### Verification observed
+
+- All exact-head checks passed before PR #117 merged.
+- Artifact tests verify the exact file list, disclosure boundary, forbidden
+  paths/content, and every relative JavaScript import.
+- Public demo deployment #1 succeeded from main commit
+  `8464ae81ab92e2bc594f8f630cb38b19da360245`.
+- Repository metadata reports Pages enabled.
+- A user-provided desktop capture shows the published Home page rendered.
+- PR #118 moved checkout and setup-node to verified Node 24-based action
+  releases; all four exact-head quality jobs passed before merge.
+
+### Not verified
+
+The independent crawler respected `noindex`, and the computer sandbox lacked
+public DNS. Full live route, asset, console, mobile, and assistive-technology QA
+was not independently executed.
+
+### Next weakest area
+
+Write the current CaseFind trust-invariant map and connect one read-only
+C-03/E-04 source-record adapter with explicit synthetic fallback. Add no writes
+until fail-closed contract tests pass.
