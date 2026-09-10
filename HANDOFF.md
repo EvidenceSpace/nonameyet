@@ -1,64 +1,67 @@
 # HANDOFF — EvidenceSpace
 
-> Living handoff for the next contributor. Keep this file factual, concise, and
-> aligned with the repository.
+> Factual resume point for the next contributor. Keep observed evidence separate
+> from product ambition.
 
 ## Resume here
 
-EvidenceSpace now has its first recognizable connected product slice:
+EvidenceSpace has one connected, synthetic product slice:
 
-The connected route is **Home → Cases → Case C-03 Brief → Evidence E-04 →
-Context Lens → exact-object return**.
+**Home → Cases → Case C-03 Brief → Evidence E-04 → Context Lens → exact-object
+return**.
 
 The implementation lives under `web/evidencespace-*` and
-`web/evidencespace-pages/`. It is a prototype-faithful, synthetic front end—not
-production authentication, storage, collaboration, evidence processing, or AI.
+`web/evidencespace-pages/`. It is publicly previewable, but it is not production
+authentication, storage, collaboration, evidence processing, payments, or AI.
 
-The next weakest area is no longer shell architecture. It is **trust-preserving
-migration**: refresh representative CaseFind integrity and recovery modules,
-write the invariant map, and connect one real data seam without weakening
-original-source protection or honest state handling.
+The next weakest product area remains **trust-preserving CaseFind migration**:
+write the current invariant map and connect one read-only C-03/E-04 data seam
+before adding any mutation path.
 
-## Status snapshot
+## Current repository truth
 
-### Current in the repository
-
-- The canonical 37-screen EvidenceSpace prototype is preserved unchanged.
-- Human-made interface quality requirements are durable in repository guidance.
-- The connected shell has a stable rail, quiet top bar, global routes, seven
-  case lenses, query-addressable URLs, History API navigation, Back/Forward
-  support, page-level lazy loading, route teardown, stale-render protection,
-  page-labelled main landmarks, exact Context Lens origin-focus restoration,
-  titles, focus movement, and live announcements.
+- The canonical 37-screen prototype is preserved unchanged.
 - Product pages exist for Home, Cases, Brief, and Evidence.
-- The shared Context Lens works from Brief and Evidence.
-- Case `C-03` and Evidence `E-04` remain the same objects across navigation and
-  return paths.
-- Honest foundations remain for unfinished pages; they do not pretend to be
-  product-complete.
+- Other destinations render honest foundations inside the same shell.
+- The shell provides query-addressable routes, History API navigation,
+  Back/Forward support, page-level lazy loading, intent prefetch, teardown,
+  stale-render protection, page-labelled main landmarks, exact Context Lens
+  focus return, titles, and live announcements.
 - Loading, empty, denied, error, narrow-window, dark, reduced-motion, and
-  forced-colors behavior is present.
-- Deterministic and Playwright coverage exercises the connected slice.
-- CaseFind remains runnable as a migration asset.
+  forced-colors behavior exists for the connected slice.
+- CaseFind remains runnable as the migration asset for proven persistence,
+  integrity, review, timeline, export, deletion, and recovery behavior.
 
-### Not current / not proven
+## Public demo
 
-- No production auth, authorization store, persistence, collaboration, upload,
-  evidence ingestion, AI execution, notifications, marketplace, payment, or
-  legal workflow is connected to the new slice.
-- Preview confirm/correct controls are session-only and do not save or share
-  data.
-- Unsupported routes are foundations, not finished pages.
-- Only eight of 37 canonical screens have received individual route-level
-  inspection.
-- The Electron/desktop host has not been proven against this connected shell.
-- Windows packaging, assistive-technology combinations, real network loss,
-  concurrent edits, revocation, and production-scale performance remain
-  unverified.
-- CaseFind trust behavior has not yet been migrated into the new presentation
-  layer.
+Live URL: <https://evidencespace.github.io/nonameyet/>
 
-## Canonical design and preservation
+The first manual Pages deployment succeeded from `main` at
+`8464ae81ab92e2bc594f8f630cb38b19da360245`. Repository metadata reports Pages
+enabled, and a user-supplied desktop capture shows the Home page rendered with
+its connected shell.
+
+Publication is deliberately bounded:
+
+- `scripts/build-public-demo.mjs` creates a fresh 15-file allowlist.
+- Only the connected synthetic shell, its page modules, a disclosure entry, a
+  disallowing `robots.txt`, and `.nojekyll` are published.
+- The canonical prototype, CaseFind files, documents, backend code, and
+  repository history are not in the Pages artifact.
+- The entry says the data is fictional, warns against entering real case
+  information, and states that accounts, secure storage, payments, and AI
+  actions are not connected.
+- `noindex`, `nofollow`, and `noarchive` reduce accidental discovery; they are
+  not access control. The site is public.
+- External workflow actions are pinned to immutable commits. Checkout v7.0.1
+  and setup-node v7.0.0 replaced Node 20-based action runtimes in PR #118.
+
+The crawler used for independent text extraction respected `noindex` and
+returned `CRAWL_NOINDEX`; the computer sandbox also lacked public DNS. Do not
+claim that every live route, resource, or console state was independently
+exercised from that environment.
+
+## Canonical design
 
 Primary baseline:
 
@@ -67,234 +70,91 @@ Primary baseline:
 
 Verified identity:
 
-- raw attachment bytes: `5,226,610`;
-- raw SHA-256:
-  `114d1e96debe2b6dda13a76782c55085ab6f479543a56a2c6f5071a921134c72`;
 - normalized bytes: `5,226,405`;
 - normalized SHA-256:
   `676f787dd69c5a0b41339faa519388e6eb9af0e05794133d4980ec7394443807`;
 - repository blob: `abcc8e2b5c5e56ba1cfdaf07182b6633c7b03199`;
 - 37 unique named 1920×1080 WebP screens.
 
-Individually reviewed source screens:
+Individually reviewed screens: 1, 2, 3, 7, 8, 10, 11, and 12. Do not imply the
+remaining 29 received route-by-route review.
 
-- `01-auth.webp`
-- `02-onboarding-profile.webp`
-- `03-onboarding-legal.webp`
-- `07-home.webp`
-- `08-cases.webp`
-- `10-brief.webp`
-- `11-space.webp`
-- `12-evidence.webp`
+## Connected architecture
 
-The first connected slice uses screens 7, 8, 10, 11, and 12 as visual anchors.
-Do not imply the remaining 29 screens have received route-by-route QA.
-
-## Connected slice architecture
-
-### Core files
+Core files:
 
 - `web/evidencespace-shell.html`
 - `web/evidencespace-shell.js`
 - `web/evidencespace-shell-model.js`
 - `web/evidencespace-shell.css`
 - `web/evidencespace-tokens.css`
-- `web/evidencespace-pages/fixtures.js`
-- `web/evidencespace-pages/page-utils.js`
-- `web/evidencespace-pages/foundation.js`
-- `web/evidencespace-pages/home.js`
-- `web/evidencespace-pages/cases.js`
-- `web/evidencespace-pages/brief.js`
-- `web/evidencespace-pages/evidence.js`
+- `web/evidencespace-pages/`
 
-Tests:
-
-- `tests/evidencespace-shell.test.ts`
-- `tests/browser/evidencespace-shell.spec.ts`
-- `tests/browser/evidencespace-map-layout.spec.ts`
-- `tests/browser/evidencespace-page-navigation.spec.ts`
-
-### Routes
+Primary routes:
 
 - Home: `?route=home`
 - Cases: `?route=cases`
 - Brief: `?route=brief&case=C-03`
 - Evidence: `?route=evidence&case=C-03&evidence=E-04&from=brief`
 - Context Lens: `?route=brief&case=C-03&context=E-04`
-- State diagnostics: `view=loading`, `view=empty`, `view=denied`, `view=error`
 
-Query-addressable routes are intentional for static and packaged-host
-compatibility. Native ES modules are an incremental no-framework decision for
-this slice, not a permanent renderer commitment.
+“Webapps as pages” means one mounted shell with addressable pages, independent
+lazy modules, exact-object context, and working return paths—not disconnected
+HTML mini-apps. Query URLs remain intentional for static and packaged-host
+compatibility.
 
-The route structure implements “webapps as pages” as one application: each page
-has its own address, title, main heading, lazy module, state boundary, and return
-path while the shell stays mounted. It is not a collection of disconnected HTML
-mini-apps.
+## Observed verification
 
-### Implemented product behavior
+- The first connected slice passed 7 deterministic and 10 browser tests during
+  its original local verification.
+- Page-focus continuity added three focused browser regressions and passed all
+  exact-head GitHub quality jobs before PR #116 merged.
+- The 15-file public artifact has deterministic coverage for its exact file
+  list, disclosure/no-index boundary, forbidden paths/content, and relative
+  JavaScript import resolution. All PR #117 checks passed.
+- Node 24 action upgrades passed dependency/docs/assets/typecheck,
+  deterministic, Chromium lifecycle, and aggregate checks before PR #118 merged.
+- The successful public deployment and rendered Home page were visually
+  supplied by the user.
 
-Home:
+## Not proven
 
-- resumes C-03;
-- shows a concise current focus and connected-object preview;
-- routes primary actions to Brief and E-04;
-- shows truthful synthetic case, attention, Private AI, and quick-start regions.
-
-Cases:
-
-- contains four synthetic records;
-- supports search and functional All / Needs you / Mine / Shared filters;
-- presents pinned cases and an accessible table;
-- keeps current focus and next action visible.
-
-Brief:
-
-- presents qualified reviewed understanding;
-- keeps source support, contrary material, and unknowns visible;
-- labels the path as descriptive, not predictive;
-- provides one source-linked next step;
-- exposes the connected case map and Context Lens.
-
-Evidence:
-
-- keeps the original source visually distinct from annotations;
-- shows provenance, integrity language, statements A1/A2, review status, and
-  backlinks;
-- keeps E-04 selected and returns to the same Brief;
-- labels confirmation/correction as a browser-session preview rather than fake
-  persistence.
-
-Context Lens:
-
-- shows the selected E-04 source-backed assessment;
-- has keyboard-operable Details, Comments, and Activity tabs;
-- labels the Ghost Proposal `AI proposal · Not applied`;
-- routes to Work for later review instead of silently mutating state;
-- closes through its control, scrim, Escape, or browser history while preserving
-  route continuity and returning focus to the exact opening object or control;
-- falls back to the page heading when the opening origin no longer exists.
-
-## Verification evidence
-
-Baseline local evidence for the first connected slice:
-
-- `node --check` passed for all new JavaScript modules.
-- Deterministic suite: 7 tests, 7 passed, 0 failed.
-- Browser suite: 10 tests, 10 passed, 0 failed.
-- The functional flow covered direct load, Home → Cases → Brief → E-04, exact
-  return, Back/Forward, filters, search, Context Lens, Escape, denied-title
-  protection, invalid routes, compact overflow, and recovery states.
-- Desktop visual inspection covered Home, Cases, Brief, Evidence, and Context
-  Lens at 1440px.
-- Narrow visual inspection covered Home, Cases, Brief, Evidence, and Context
-  Lens between 900px and 520px.
-- Dark Home/Evidence, focus diagnostics, and Evidence recovery states were
-  inspected.
-- No page-level horizontal overflow, console errors, or failed product resources
-  remained in the final browser run.
-
-Additional observed evidence for page-focus continuity:
-
-- local `node --check` passed for the changed JavaScript and TypeScript test
-  source;
-- three focused browser regressions cover page-labelled main landmarks, exact
-  Brief object focus return, and exact Evidence control focus return when more
-  than one link opens the same Context Lens;
-- exact-head GitHub Actions passed dependency/docs/assets/typecheck,
-  deterministic tests, Chromium browser lifecycle, and the aggregate quality
-  check for behavior commit `723bcf6d8c6bf9403ba5ce582ba972dccec12ce2`;
-- the committed remote diff was inspected.
-
-Keep final-head GitHub Actions evidence in the pull request. Do not convert
-these observations into a claim that packaged desktop, production data, or real
-assistive-technology combinations were tested.
-
-## CaseFind migration asset
-
-The earlier CaseFind interface is not the target visual system, but it contains
-behavior that must not be discarded without proof.
-
-Refresh these representative paths before making migration claims:
-
-- `web/storage.js`
-- `web/index.html`
-- `web/cases.html`
-- `web/cases-new.html`
-- `web/case.html`
-- `web/review-transition.js`
-- `web/timeline-model.js`
-- `web/timeline-ui.js`
-- `web/original-byte-integrity.js`
-- `web/processing-integrity.js`
-- relevant modules under `src/ai/`, `src/domain/`, `src/processing/`, and
-  `src/report/`
-
-Record at least these invariants:
-
-1. originals remain byte-preserved and distinguishable from derivatives;
-2. processing failures do not silently replace or downgrade source truth;
-3. review transitions are explicit, reversible where promised, and auditable;
-4. deletion, stale-source, reconnect, and recovery behavior is fail-closed;
-5. exported/report material preserves provenance and uncertainty;
-6. private or restricted matter data never leaks into fixtures, logs,
-   screenshots, traces, or CI artifacts.
-
-Do not claim the new synthetic slice replaces any of those behaviors until an
-equivalent implementation and migration test exist.
+- production authentication, authorization, persistence, or collaboration;
+- new-shell evidence ingestion or CaseFind migration;
+- real AI execution, notifications, marketplace, booking, or payments;
+- backend concurrency, revocation, retry, partial failure, or deletion;
+- packaged Windows/macOS behavior;
+- real assistive-technology combinations;
+- full route/console/resource QA of the public URL;
+- route-by-route QA of all 37 canonical screens.
 
 ## Immediate next task
 
-1. Read the representative CaseFind paths above and write a compact
-   current-invariant map.
-2. Choose one vertical data seam for C-03/E-04—prefer read-only loading of an
-   original-source record before any mutation path.
-3. Define adapter boundaries so the connected UI does not depend directly on
-   legacy DOM or storage shapes.
-4. Add contract tests for provenance, contrary material, denied access,
-   stale/deleted source behavior, and recovery.
-5. Implement the seam behind the existing synthetic interface without changing
-   the canonical prototype.
-6. Re-run deterministic, browser, security, docs, dependency, workflow, type,
-   and full repository checks.
-7. Inspect the exact remote diff and GitHub Actions head before merge.
+1. Refresh representative CaseFind trust modules:
+   `web/storage.js`, `web/review-transition.js`, `web/timeline-model.js`,
+   `web/timeline-ui.js`, `web/original-byte-integrity.js`,
+   `web/processing-integrity.js`, and relevant `src/` domain/processing/report
+   code.
+2. Write an invariant map covering original bytes, provenance, processing
+   failure, review transitions, contrary material, deletion, stale sources,
+   reconnect, recovery, exports, and restricted-data handling.
+3. Define an adapter independent of legacy DOM and storage shapes.
+4. Connect one read-only C-03/E-04 record with explicit synthetic fallback.
+5. Add fail-closed tests for denied, missing, stale, changed, and deleted
+   sources, contrary material, recovery, and rollback.
+6. Add no writes until those tests pass.
 
-After that, select the next visual route from the remaining canonical screens.
-Space is still a foundation; only the shared Context Lens pattern is
-implemented.
+## Stable product structure
 
-## Product structure that must remain stable
+Global: **Home → Cases → New case → Lawyers → Notifications → Settings →
+Security and help → Account**.
 
-Global:
-
-Global route order: **Home → Cases → New case → Lawyers → Notifications →
-Settings → Security and help → Account**.
-
-Inside a case:
-
-Case-lens order: **Brief → Space → Evidence → Research → Work → Room →
-Reports**.
-
-Core loop:
+Case lenses: **Brief → Space → Evidence → Research → Work → Room → Reports**.
 
 Core loop: **capture → preserve → organize → understand → decide → act →
 review**.
 
-Signature patterns:
-
-- Case Spine
-- Provenance Rail
-- Context Lens
-- Ghost Proposal
-- Workspace receipt
-
-“Webapps as pages” means one connected app with addressable routes, a shared
-shell, exact-object context, and working return paths—not disconnected
-mini-apps. Separate HTML documents do not automatically improve performance;
-page modules should load on demand inside the stable shell and preload only on
-clear user intent.
-
-### Trust boundaries
+Trust boundaries:
 
 - Workspace membership does not grant case access.
 - Payment does not grant case access.
@@ -302,38 +162,26 @@ clear user intent.
 
 ## Human-made interface requirements
 
-- Keep the result recognizably human-designed rather than generated.
-- Use vocabulary a person understands on first reading.
-- Remove or shorten copy before shrinking typography.
-- Avoid billboard headings and tiny helper text.
-- Use proportion, spacing, alignment, typography, meaningful content, and
-  designed states to create appeal.
-- Prefer one clear primary action and a small number of honest supporting
-  actions.
-- Avoid ornamental AI imagery, arbitrary gradients, glass everywhere, filler
-  cards, and motion for its own sake.
-- Keep motion limited, causal, performant, and compatible with reduced motion.
-- Test empty, loading, denied, error, offline/retry, stale, reconnect, deletion,
-  and recovery states appropriate to each slice.
+- Use short, familiar vocabulary.
+- Remove copy before shrinking type.
+- Keep headings proportional and supporting text readable.
+- Create appeal through hierarchy, spacing, alignment, content, and useful
+  states—not filler cards or decoration.
+- Use motion only when it explains cause, movement, progress, or status.
+- Avoid ornamental AI imagery, arbitrary gradients, glass everywhere, and
+  generic dashboard redesigns.
+- Refine the approved system instead of replacing it.
 
-**Refine, do not redesign.** Improve the approved prototype without turning
-EvidenceSpace into a generic dashboard.
-
-## Delivery and branch posture
+## Delivery guardrails
 
 - Durable accepted work belongs on `main` through focused reviewed changes.
-- The canonical prototype must remain outside unrelated diffs.
-- Do not mix historical branch cleanup, PR #86 salvage, or public deployment
-  into product-slice changes.
-- PR #86 remains on hold until targeted salvage is proven.
-- Defer deleting historical branches until protection and automatic
-  merged-branch deletion are in place.
-- Do not publish GitHub Pages or another public deployment without explicit
-  visibility approval.
+- Keep the canonical prototype outside unrelated diffs.
+- Keep CaseFind until trust-critical replacements and migration tests exist.
+- Keep PR #86 on hold; salvage only targeted current behavior.
+- Keep historical branch cleanup separate from product work.
+- Treat the Pages site as a public synthetic preview, never production hosting.
 
 ## Required checks
-
-Run applicable checks and report observed outcomes:
 
 ```bash
 npm run check:dependencies
@@ -346,16 +194,7 @@ npm run test:browser
 npm run check
 ```
 
-`tsconfig.json` covers `src/**/*.ts`; do not claim it typechecks the browser
-shell, tests, scripts, or server.
-
-## Continuity protocol
-
-When implementation truth changes:
-
-1. update this file;
-2. update `handoff/CURRENT-STATE-AND-NEXT-STEPS.md`;
-3. append `handoff/SESSION-LEDGER.md`;
-4. keep exact command results and remote CI evidence in the pull request;
-5. state what was not verified;
-6. name the next weakest area without inflating progress.
+When implementation truth changes, update this file,
+`handoff/CURRENT-STATE-AND-NEXT-STEPS.md`, and
+`handoff/SESSION-LEDGER.md`; report only observed results and state what remains
+unverified.

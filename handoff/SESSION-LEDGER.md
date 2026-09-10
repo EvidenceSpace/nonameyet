@@ -53,66 +53,71 @@ behavior.
   dark mode, and reduced motion were exercised.
 - Desktop and narrow visual reviews covered Home, Cases, Brief, Evidence, and
   Context Lens.
-- Dark Home/Evidence, focus diagnostics, and Evidence error recovery were
-  inspected.
-- Final local browser evidence had no page-level horizontal overflow, console
-  errors, or failed product resources.
-
-### Not verified
-
-Production data/auth, persistent collaboration, legacy migration, real
-offline/reconnect, concurrency, revocation, packaged Windows/macOS, real
-assistive-technology combinations, and the remaining 29 canonical screens.
+- Final local browser evidence had no page-level overflow, console errors, or
+  failed product resources.
 
 ### Next weakest area
 
-Refresh representative CaseFind trust modules, write the invariant map, and
-connect one read-only C-03/E-04 source-record seam behind an adapter. Do not add
-writes until provenance, denied access, stale/deleted sources, contrary
-material, recovery, and rollback have contract coverage.
-
-### Delivery notes
-
-- Canonical prototype preserved unchanged.
-- PR #86 remains on hold.
-- Branch cleanup remains separate.
-- Public GitHub Pages or another public deployment remains deferred pending
-  explicit visibility approval.
+Connect one trust-preserving, read-only C-03/E-04 data seam behind an adapter.
+Do not add writes until provenance, denied access, stale/deleted sources,
+contrary material, recovery, and rollback have contract coverage.
 
 ## 2026-09-10 — Connected-page focus continuity
 
 ### Outcome
 
-Strengthened the existing “webapps as pages” architecture without splitting the
-product into separate mini-apps. Addressable query routes still share one shell
-and lazy page modules, while each rendered page now gives the main landmark its
-visible page heading.
-
-Closing the Context Lens through Escape, its close control, the scrim, or browser
-history returns keyboard focus to the exact object or control that opened it.
-If that origin no longer exists, focus falls back to the page heading.
+Kept one mounted shell with addressable lazy page modules while labelling each
+main landmark and returning Context Lens focus to the exact opening object or
+control. Missing origins fall back to the page heading.
 
 ### Verification observed
 
-- Local `node --check` passed for the changed JavaScript and TypeScript test
-  source.
-- Exact-head GitHub Actions passed dependency/docs/assets/typecheck,
-  deterministic tests, Chromium browser lifecycle, and the aggregate quality
-  check for commit `723bcf6d8c6bf9403ba5ce582ba972dccec12ce2`.
-- Three browser regressions cover page-labelled main landmarks, Brief object
-  focus return, and exact Evidence control return when duplicate Context Lens
-  links exist.
-- The committed remote diff contains only the shell behavior and focused browser
-  coverage; the canonical prototype is unchanged.
+- Local syntax checks passed for changed source.
+- All exact-head GitHub quality jobs passed before PR #116 merged.
+- Three browser regressions cover main-landmark labelling and exact Brief and
+  Evidence focus return.
+- The canonical prototype remained unchanged.
 
 ### Not verified
 
-Packaged Windows/macOS behavior and real VoiceOver, NVDA, or other assistive-
-technology combinations were not exercised. This change does not prove public
-deployment, production data, persistence, collaboration, or backend behavior.
+Packaged Windows/macOS and real assistive-technology combinations were not
+exercised.
+
+## 2026-09-10 — Public synthetic demo
+
+### Outcome
+
+Published the connected synthetic slice at
+<https://evidencespace.github.io/nonameyet/> through a manual GitHub Pages
+workflow. A concise entry page states that all data is fictional, warns against
+entering real case information, and states that accounts, secure storage,
+payments, and AI actions are not connected.
+
+The deployment artifact is rebuilt from an explicit 15-file allowlist. It
+excludes the canonical prototype, CaseFind, documents, backend code, and
+repository history. No-index controls reduce accidental discovery but do not
+make the public site private.
+
+### Verification observed
+
+- All exact-head checks passed before PR #117 merged.
+- Artifact tests verify the exact file list, disclosure boundary, forbidden
+  paths/content, and every relative JavaScript import.
+- Public demo deployment #1 succeeded from main commit
+  `8464ae81ab92e2bc594f8f630cb38b19da360245`.
+- Repository metadata reports Pages enabled.
+- A user-provided desktop capture shows the published Home page rendered.
+- PR #118 moved checkout and setup-node to verified Node 24-based action
+  releases; all four exact-head quality jobs passed before merge.
+
+### Not verified
+
+The independent crawler respected `noindex`, and the computer sandbox lacked
+public DNS. Full live route, asset, console, mobile, and assistive-technology QA
+was not independently executed.
 
 ### Next weakest area
 
-The next product slice remains the trust-preserving, read-only C-03/E-04 data
-adapter. Public GitHub Pages deployment remains deferred until repository
-visibility and prototype exposure are explicitly approved.
+Write the current CaseFind trust-invariant map and connect one read-only
+C-03/E-04 source-record adapter with explicit synthetic fallback. Add no writes
+until fail-closed contract tests pass.
