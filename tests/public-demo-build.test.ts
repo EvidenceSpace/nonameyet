@@ -13,6 +13,7 @@ const expectedFiles = [
   "app.html",
   "evidencespace-pages/brief.js",
   "evidencespace-pages/cases.js",
+  "evidencespace-pages/evidence-record-adapter.js",
   "evidencespace-pages/evidence.js",
   "evidencespace-pages/fixtures.js",
   "evidencespace-pages/foundation.js",

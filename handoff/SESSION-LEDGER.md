@@ -155,3 +155,52 @@ was not independently executed.
 Write the current CaseFind trust-invariant map and connect one read-only
 C-03/E-04 source-record adapter with explicit synthetic fallback. Add no writes
 until fail-closed contract tests pass.
+
+## 2026-09-10 — Read-only Evidence adapter boundary
+
+### Outcome
+
+Implemented a storage-independent read boundary for C-03/E-04. Evidence and
+Context Lens now consume the same immutable normalized record. The adapter
+accepts a host provider, checks route, source, original-metadata, processing,
+and statement identities, and preserves contrary material.
+
+Provider participation is fail-closed. Denied, missing, deleted, stale, changed,
+malformed, and failed reads return no record and never substitute the synthetic
+source. A matching provider record is visibly read-only; session-only review
+controls remain available only in the labelled synthetic preview.
+
+### Verification observed
+
+- Focused local deterministic coverage passed 10 tests.
+- Implementation head `25212db2d93f9bbd219e97f4515ae8a2f2f27b4e`
+  passed dependency/docs/assets/typecheck, deterministic, Chromium lifecycle,
+  and aggregate jobs in GitHub Actions run `34480892200`.
+- Three browser tests exercised a matching renamed provider snapshot, denial
+  without synthetic filename/title leakage, and stale Context Lens identity.
+- The public builder and test now require an exact 16-file artifact including
+  the read adapter, while preserving disclosure, no-index, forbidden-content,
+  and import-resolution checks.
+- The remote change set contained the nine intended implementation, test, build,
+  and invariant files before these continuity updates. The canonical prototype
+  remained untouched.
+
+### Truth boundary
+
+No CaseFind IndexedDB provider, backend, authorization service, migration, byte
+rehash, or provider-backed write was added. The provider hook is a narrow host
+contract, not proof that production data is connected.
+
+### Not verified
+
+Real revocation, concurrency, retry, network recovery, packaged desktop,
+assistive technology, production data, and a live deployment of the 16-file
+artifact were not exercised.
+
+### Next weakest area
+
+Build a dedicated read-only CaseFind provider that opens existing stores without
+upgrading or mutating them, maps stable IDs, returns authorization-aware states,
+and is tested against temporary IndexedDB fixtures. Keep all provider-backed
+writes blocked until compare-and-swap, atomicity, dependency, recovery, and
+rollback guarantees are proven through the new boundary.

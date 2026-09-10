@@ -12,6 +12,7 @@ export const PUBLIC_DEMO_SOURCE_FILES = Object.freeze([
   ["web/evidencespace-tokens.css", "evidencespace-tokens.css"],
   ["web/evidencespace-pages/brief.js", "evidencespace-pages/brief.js"],
   ["web/evidencespace-pages/cases.js", "evidencespace-pages/cases.js"],
+  ["web/evidencespace-pages/evidence-record-adapter.js", "evidencespace-pages/evidence-record-adapter.js"],
   ["web/evidencespace-pages/evidence.js", "evidencespace-pages/evidence.js"],
   ["web/evidencespace-pages/fixtures.js", "evidencespace-pages/fixtures.js"],
   ["web/evidencespace-pages/foundation.js", "evidencespace-pages/foundation.js"],
