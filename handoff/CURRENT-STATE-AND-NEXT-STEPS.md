@@ -14,7 +14,11 @@ EvidenceSpace has two runnable surfaces with different roles:
    - Uses one persistent shell with addressable query pages, History API
      navigation, lazy modules, intent prefetch, page-labelled main landmarks,
      exact origin-focus return, and honest unfinished-page foundations.
-   - Uses synthetic fixtures and session-only preview controls.
+   - Uses synthetic fixtures when no provider exists.
+   - Accepts one read-only provider result through a validation adapter shared by
+     Evidence and Context Lens.
+   - Keeps provider-backed records read-only and fails closed without a record
+     for denied, missing, deleted, stale, changed, malformed, or failed reads.
 
 2. **CaseFind migration asset** under older `web/` and `src/` paths.
    - Still owns proven persistence, integrity, review transition, timeline,
@@ -22,9 +26,9 @@ EvidenceSpace has two runnable surfaces with different roles:
    - Must remain runnable until equivalent EvidenceSpace behavior and migration
      tests exist.
 
-The connected slice is recognizable but incomplete. It does not provide
-production auth, persistence, collaboration, ingestion, AI execution,
-marketplace, payments, or legal services.
+The connected slice is recognizable but incomplete. It does not provide a real
+CaseFind provider, production auth, persistence, collaboration, ingestion, AI
+execution, marketplace, payments, or legal services.
 
 ## Public preview
 
@@ -36,8 +40,8 @@ Observed facts:
 - Public demo deployment #1 completed successfully from commit
   `8464ae81ab92e2bc594f8f630cb38b19da360245`.
 - A user-provided desktop capture shows the published Home page rendered.
-- The Pages artifact is a tested 15-file allowlist containing only the connected
-  synthetic shell and its disclosure entry.
+- The Pages artifact is a tested 16-file allowlist containing only the connected
+  synthetic shell, its read adapter, and its disclosure entry.
 - The canonical prototype, CaseFind surface, repository documents, and backend
   code are excluded from the artifact.
 - The public entry warns that data is fictional and that accounts, secure
@@ -49,7 +53,8 @@ Observed facts:
 
 Independent automated page extraction was blocked by the intentional no-index
 boundary, and the computer sandbox lacked external DNS. Full public route,
-resource, and console QA is therefore not claimed.
+resource, and console QA is therefore not claimed. The 16-file artifact has not
+yet been observed in a live deployment.
 
 ## Canonical design state
 
@@ -73,9 +78,13 @@ did not.
 - Home resumes C-03 and links to Brief and E-04.
 - Cases provides four truthful synthetic records with search and filters.
 - Brief keeps confirmed, contrary, and unknown material visible.
-- Evidence distinguishes the original email from annotations and exposes
-  provenance, statements, review state, and backlinks.
-- Context Lens exposes details, comments, activity, and an
+- Evidence reads selected metadata, preview, source-linked statements, and
+  provenance from an immutable normalized record.
+- Context Lens receives the same normalized record and keeps source details
+  closed for non-ready provider states.
+- A matching provider record is visibly read-only; synthetic confirm/correct
+  controls remain session-only and visibly labelled as preview behavior.
+- Context Lens still exposes details, comments, activity, and an
   `AI proposal · Not applied`; dismissal returns focus to its exact opening
   object when available.
 - Unsupported destinations remain honest foundations.
@@ -89,6 +98,15 @@ did not.
 - PR #117: the same four gates passed for the public allowlist and its three
   deterministic artifact tests.
 - PR #118: the same four gates passed for Node 24 workflow action upgrades.
+- Read-adapter implementation commit
+  `25212db2d93f9bbd219e97f4515ae8a2f2f27b4e` passed all four exact-head jobs in
+  run `34480892200`.
+- Adapter coverage includes 10 deterministic tests for identity, contrary
+  material, provider states, recovery, rollback, and no-fallback behavior.
+- Three browser tests exercise matching read-only provider data, denial without
+  fixture leakage, and stale Context Lens identity.
+- Public artifact tests require exactly 16 files and resolve every relative
+  import.
 - User evidence shows the first Pages deployment succeeded and Home rendered.
 
 Do not extend these observations to production data, backend behavior, packaged
@@ -96,30 +114,34 @@ desktop, real assistive technology, or full live-site QA.
 
 ## Not verified
 
-- production authentication/authorization or writes;
-- original-source ingestion through the new shell;
+- a production CaseFind read provider or authorization service;
+- original-source ingestion or rehashing through the new shell;
 - legacy-to-new data migration;
+- provider-backed review, correction, upload, deletion, or collaboration writes;
 - real offline/reconnect, concurrency, revocation, retry, or deletion;
 - packaged Windows/macOS behavior;
 - real screen-reader/browser combinations;
 - all 37 canonical screens;
-- every live public route, asset, and console state.
+- every live public route, asset, and console state;
+- a live deployment containing the 16-file artifact.
 
 ## Next weakest area
 
-**Trust-preserving CaseFind migration into one read-only connected data seam.**
+**Dedicated read-only CaseFind provider behind the verified adapter.**
 
 Required sequence:
 
-1. Refresh representative storage, integrity, review, timeline, deletion,
-   recovery, export, and restricted-data code.
-2. Write the current invariant map.
-3. Define an adapter that does not expose legacy DOM/storage shapes to page
-   modules.
-4. Load one read-only C-03/E-04 source record with explicit synthetic fallback.
-5. Add contract tests for provenance, denied access, stale/deleted/changed
-   sources, contrary evidence, recovery, and rollback.
-6. Add no mutation until those tests pass.
+1. Open the existing CaseFind database at its current version without upgrading
+   or mutating it.
+2. Read the case, file, processing, fact, and suggestion stores required for one
+   source snapshot.
+3. Map legacy file IDs to stable EvidenceSpace case/evidence IDs.
+4. Return explicit authorization-aware non-ready states through the existing
+   contract.
+5. Test identity drift, denied/missing/deleted states, open failure, recovery,
+   and no-write behavior against temporary IndexedDB fixtures.
+6. Add no provider-backed mutation until compare-and-swap, atomicity, source
+   dependency, recovery, and rollback guarantees are proven at this boundary.
 7. Re-run exact-head repository checks before merge.
 
 ## Later visual slices

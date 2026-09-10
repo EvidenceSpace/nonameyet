@@ -14,9 +14,10 @@ The implementation lives under `web/evidencespace-*` and
 `web/evidencespace-pages/`. It is publicly previewable, but it is not production
 authentication, storage, collaboration, evidence processing, payments, or AI.
 
-The next weakest product area remains **trust-preserving CaseFind migration**:
-write the current invariant map and connect one read-only C-03/E-04 data seam
-before adding any mutation path.
+A trust-preserving, read-only C-03/E-04 adapter boundary is now implemented.
+The next weakest product area is a **dedicated read-only CaseFind provider** that
+reads existing stores without upgrading or mutating them. Do not add a
+provider-backed write path yet.
 
 ## Current repository truth
 
@@ -27,6 +28,15 @@ before adding any mutation path.
   Back/Forward support, page-level lazy loading, intent prefetch, teardown,
   stale-render protection, page-labelled main landmarks, exact Context Lens
   focus return, titles, and live announcements.
+- Evidence and Context Lens can read the same normalized C-03/E-04 result through
+  `globalThis.__evidenceSpaceEvidenceProvider`.
+- The adapter checks route, source, original-metadata, processing, and statement
+  source identities before returning a deeply frozen display record.
+- Provider denial, absence, deletion, staleness, change, malformed output, and
+  failure return no source record. Synthetic fallback is used only when no
+  provider exists.
+- Provider-backed records are read-only. Session-only confirm/correct behavior
+  remains available only in the visibly labelled synthetic preview.
 - Loading, empty, denied, error, narrow-window, dark, reduced-motion, and
   forced-colors behavior exists for the connected slice.
 - CaseFind remains runnable as the migration asset for proven persistence,
@@ -43,9 +53,9 @@ its connected shell.
 
 Publication is deliberately bounded:
 
-- `scripts/build-public-demo.mjs` creates a fresh 15-file allowlist.
-- Only the connected synthetic shell, its page modules, a disclosure entry, a
-  disallowing `robots.txt`, and `.nojekyll` are published.
+- `scripts/build-public-demo.mjs` creates a fresh 16-file allowlist.
+- Only the connected synthetic shell, its read adapter and page modules, a
+  disclosure entry, a disallowing `robots.txt`, and `.nojekyll` are published.
 - The canonical prototype, CaseFind files, documents, backend code, and
   repository history are not in the Pages artifact.
 - The entry says the data is fictional, warns against entering real case
@@ -59,7 +69,8 @@ Publication is deliberately bounded:
 The crawler used for independent text extraction respected `noindex` and
 returned `CRAWL_NOINDEX`; the computer sandbox also lacked public DNS. Do not
 claim that every live route, resource, or console state was independently
-exercised from that environment.
+exercised from that environment. The 16-file artifact has not yet been observed
+in a live deployment.
 
 ## Canonical design
 
@@ -88,6 +99,7 @@ Core files:
 - `web/evidencespace-shell-model.js`
 - `web/evidencespace-shell.css`
 - `web/evidencespace-tokens.css`
+- `web/evidencespace-pages/evidence-record-adapter.js`
 - `web/evidencespace-pages/`
 
 Primary routes:
@@ -109,9 +121,16 @@ compatibility.
   its original local verification.
 - Page-focus continuity added three focused browser regressions and passed all
   exact-head GitHub quality jobs before PR #116 merged.
-- The 15-file public artifact has deterministic coverage for its exact file
-  list, disclosure/no-index boundary, forbidden paths/content, and relative
-  JavaScript import resolution. All PR #117 checks passed.
+- The public artifact has deterministic coverage for its exact 16-file list,
+  disclosure/no-index boundary, forbidden paths/content, and relative JavaScript
+  import resolution.
+- The read-adapter implementation head
+  `25212db2d93f9bbd219e97f4515ae8a2f2f27b4e` passed all four GitHub quality
+  jobs in run `34480892200`: dependency/docs/assets/typecheck, deterministic,
+  Chromium lifecycle, and aggregate.
+- Focused adapter coverage includes 10 deterministic tests and three browser
+  tests for matching provider data, provider denial, and stale Context Lens
+  identity.
 - Node 24 action upgrades passed dependency/docs/assets/typecheck,
   deterministic, Chromium lifecycle, and aggregate checks before PR #118 merged.
 - The successful public deployment and rendered Home page were visually
@@ -120,29 +139,31 @@ compatibility.
 ## Not proven
 
 - production authentication, authorization, persistence, or collaboration;
-- new-shell evidence ingestion or CaseFind migration;
+- an actual CaseFind IndexedDB provider or legacy-to-new migration;
+- original-byte rehashing through the connected shell;
+- any provider-backed review, upload, deletion, or collaboration write;
 - real AI execution, notifications, marketplace, booking, or payments;
 - backend concurrency, revocation, retry, partial failure, or deletion;
 - packaged Windows/macOS behavior;
 - real assistive-technology combinations;
 - full route/console/resource QA of the public URL;
+- live deployment of the 16-file artifact;
 - route-by-route QA of all 37 canonical screens.
 
 ## Immediate next task
 
-1. Refresh representative CaseFind trust modules:
-   `web/storage.js`, `web/review-transition.js`, `web/timeline-model.js`,
-   `web/timeline-ui.js`, `web/original-byte-integrity.js`,
-   `web/processing-integrity.js`, and relevant `src/` domain/processing/report
-   code.
-2. Write an invariant map covering original bytes, provenance, processing
-   failure, review transitions, contrary material, deletion, stale sources,
-   reconnect, recovery, exports, and restricted-data handling.
-3. Define an adapter independent of legacy DOM and storage shapes.
-4. Connect one read-only C-03/E-04 record with explicit synthetic fallback.
-5. Add fail-closed tests for denied, missing, stale, changed, and deleted
-   sources, contrary material, recovery, and rollback.
-6. Add no writes until those tests pass.
+1. Build a dedicated CaseFind read provider around the current stores without
+   opening them at a newer version or writing during reads.
+2. Map legacy file IDs to stable EvidenceSpace case/evidence IDs without copying
+   source bytes into the page layer.
+3. Return explicit `ready`, `denied`, `missing`, `deleted`, `stale`, `changed`,
+   and `error` states through the existing adapter contract.
+4. Test matching, denied, missing, deleted, stale, changed, open-failure, and
+   recovery behavior against temporary IndexedDB fixtures.
+5. Prove that opening and reading leaves the source database unchanged.
+6. Keep provider-backed mutations blocked until source identity, explicit human
+   review, concurrency, recovery, deletion, and rollback guarantees are proven
+   through the new boundary.
 
 ## Stable product structure
 
