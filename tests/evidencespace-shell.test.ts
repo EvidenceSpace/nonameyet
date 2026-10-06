@@ -29,9 +29,10 @@ test("route resolution distinguishes product pages from honest foundations", () 
   assert.equal(resolveShellRoute("EVIDENCE").kind, "case");
   assert.equal(resolveShellRoute("research").globalDestination, "cases");
   assert.equal(resolveShellRoute("javascript:alert(1)").id, "not-found");
-  assert.deepEqual(PRODUCT_PAGE_IDS, ["home", "cases", "brief", "evidence"]);
+  assert.deepEqual(PRODUCT_PAGE_IDS, ["home", "cases", "brief", "space", "evidence"]);
   assert.equal(isProductPage("brief"), true);
-  assert.equal(isProductPage("space"), false);
+  assert.equal(isProductPage("space"), true);
+  assert.equal(isProductPage("research"), false);
 });
 
 test("case and object identifiers are bounded before display or linking", () => {

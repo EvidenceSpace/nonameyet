@@ -7,21 +7,29 @@
 
 EvidenceSpace has one connected, synthetic product slice:
 
-**Home → Cases → Case C-03 Brief → Evidence E-04 → Context Lens → exact-object
-return**.
+**Home → Cases → Case C-03 Brief → Space → Evidence E-04 → Context Lens →
+exact-object return**.
+
+Since 6 October 2026 the slice follows the approved v2 refinement rules in
+`docs/design/v2-refinement-system.md` (one case bible, plain wording,
+“Suggested · not added” for assistant output, larger type, key dates ribbon,
+interactive Space board).
 
 The implementation lives under `web/evidencespace-*` and
 `web/evidencespace-pages/`. It is publicly previewable, but it is not production
 authentication, storage, collaboration, evidence processing, payments, or AI.
 
-The next weakest product area remains **trust-preserving CaseFind migration**:
+Design comes first (owner direction). Next design work: carry the v2 pass to
+Research, Work, Room, Reports, New case, Lawyers, Notifications, Settings and
+onboarding. After that, the next weakest product area remains
+**trust-preserving CaseFind migration**:
 write the current invariant map and connect one read-only C-03/E-04 data seam
 before adding any mutation path.
 
 ## Current repository truth
 
 - The canonical 37-screen prototype is preserved unchanged.
-- Product pages exist for Home, Cases, Brief, and Evidence.
+- Product pages exist for Home, Cases, Brief, Space, and Evidence.
 - Other destinations render honest foundations inside the same shell.
 - The shell provides query-addressable routes, History API navigation,
   Back/Forward support, page-level lazy loading, intent prefetch, teardown,
@@ -109,13 +117,17 @@ compatibility.
   its original local verification.
 - Page-focus continuity added three focused browser regressions and passed all
   exact-head GitHub quality jobs before PR #116 merged.
-- The 15-file public artifact has deterministic coverage for its exact file
+- The public artifact (16 files since Space was added) has deterministic coverage for its exact file
   list, disclosure/no-index boundary, forbidden paths/content, and relative
   JavaScript import resolution. All PR #117 checks passed.
 - Node 24 action upgrades passed dependency/docs/assets/typecheck,
   deterministic, Chromium lifecycle, and aggregate checks before PR #118 merged.
 - The successful public deployment and rendered Home page were visually
   supplied by the user.
+- The v2 slice passed the 14 shell browser tests in local Chromium and was
+  reviewed by screenshot at 1440×900 (light and dark) and 520×900. Space drag,
+  keyboard move, add/undo, dismiss/undo, in-app persistence and Outline view
+  were exercised by a browser script with no console errors.
 
 ## Not proven
 

@@ -28,7 +28,7 @@ test("returns focus to the exact Brief object after the Context Lens closes", as
 
 test("returns focus to the exact Evidence control when duplicate context links exist", async ({ page }) => {
   await openShell(page, "?route=evidence&case=C-03&evidence=E-04&from=brief");
-  const origin = page.getByRole("link", { name: "Open Context Lens", exact: true });
+  const origin = page.getByRole("link", { name: "Show details", exact: true });
   await origin.click();
   await expect(page.locator("[data-context-close]")).toBeFocused();
 

@@ -17,6 +17,7 @@ export const PUBLIC_DEMO_SOURCE_FILES = Object.freeze([
   ["web/evidencespace-pages/foundation.js", "evidencespace-pages/foundation.js"],
   ["web/evidencespace-pages/home.js", "evidencespace-pages/home.js"],
   ["web/evidencespace-pages/page-utils.js", "evidencespace-pages/page-utils.js"],
+  ["web/evidencespace-pages/space.js", "evidencespace-pages/space.js"],
 ]);
 
 const sourceDescription =

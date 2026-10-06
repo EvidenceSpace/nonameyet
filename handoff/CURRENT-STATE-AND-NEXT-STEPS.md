@@ -112,6 +112,12 @@ systematic, human-sounding v2 before deeper implementation. See
 `docs/design/prototype-review-2026-10-06.md` for findings, open decisions, and
 the proposed sequence. The CaseFind migration below stays queued behind it.
 
+The owner approved the case bible, the wording rule (assistant output stays,
+labelled plainly) and the type/density rules. The v2 pass is built for Home,
+Cases, Brief, Space and Evidence; rules live in
+`docs/design/v2-refinement-system.md`. Next: the same pass for Research, Work,
+Room, Reports, New case, Lawyers, Notifications, Settings and onboarding.
+
 ## Next weakest area
 
 **Trust-preserving CaseFind migration into one read-only connected data seam.**
