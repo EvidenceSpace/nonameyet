@@ -155,3 +155,39 @@ was not independently executed.
 Write the current CaseFind trust-invariant map and connect one read-only
 C-03/E-04 source-record adapter with explicit synthetic fallback. Add no writes
 until fail-closed contract tests pass.
+
+## 2026-10-06 — Prototype design review
+
+### Outcome
+
+The owner asked for a complete pass through the approved prototype before more
+implementation. `docs/design/prototype-review-2026-10-06.md` records the review:
+what to keep, six systemic issue groups (click areas, contradictory demo case,
+system/AI-sounding copy, density and type, navigation consistency, collisions
+and empty space), notes for all 37 screens, a proposed v2 refinement direction,
+and a case-bible proposal.
+
+The owner confirmed in conversation that agents may merge to `main` when
+satisfied, that the desktop target remains both Windows and macOS, and that the
+interface should avoid AI-sounding wording.
+
+### Verification observed
+
+- 37 screens extracted from the unchanged canonical prototype and inspected.
+- 325 click areas parsed from `ROUTES` and drawn onto their screens; mismatches
+  are listed in the review.
+- Connected slice rendered locally in Chromium for Home, Cases, Brief, Evidence,
+  Context Lens, and the Space foundation with no console errors.
+- `npm run check` passed locally (505 deterministic tests).
+
+### Not verified
+
+No design or code changed. Settings screens 24–37 were reviewed for structure,
+not word by word. No live public URL QA.
+
+### Next weakest area
+
+Owner decisions on the case bible, the assistant-output term, and the v2 type
+scale; then v2 tokens/components and a rebuild of Home, Cases, Brief, Space, and
+Evidence. CaseFind migration stays queued behind the design pass.
+
