@@ -105,6 +105,13 @@ desktop, real assistive technology, or full live-site QA.
 - all 37 canonical screens;
 - every live public route, asset, and console state.
 
+## Owner direction — 6 October 2026
+
+Design comes first. The owner wants the prototype refined into a more polished,
+systematic, human-sounding v2 before deeper implementation. See
+`docs/design/prototype-review-2026-10-06.md` for findings, open decisions, and
+the proposed sequence. The CaseFind migration below stays queued behind it.
+
 ## Next weakest area
 
 **Trust-preserving CaseFind migration into one read-only connected data seam.**
