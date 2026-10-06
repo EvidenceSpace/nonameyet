@@ -19,7 +19,7 @@ export const CASE_LENSES = Object.freeze([
   Object.freeze({ id: "reports", label: "Reports" }),
 ]);
 
-export const PRODUCT_PAGE_IDS = Object.freeze(["home", "cases", "brief", "evidence"]);
+export const PRODUCT_PAGE_IDS = Object.freeze(["home", "cases", "brief", "space", "evidence"]);
 
 const route = (id, kind, title, group, globalDestination, options = {}) =>
   Object.freeze({ id, kind, title, group, globalDestination, ...options });
@@ -34,7 +34,7 @@ export const ROUTES = Object.freeze({
   settings: route("settings", "global", "Settings", "Preferences", "settings"),
   account: route("account", "global", "Account", "Identity", "account"),
   brief: route("brief", "case", "Brief", "Case", "cases", { productPage: true }),
-  space: route("space", "case", "Space", "Case", "cases"),
+  space: route("space", "case", "Space", "Case", "cases", { productPage: true }),
   evidence: route("evidence", "case", "Evidence", "Case", "cases", { productPage: true }),
   research: route("research", "case", "Research", "Case", "cases"),
   work: route("work", "case", "Work", "Case", "cases"),

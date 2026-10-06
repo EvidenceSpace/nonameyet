@@ -4,6 +4,39 @@ Append one high-signal entry when implementation truth, verification evidence,
 or the next weakest area changes. Keep private data and machine-specific paths
 out of this file.
 
+## 2026-10-06 — v2 refinement of the connected slice
+
+### Outcome
+
+Applied the approved v2 rules to Home, Cases, Brief and Evidence, and built
+Space as a product page. Rules and case bible:
+`docs/design/v2-refinement-system.md`.
+
+### Changes
+
+- One case bible in `fixtures.js`; Riley's surname is Shah (avoids two
+  Morgans). Avatar is AM everywhere.
+- Light rail, top bar that owns context only, key dates ribbon on case pages.
+- Copy pass: no eyebrows, one disclaimer, “Suggested · not added”.
+- Data-driven connection maps per case (fixes Northbridge reusing Harbor's
+  map). Non-C-03 cases say they aren't filled in rather than showing C-03.
+- Space: draggable and keyboard-movable cards, live labelled connectors,
+  inspector, Outline view, add/dismiss suggestion with Undo; layout kept until reload.
+- Evidence: all six sources viewable (email, agreement, invoice, screenshot,
+  note), working search/filter and zoom, per-passage check and correction.
+- Details panel works for any evidence item; opening it keeps the page.
+- Shared-element transitions; reduced motion makes them instant.
+
+### Verification observed
+
+- 14 shell browser tests passed in local Chromium.
+- Screenshots reviewed at 1440×900 light/dark and 520×900.
+- Space interactions exercised by script with no console errors.
+
+### Not proven
+
+Real screen readers, Windows/macOS packaged builds, and the remaining screens.
+
 ## 2026-09-09 — First connected EvidenceSpace product slice
 
 ### Outcome
