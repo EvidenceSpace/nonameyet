@@ -7,7 +7,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   failOnFlakyTests: Boolean(process.env.CI),
-  reporter: "list",
+  reporter: process.env.CI ? [["list"], ["github"]] : "list",
   timeout: 45_000,
   expect: { timeout: 8_000 },
   outputDir: "test-results/browser",
