@@ -59,7 +59,7 @@ test("navigates Home to Cases to Brief to E-04 without reloading the shell", asy
   await openShell(page);
   const bootId = await page.evaluate(() => (window as typeof window & { __evidenceSpaceBootId: string }).__evidenceSpaceBootId);
 
-  await page.locator('[data-global-route="cases"]').click();
+  await page.locator("#topbar-nav").getByRole("link", { name: "Cases", exact: true }).click();
   await expect(page.locator("#page-title")).toHaveText("Cases");
   await expect(page.locator("#page-title")).toBeFocused();
   expect(await page.evaluate(() => (window as typeof window & { __evidenceSpaceBootId: string }).__evidenceSpaceBootId)).toBe(bootId);
@@ -147,7 +147,7 @@ test("reflows Evidence and Context Lens without page-level overflow", async ({ p
   expect(Math.round(main!.x)).toBe(8);
   expect(Math.round(520 - main!.x - main!.width)).toBe(8);
 
-  await page.getByRole("link", { name: "Show details" }).click();
+  await page.getByRole("link", { name: "Open Context Lens" }).click();
   await expect(page.locator("#context-lens")).toBeVisible();
   await page.waitForTimeout(20);
   await expectNoPageOverflow(page);

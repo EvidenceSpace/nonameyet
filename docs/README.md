@@ -58,7 +58,8 @@ When documents conflict, resolve the conflict in the same PR. A design artifact 
 - [`design/motion-and-engagement.md`](design/motion-and-engagement.md)
 - [`design/ux-quality-bar.md`](design/ux-quality-bar.md)
 - [`design/prototype-review-2026-10-06.md`](design/prototype-review-2026-10-06.md) — full prototype review: click-through errors, fixture contradictions, copy, density, and proposed v2 refinement direction.
-- [`design/v2-refinement-system.md`](design/v2-refinement-system.md) — approved v2 rules (case bible, wording, type scale, colour meaning, frame, map, Space board, motion) and what the slice now implements.
+- [`design/v2-refinement-system.md`](design/v2-refinement-system.md) — v2 visual pass notes; superseded, the owner preferred the previous visual style.
+- [`design/space-whiteboard.md`](design/space-whiteboard.md) — the Space whiteboard: tools, boards, templates, storage, and limits.
 - [`../design-prototypes/README.md`](../design-prototypes/README.md)
 
 The application design direction was approved on 30 August 2026 and reaffirmed on 9 September 2026. Small bar/tab/route defects, dense copy, and underused space are scoped implementation debt; they do not authorize a replacement aesthetic.

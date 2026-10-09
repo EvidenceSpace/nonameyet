@@ -18,6 +18,7 @@ const expectedFiles = [
   "evidencespace-pages/foundation.js",
   "evidencespace-pages/home.js",
   "evidencespace-pages/page-utils.js",
+  "evidencespace-pages/space-model.js",
   "evidencespace-pages/space.js",
   "evidencespace-shell-model.js",
   "evidencespace-shell.css",

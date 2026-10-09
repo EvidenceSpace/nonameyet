@@ -1,8 +1,10 @@
 # v2 refinement system
 
-Status: approved by the owner on 6 October 2026 (case bible, wording rule, type
-and density rules). First built in the connected slice: Home, Cases, Brief,
-Space and Evidence.
+Status: superseded. The rules were approved on 6 October 2026 and built in PR
+#123, but after reviewing the result the owner preferred the previous visual
+style. Home, Cases, Brief and Evidence were restored to it, and Space became a
+whiteboard (`space-whiteboard.md`). Keep this file as reference for the case
+bible and wording ideas; it does not describe the current slice.
 
 Refine, do not redesign: the shell geometry, seven-lens order and approved
 screens stay. This document records what changed and the rules every later

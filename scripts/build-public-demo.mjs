@@ -17,6 +17,7 @@ export const PUBLIC_DEMO_SOURCE_FILES = Object.freeze([
   ["web/evidencespace-pages/foundation.js", "evidencespace-pages/foundation.js"],
   ["web/evidencespace-pages/home.js", "evidencespace-pages/home.js"],
   ["web/evidencespace-pages/page-utils.js", "evidencespace-pages/page-utils.js"],
+  ["web/evidencespace-pages/space-model.js", "evidencespace-pages/space-model.js"],
   ["web/evidencespace-pages/space.js", "evidencespace-pages/space.js"],
 ]);
 
@@ -57,7 +58,7 @@ function publicLandingHtml() {
       <p class="lede">Explore the connected case workspace and its current page flow.</p>
       <div class="notice"><strong>Demo only</strong>Everything shown is fictional. Do not enter real case information. Accounts, secure storage, payments, and AI actions are not connected.</div>
       <a href="app.html?route=home">Open the demo</a>
-      <p class="small">Changes in this preview are temporary and reset when the page reloads.</p>
+      <p class="small">Space boards are saved in this browser only. Other changes in this preview reset when the page reloads.</p>
     </main>
   </body>
 </html>

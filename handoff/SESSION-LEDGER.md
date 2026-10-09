@@ -4,7 +4,29 @@ Append one high-signal entry when implementation truth, verification evidence,
 or the next weakest area changes. Keep private data and machine-specific paths
 out of this file.
 
-## 2026-10-06 — v2 refinement of the connected slice
+## 2026-10 — Previous style restored; Space becomes a whiteboard
+
+### Outcome
+
+The owner reviewed the v2 pass (PR #123) and preferred the previous visual
+style, asked for more user input, and asked for Space to be a real whiteboard.
+Home, Cases, Brief, Evidence, the shell and their browser tests were restored
+to the pre-v2 versions. Space was rebuilt as a whiteboard
+(`docs/design/space-whiteboard.md`).
+
+### Verification observed
+
+- `npm run check` passed locally (510 deterministic tests, 5 new for the
+  whiteboard model).
+- 19 browser tests (14 shell, 5 whiteboard) passed in local Chromium, twice.
+- Screenshots reviewed at 1440×900 light and dark and 390×844.
+
+### Not proven
+
+Real screen readers, real touch hardware, large boards, and anything beyond
+this browser's storage.
+
+## 2026-10-06 — v2 refinement of the connected slice (later reverted)
 
 ### Outcome
 

@@ -112,11 +112,12 @@ systematic, human-sounding v2 before deeper implementation. See
 `docs/design/prototype-review-2026-10-06.md` for findings, open decisions, and
 the proposed sequence. The CaseFind migration below stays queued behind it.
 
-The owner approved the case bible, the wording rule (assistant output stays,
-labelled plainly) and the type/density rules. The v2 pass is built for Home,
-Cases, Brief, Space and Evidence; rules live in
-`docs/design/v2-refinement-system.md`. Next: the same pass for Research, Work,
-Room, Reports, New case, Lawyers, Notifications, Settings and onboarding.
+A v2 visual pass was built and merged (PR #123), then reverted after owner
+review: the previous visual style is preferred (small text is acceptable;
+scaling can be handled later). The owner asked for much more user input and for
+Space to be a real whiteboard. Space now is one; see
+`docs/design/space-whiteboard.md`. Next: more add/edit paths on Brief,
+Evidence and Cases in the previous style, then the remaining screens.
 
 ## Next weakest area
 
