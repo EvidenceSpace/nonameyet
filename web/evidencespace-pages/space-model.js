@@ -345,13 +345,13 @@ export function buildTemplate(templateId, { withCaseContent = true } = {}) {
       add({ ...card("question", undefined, -130, 340), text: "What decides between them?" });
       return { items, links, strokes };
     }
-    const claimA = add(note("The work was delivered and accepted on 29 July.", -650, -200, "green", { w: 230, h: 130 }));
-    const claimB = add(note("The mobile layouts weren’t finished.", 230, -200, "pink", { w: 230, h: 130 }));
-    const e01 = add(card("evidence", "E-01", -650, -20, { w: 236 }));
-    const e02 = add(card("evidence", "E-02", -650, 130, { w: 236 }));
-    const e03 = add(card("evidence", "E-03", -400, 0, { w: 200, h: 130 }));
-    const e04 = add(card("evidence", "E-04", 230, -20, { w: 236 }));
-    const e05 = add(card("evidence", "E-05", 230, 130, { w: 236 }));
+    const claimA = add(note("The work was delivered and accepted on 29 July.", -560, -200, "green", { w: 230, h: 130 }));
+    const claimB = add(note("The mobile layouts weren’t finished.", 330, -200, "pink", { w: 230, h: 130 }));
+    const e01 = add(card("evidence", "E-01", -660, -10, { w: 226 }));
+    const e02 = add(card("evidence", "E-02", -660, 150, { w: 226 }));
+    const e03 = add(card("evidence", "E-03", -414, -10, { w: 214 }));
+    const e04 = add(card("evidence", "E-04", 220, -10, { w: 226 }));
+    const e05 = add(card("evidence", "E-05", 466, -10, { w: 214 }));
     const q = add(questionCard("Q-2", -130, 340));
     links.push(
       link(e03, claimA, "supports"), link(e01, claimA, "supports", "Clause 4.2"), link(e02, e01, "related"),

@@ -1074,7 +1074,8 @@ main[data-route="space"] #page-content { position: absolute; inset: 0; min-heigh
 .es-wb-item[data-tone="contrary"]::before { background: var(--es-color-contrary); }
 .es-wb-item[data-tone="uncertain"]::before { background: var(--es-color-uncertain); }
 .es-wb-item[data-tone="action"]::before { background: var(--es-color-action); }
-.es-wb-ev-meta { display: flex; align-items: center; gap: 7px; min-width: 0; color: var(--es-color-text-muted); font-size: 11px; font-weight: 600; }
+.es-wb-ev-meta > span { white-space: nowrap; }
+.es-wb-ev-meta { display: flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; color: var(--es-color-text-muted); font-size: 11px; font-weight: 600; }
 .es-wb-ev-kind { padding: 2px 6px; border-radius: 5px; background: var(--es-color-surface-muted); color: var(--es-color-text); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.04em; }
 .es-wb-ev-state { margin-left: auto; font-size: 11px; font-weight: 700; }
 .es-wb-ev-state[data-tone="contrary"] { color: var(--es-color-contrary); }
@@ -1190,11 +1191,11 @@ main[data-route="space"] #page-content { position: absolute; inset: 0; min-heigh
 /* ink */
 .es-wb-svg.is-ink .es-wb-stroke { fill: none; stroke: var(--wb-ink-ink); stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .es-board[data-tool="select"] .es-wb-svg.is-ink .es-wb-stroke { pointer-events: stroke; cursor: pointer; }
-.es-wb-stroke[data-color="blue"] { stroke: var(--wb-ink-blue); }
-.es-wb-stroke[data-color="red"] { stroke: var(--wb-ink-red); }
-.es-wb-stroke[data-color="green"] { stroke: var(--wb-ink-green); }
-.es-wb-stroke[data-color="violet"] { stroke: var(--wb-ink-violet); }
-.es-wb-stroke[data-color="amber"] { stroke: var(--wb-ink-amber); }
+.es-wb-svg.is-ink .es-wb-stroke[data-color="blue"] { stroke: var(--wb-ink-blue); }
+.es-wb-svg.is-ink .es-wb-stroke[data-color="red"] { stroke: var(--wb-ink-red); }
+.es-wb-svg.is-ink .es-wb-stroke[data-color="green"] { stroke: var(--wb-ink-green); }
+.es-wb-svg.is-ink .es-wb-stroke[data-color="violet"] { stroke: var(--wb-ink-violet); }
+.es-wb-svg.is-ink .es-wb-stroke[data-color="amber"] { stroke: var(--wb-ink-amber); }
 .es-wb-stroke.is-highlighter { stroke-opacity: 0.38; mix-blend-mode: multiply; stroke-linecap: square; }
 :root[data-theme="dark"] .es-wb-stroke.is-highlighter { mix-blend-mode: screen; }
 .es-wb-stroke.is-selected { filter: drop-shadow(0 0 1.5px var(--es-color-action)) drop-shadow(0 0 1.5px var(--es-color-action)); }
