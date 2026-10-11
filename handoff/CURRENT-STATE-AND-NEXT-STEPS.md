@@ -192,6 +192,8 @@ impression. Docs: `docs/design/case-board/`. Prototype:
 This is still the design phase. No app code changed. Don't merge anything
 without the owner's approval; PR #124 stays unmerged.
 
-Next design step: the intake and first-impression flow (a real person brings
-their papers and the board starts helping in the first minutes), tested against
-the journeys in `docs/design/case-board/real-life-journeys.md`.
+The first-day intake flow is designed and prototyped:
+`docs/design/case-board/first-day-intake.md` and
+`design-prototypes/case-board-intake/`. Next design steps: Priya's first day in
+simple view, then Sam's days 2 to 21 (dashcam arrives, liability denied,
+solicitor joins), which links the intake to the case board.

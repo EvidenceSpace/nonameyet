@@ -4,6 +4,35 @@ Append one high-signal entry when implementation truth, verification evidence,
 or the next weakest area changes. Keep private data and machine-specific paths
 out of this file.
 
+## 2026-10-11 — First day intake (design)
+
+### Outcome
+
+Designed and prototyped the first day with a case: the phone at the scene
+(what happened, safety, five things that are hard to get later, save with an
+email), then the laptop that evening (cards from the phone, proof gaps, own
+words with live highlighting, adding files, checking five suggestions one at a
+time, the first letter, simple view). Doc:
+`docs/design/case-board/first-day-intake.md`. Prototype:
+`design-prototypes/case-board-intake/`.
+
+### Verification observed
+
+- Scripted click-through of the whole flow in headless Chromium, as separate
+  files and as a single file, with no page errors.
+- Screens reviewed at 1920×1080. Fixed: new cards hidden under the check panel
+  (the board now moves to show each change), stacked notices, overlapping
+  labels, and copy that assumed the app knew about an email it hadn't seen.
+
+### Not verified
+
+Real extraction, real phone-to-laptop sync, real reminders, any real person
+using it. No app code changed.
+
+### Next weakest area
+
+Priya's first day in simple view, and Sam's days 2 to 21.
+
 ## 2026-10-11 — Space as the case board (design)
 
 ### Outcome

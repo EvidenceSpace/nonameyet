@@ -12,6 +12,7 @@ This folder holds everything about the case-board direction, so any agent or mod
 | [real-life-journeys.md](real-life-journeys.md) | Day-by-day journeys through five real situations. For each: what people open, where they would quit, what makes them pay. |
 | [room-and-calls.md](room-and-calls.md) | Room as the place people in a case talk: chat, voice/video calls, "Dana is calling you", notes and decisions saved to the case. |
 | [other-sections.md](other-sections.md) | How Brief, Evidence, Research, Work, Room and Reports become views of the same case data. |
+| [first-day-intake.md](first-day-intake.md) | The first day, worked out: phone at the scene, then the laptop that evening. Own words, adding files, checking suggestions one at a time, the first letter, simple view. Prototype: `design-prototypes/case-board-intake/`. |
 | [prototype-car-accident.md](prototype-car-accident.md) | The interactive prototype: what it shows, what is real logic vs simulated, and how each part could be real in the product. |
 | [open-questions.md](open-questions.md) | Risks, unknowns and decisions required before building. |
 | [space-direction-2026-10-09.md](space-direction-2026-10-09.md) | Earlier Space proposal (element grammar, semantic zoom, signature interactions). Still valid underneath the case-board idea. |
