@@ -4,6 +4,61 @@ Append one high-signal entry when implementation truth, verification evidence,
 or the next weakest area changes. Keep private data and machine-specific paths
 out of this file.
 
+## 2026-10-11 — First day intake (design)
+
+### Outcome
+
+Designed and prototyped the first day with a case: the phone at the scene
+(what happened, safety, five things that are hard to get later, save with an
+email), then the laptop that evening (cards from the phone, proof gaps, own
+words with live highlighting, adding files, checking five suggestions one at a
+time, the first letter, simple view). Doc:
+`docs/design/case-board/first-day-intake.md`. Prototype:
+`design-prototypes/case-board-intake/`.
+
+### Verification observed
+
+- Scripted click-through of the whole flow in headless Chromium, as separate
+  files and as a single file, with no page errors.
+- Screens reviewed at 1920×1080. Fixed: new cards hidden under the check panel
+  (the board now moves to show each change), stacked notices, overlapping
+  labels, and copy that assumed the app knew about an email it hadn't seen.
+
+### Not verified
+
+Real extraction, real phone-to-laptop sync, real reminders, any real person
+using it. No app code changed.
+
+### Next weakest area
+
+Priya's first day in simple view, and Sam's days 2 to 21.
+
+## 2026-10-11 — Space as the case board (design)
+
+### Outcome
+
+Built and reviewed a working prototype of Space as a case board for a fictional
+car accident claim. Wrote the design docs in `docs/design/case-board/`:
+the board, building blocks, getting a case in, real-life journeys, Room and
+calls, other sections, prototype notes and open questions. Prototype source is
+in `design-prototypes/case-board-car-accident/`.
+
+### Verification observed
+
+- The full click-through ran in headless Chromium with no page errors before
+  the design workspace was reset.
+- The source was then split back out of the delivered single-file HTML. The
+  split version loads and its main panels open with no page errors.
+
+### Not verified
+
+The full flow on the split files. Any real data, map or video. No app code
+changed.
+
+### Next weakest area
+
+The intake and first-impression flow, and owner decisions on call scope.
+
 ## 2026-10-06 — v2 refinement of the connected slice
 
 ### Outcome

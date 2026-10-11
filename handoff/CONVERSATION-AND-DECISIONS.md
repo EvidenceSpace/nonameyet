@@ -75,3 +75,24 @@ No coding competition, tournament, fight, duo/squad, game mode, outcome predicti
 ## Current mandate
 
 Build a professional, coherent, prototype-faithful product through tested vertical slices. Do not restart settled discovery, imitate competitors, or sacrifice trust, accessibility, performance, provenance, recovery, or visual character for speed.
+## 11 October 2026 — Space as the case board
+
+The owner reviewed a working prototype of Space as a case board for a fictional car accident claim (Reyes v Kowalski). The board doesn't only show the case; it works it out. Cards are people, statements, disputed points, documents, media, money, deadlines and leads. Strings between them carry meaning, and the proof panel updates when something changes (for example, striking a witness who couldn't see the lights). The owner liked it and asked how realistic it is.
+
+Answered plainly:
+
+- The junction plan was drawn by hand. In the product it comes from OpenStreetMap or licensed imagery, and people place the vehicles and witnesses.
+- The dashcam was a synthetic 3D render. In the product it is the user's uploaded video.
+- Speed from frames is an estimate and must be labelled as one, with its method shown.
+- The case data was typed by hand. In the product: upload, the assistant suggests, a person confirms.
+- The demo is scripted to a few minutes. A real case takes weeks, and the board must work for slow, partial, messy progress.
+
+Direction from the owner:
+
+- Room should support calls, with an in-app "X is calling you in Room" notice. This changes the earlier exclusion of native calls. Scope (voice/video, recording, consent, providers) is an open decision; see `docs/design/case-board/room-and-calls.md`.
+- Design from real-life journeys, not from screens. The first impression must be helpful straight away.
+- Building blocks are shared, and each tab is a view of the same case data, so everything stays connected.
+- No gimmicks, no copied patterns, no AI-sounding words or looks.
+- In this design phase, nothing is merged without the owner's approval. PR #124 stays unmerged.
+
+Docs: `docs/design/case-board/`. Prototype: `design-prototypes/case-board-car-accident/`.
