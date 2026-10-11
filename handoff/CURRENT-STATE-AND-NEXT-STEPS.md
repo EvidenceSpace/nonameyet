@@ -180,3 +180,18 @@ npm run check
 
 Report observed results only. `tsconfig.json` covers `src/**/*.ts`, not the
 browser shell, tests, scripts, or server.
+
+## Owner direction — 11 October 2026
+
+Space becomes the case board: one board that works the case out, built from
+shared building blocks that every tab also reads. Room gains calls (scope still
+to decide). Design starts from real-life journeys and a helpful first
+impression. Docs: `docs/design/case-board/`. Prototype:
+`design-prototypes/case-board-car-accident/`.
+
+This is still the design phase. No app code changed. Don't merge anything
+without the owner's approval; PR #124 stays unmerged.
+
+Next design step: the intake and first-impression flow (a real person brings
+their papers and the board starts helping in the first minutes), tested against
+the journeys in `docs/design/case-board/real-life-journeys.md`.

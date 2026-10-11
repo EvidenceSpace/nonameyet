@@ -4,6 +4,32 @@ Append one high-signal entry when implementation truth, verification evidence,
 or the next weakest area changes. Keep private data and machine-specific paths
 out of this file.
 
+## 2026-10-11 — Space as the case board (design)
+
+### Outcome
+
+Built and reviewed a working prototype of Space as a case board for a fictional
+car accident claim. Wrote the design docs in `docs/design/case-board/`:
+the board, building blocks, getting a case in, real-life journeys, Room and
+calls, other sections, prototype notes and open questions. Prototype source is
+in `design-prototypes/case-board-car-accident/`.
+
+### Verification observed
+
+- The full click-through ran in headless Chromium with no page errors before
+  the design workspace was reset.
+- The source was then split back out of the delivered single-file HTML. The
+  split version loads and its main panels open with no page errors.
+
+### Not verified
+
+The full flow on the split files. Any real data, map or video. No app code
+changed.
+
+### Next weakest area
+
+The intake and first-impression flow, and owner decisions on call scope.
+
 ## 2026-10-06 — v2 refinement of the connected slice
 
 ### Outcome

@@ -63,3 +63,6 @@ Supporting files:
 ## Boundaries
 
 No real evidence, legal analysis, authentication, storage, AI, collaboration, payment, or marketplace service is connected. Layout and motion values remain hypotheses until implemented and verified on Windows/macOS with accessibility and performance evidence.
+## Case board prototype (11 October 2026)
+
+`case-board-car-accident/` is a design-phase prototype of Space as a case board, built on a fictional car accident claim. It isn't the canonical prototype and doesn't replace it. See its README and `docs/design/case-board/`.
